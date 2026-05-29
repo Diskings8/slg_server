@@ -1,0 +1,42 @@
+mysql_common:
+  user: "root"
+  pass: "123456"
+  addr: "127.0.0.1"
+  port: "3306"
+  db_name_prefix: "common_db_0"
+  params: "charset=utf8mb4&parseTime=True&loc=Local"
+
+mysql_game:
+  user: "root"
+  pass: "123456"
+  addr: "127.0.0.1"
+  port: "3306"
+  db_name_prefix: "game_db_0"
+  params: "charset=utf8mb4&parseTime=True&loc=Local"
+
+redis:
+  addr: "127.0.0.1"
+  port: "6379"
+  password: ""
+  db: 0
+
+snowflake:
+  datacenter_id: 1
+  worker_id: 1
+
+etcd:
+  addr: "127.0.0.1"
+  port: "2379"
+
+gateWay:
+  addr: "127.0.0.1"
+  tcp_port: "13001"
+  rpc_port: "13002"
+
+game_server:
+  addr: "127.0.0.1"
+  port: "11001"
+
+battle_server:
+  addr: "127.0.0.1"
+  port: "12001"
