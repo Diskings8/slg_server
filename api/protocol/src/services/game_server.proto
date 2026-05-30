@@ -1,0 +1,18 @@
+syntax = "proto3";
+package game;
+option go_package = "./pb";
+
+import "proto_common.proto";
+
+service GameNodeService {
+  rpc Stream(stream NodePacket) returns (stream NodePacket) {}
+  // 登录服创建玩家
+  rpc CreateRole(CreateRoleReq) returns (CreateRoleRsp);
+  rpc LoginOnce(LoginOnceReq) returns (LoginOnceRsp);
+}
+
+service GatewayNodeService {
+  // 登录服创建玩家
+  rpc NotifyInfo(NotifyInfoReq) returns (NotifyInfoRsp);
+}
+

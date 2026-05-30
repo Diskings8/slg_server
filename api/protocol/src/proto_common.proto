@@ -1,0 +1,33 @@
+syntax = "proto3";
+package game;
+option go_package = "./pb";
+
+message NodePacket {
+  uint32 msgId = 1;
+  repeated bytes body = 2;
+}
+
+message CreateRoleReq{
+  uint64 userId = 1;
+  string roleName = 2;
+}
+
+message CreateRoleRsp{
+  uint64 roleId = 1;
+}
+
+message LoginOnceReq{
+  uint64 roleId = 1;
+}
+
+message LoginOnceRsp{
+  bool result = 1;
+}
+
+message NotifyInfoReq{
+  string info = 1;
+}
+
+message NotifyInfoRsp{
+  bool result = 1;
+}
