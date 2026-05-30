@@ -26,10 +26,10 @@ func (s *Session) Close() {
 	_ = s.conn.Close()
 }
 
-func (s *Session) RunToRecvFromConn() {
+func (s *Session) RunToReceiveFromConn() {
 	defer func() {
 		if e := recover(); e != nil {
-			loggers.Log.Error(fmt.Sprintf("session RunToRecvFromConn error :%+v", e))
+			loggers.Log.Error(fmt.Sprintf("session RunToReceiveFromConn error :%+v", e))
 		}
 	}()
 	for {

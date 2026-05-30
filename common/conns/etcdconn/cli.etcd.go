@@ -1,6 +1,7 @@
 package etcdconn
 
 import (
+	"log"
 	"time"
 
 	clientv3 "go.etcd.io/etcd/client/v3"
@@ -19,6 +20,7 @@ func InitEtcd(dsn string) {
 	})
 }
 
+// GetCli etcd客户端
 func GetCli() *clientv3.Client {
 	return etcdClient
 }

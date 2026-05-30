@@ -25,6 +25,34 @@ func RegisterServiceByNodeType(nodeType NodeService, instance string, addr strin
 	registerWithLease(key, addr)
 }
 
+func GetNodeTypeServerList(nodeType NodeService) ([]string, error) {
+	key := GetServiceKeyByNodeType(nodeType)
+	resp, err := etcdClient.Get(context.Background(), key, clientv3.WithPrefix())
+	if err != nil {
+		return nil, err
+	}
+	var addrs []string
+	for _, kv := range resp.Kvs {
+		addrs = append(addrs, string(kv.Key), string(kv.Value))
+	}
+	return addrs, nil
+}
+
+func GetNodeTypeServerAddr(nodeType NodeService) (string, error) {
+	key := GetServiceKeyByNodeType(nodeType)
+	resp, err := etcdClient.Get(context.Background(), key, clientv3.WithPrefix())
+	if err != nil {
+		return "", err
+	}
+	if len(resp.Kvs) == 0 {
+		return "", fmt.Errorf("no available server for node type %d", nodeType)
+	}
+
+	// etcd key: /node:service:game/{instance}/
+	// etcd value: {addr}
+	return string(resp.Kvs[0].Value), nil
+}
+
 func registerWithLease(key, value string) {
 	resp, err := etcdClient.Grant(context.Background(), 10)
 	if err != nil {

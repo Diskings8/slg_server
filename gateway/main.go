@@ -14,11 +14,8 @@ import (
 	vgc "server.slg.com/common/globals/var_globals_common"
 	"server.slg.com/common/loggers"
 	"server.slg.com/common/servers"
+	"server.slg.com/gateway/mix_server_gateways"
 )
-
-const ()
-
-var ()
 
 func parseFlagVar() {
 	flag.StringVar(vgc.CommonGlobalVarEnv, "env", "dev", "运行环境：dev/pre/prod")
@@ -65,7 +62,7 @@ func main() {
 		}
 
 		srv := servers.BuildRpcServer(ctx, conf)
-		srv.RegisterServices()
+		srv.RegisterServices(&mix_server_gateways.MixServer{})
 
 		if srv.Run() != nil {
 			serverChan <- struct{}{}

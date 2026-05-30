@@ -87,7 +87,7 @@ func (s *TcpServer) handleNewConn(conn net.Conn) {
 	netc := tcp_conn.NewNetConn(conn)
 	session := session_gateways.NewSession(netc)
 	s.addConnData(netc, session)
-	session.RunToRecvFromConn()
+	session.RunToReceiveFromConn()
 	// 断开
 	s.removeConnData(session)
 }
