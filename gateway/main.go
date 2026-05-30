@@ -1,11 +1,19 @@
 package main
 
 import (
+	"context"
 	"flag"
+	"os"
+	"os/signal"
+	"sync/atomic"
+	"syscall"
+	"time"
 
 	"server.slg.com/common/configs"
-	"server.slg.com/common/globals/var_globals_common"
+	"server.slg.com/common/conns/etcdconn"
+	vgc "server.slg.com/common/globals/var_globals_common"
 	"server.slg.com/common/loggers"
+	"server.slg.com/common/servers"
 )
 
 const ()
@@ -13,20 +21,87 @@ const ()
 var ()
 
 func parseFlagVar() {
-	flag.StringVar(&var_globals_common.CommonGlobalVarEnv, "env", "dev", "运行环境：dev/pre/prod")
+	flag.StringVar(vgc.CommonGlobalVarEnv, "env", "dev", "运行环境：dev/pre/prod")
+	flag.StringVar(vgc.CommonGlobalVarInstance, "instance", "0", "运行实例id")
 }
 
 func main() {
 	parseFlagVar()
 	flag.Parse()
 
-	configs.LoadEnvConf(var_globals_common.GetEnvPath())
+	configs.LoadEnvConf(vgc.GetEnvPath())
 
 	loggers.Init()
-	loggers.Log.Info(fmt.Sprintf("网关启动"))
+	loggers.Log.Info("网关启动")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	// pprof
 
-	//
+	//etcd
+	rpcAddr := configs.GEnvConf.GateWay.RpcDsn()
+	tcpAddr := configs.GEnvConf.GateWay.TcpDsn()
+	etcdconn.RegisterServiceByNodeType(etcdconn.NodeGatewayService, *vgc.CommonGlobalVarInstance, rpcAddr)
 
+	// init system
+
+	//
+	serverCount := atomic.Int32{}
+	serverChan := make(chan struct{}, 2)
+	// 主进程阻塞监听系统退出信号
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+	// init rpc server
+	grpcServerFunc := func() {
+		serverCount.Add(1)
+		conf := servers.Config{
+			Addr:             rpcAddr,
+			Timeout:          5 * time.Second,
+			MaxRecvMsgSize:   10 * 1024 * 1024,
+			MaxSendMsgSize:   10 * 1024 * 1024,
+			EnableReflection: true,
+		}
+
+		srv := servers.BuildRpcServer(ctx, conf)
+		srv.RegisterServices()
+
+		if srv.Run() != nil {
+			serverChan <- struct{}{}
+		}
+	}
+
+	tcpServerFunc := func() {
+		serverCount.Add(1)
+		conf := servers.Config{
+			Addr:             tcpAddr,
+			Timeout:          5 * time.Second,
+			MaxRecvMsgSize:   10 * 1024 * 1024,
+			MaxSendMsgSize:   10 * 1024 * 1024,
+			EnableReflection: true,
+		}
+		srv := servers.BuildTcpServer(ctx, conf)
+		if srv.Run() != nil {
+			serverChan <- struct{}{}
+		}
+	}
+
+	grpcServerFunc()
+	tcpServerFunc()
+
+	for {
+		select {
+		case <-quit:
+			loggers.Log.Info("收到关闭信号，开始优雅关闭服务...")
+			cancel()
+			time.Sleep(time.Second * 3)
+			return
+		case <-serverChan:
+			serverCount.Add(-1)
+			if serverCount.Load() == 0 {
+				return
+			}
+		}
+	}
 }
