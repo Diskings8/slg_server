@@ -1,23 +1,23 @@
 package pools
 
 import (
+	"context"
 	"sync"
 	"sync/atomic"
+	"time"
 )
-
-type entry[T IHandler] struct {
-	handler  T
-	refCount int32
-}
 
 // Pool 泛型 handler 池，线程安全
 type Pool[T IHandler] struct {
 	mu    sync.RWMutex
 	items map[uint64]*entry[T]
+	conf  PoolConf
+	ctx   context.Context
 }
 
-func New[T IHandler]() *Pool[T] {
+func NewPool[T IHandler](conf PoolConf) *Pool[T] {
 	return &Pool[T]{
+		conf:  conf,
 		items: make(map[uint64]*entry[T]),
 	}
 }
@@ -74,4 +74,35 @@ func (p *Pool[T]) release(id uint64) {
 		return
 	}
 	atomic.AddInt32(&e.refCount, -1)
+}
+
+func (p *Pool[T]) Start(ctx context.Context) {
+	p.ctx = ctx
+	go p.loop()
+}
+
+func (p *Pool[T]) loop() {
+	cacheTicker := time.NewTicker(p.conf.SaveCacheDuration)
+	dbTicker := time.NewTicker(p.conf.SaveDbDuration)
+	defer cacheTicker.Stop()
+	defer dbTicker.Stop()
+
+	for {
+		select {
+		case <-p.ctx.Done():
+			return
+		case <-cacheTicker.C:
+			p.cacheSave()
+		case <-dbTicker.C:
+			p.dbSave()
+		}
+	}
+}
+
+func (p *Pool[T]) cacheSave() {
+	
+}
+
+func (p *Pool[T]) dbSave() {
+
 }
