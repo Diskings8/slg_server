@@ -14,7 +14,7 @@ import (
 	vgc "server.slg.com/common/globals/var_globals_common"
 	"server.slg.com/common/loggers"
 	"server.slg.com/common/servers"
-	"server.slg.com/game/mix_server_games"
+	"server.slg.com/services/game/mix_server_games"
 )
 
 func parseFlagVar() {

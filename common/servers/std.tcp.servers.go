@@ -9,7 +9,7 @@ import (
 	"server.slg.com/common/conns/netconn"
 	"server.slg.com/common/conns/netconn/tcp_conn"
 	"server.slg.com/common/loggers"
-	"server.slg.com/gateway/session_gateways"
+	"server.slg.com/services/gateway/session_gateways"
 )
 
 type TcpServer struct {
