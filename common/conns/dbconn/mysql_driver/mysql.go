@@ -5,11 +5,11 @@ import (
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"server.slg.com/common/conns/dbconn/interface_dbconn"
-	"server.slg.com/common/models/db_interface_model"
+	"server.slg.com/common/conns/dbconn/dbconn_interface"
+	"server.slg.com/common/models/db_model_interface"
 )
 
-var _ interface_dbconn.DbcI = (*MysqlDriver)(nil)
+var _ dbconn_interface.DbcI = (*MysqlDriver)(nil)
 
 type MysqlDriver struct {
 	db *gorm.DB
@@ -36,6 +36,6 @@ func NewDriver(dsn string) (*MysqlDriver, error) {
 	return driver, nil
 }
 
-func (m MysqlDriver) AutoMigrate(model db_interface_model.DbIModel) error {
+func (m MysqlDriver) AutoMigrate(model db_model_interface.DbIModel) error {
 	return m.db.AutoMigrate(model)
 }

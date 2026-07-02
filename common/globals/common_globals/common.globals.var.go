@@ -1,4 +1,4 @@
-package var_globals_common
+package common_globals
 
 var (
 	CommonGlobalVarEnv      *string

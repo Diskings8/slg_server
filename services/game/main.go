@@ -11,7 +11,7 @@ import (
 
 	"server.slg.com/common/configs"
 	"server.slg.com/common/conns/etcdconn"
-	vgc "server.slg.com/common/globals/var_globals_common"
+	vgc "server.slg.com/common/globals/common_globals"
 	"server.slg.com/common/loggers"
 	"server.slg.com/common/servers"
 	"server.slg.com/services/game/mix_server_games"

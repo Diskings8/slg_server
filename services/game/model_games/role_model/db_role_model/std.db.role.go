@@ -1,10 +1,10 @@
 package db_role_model
 
 import (
-	"server.slg.com/common/models/db_interface_model"
+	"server.slg.com/common/models/db_model_interface"
 )
 
-var _ db_interface_model.DbIModel = (*RoleDb)(nil)
+var _ db_model_interface.DbIModel = (*RoleDb)(nil)
 
 type RoleDb struct {
 	Id uint64 `gorm:"primary_key;column:id;type:bigint(20);not null"`
