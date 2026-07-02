@@ -11,3 +11,8 @@ type MapInfoI interface {
 	Level() declaration_maps.MapLevel
 	ElementID() uint32
 }
+
+type MapConfigI interface {
+	// MapCount 地图总数
+	MapCount() int32
+}
