@@ -4,13 +4,14 @@
 // - protoc             v3.21.8
 // source: services/game_server.proto
 
-package pb
+package pb_game
 
 import (
 	context "context"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	pb_common "server.slg.com/api/protocol/pb/pb_common"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -19,9 +20,9 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	GameNodeService_Stream_FullMethodName     = "/game.GameNodeService/Stream"
-	GameNodeService_CreateRole_FullMethodName = "/game.GameNodeService/CreateRole"
-	GameNodeService_LoginOnce_FullMethodName  = "/game.GameNodeService/LoginOnce"
+	GameNodeService_Stream_FullMethodName     = "/pb_game.GameNodeService/Stream"
+	GameNodeService_CreateRole_FullMethodName = "/pb_game.GameNodeService/CreateRole"
+	GameNodeService_LoginOnce_FullMethodName  = "/pb_game.GameNodeService/LoginOnce"
 )
 
 // GameNodeServiceClient is the client API for GameNodeService service.
@@ -30,8 +31,8 @@ const (
 type GameNodeServiceClient interface {
 	Stream(ctx context.Context, opts ...grpc.CallOption) (GameNodeService_StreamClient, error)
 	// 登录服创建玩家
-	CreateRole(ctx context.Context, in *CreateRoleReq, opts ...grpc.CallOption) (*CreateRoleRsp, error)
-	LoginOnce(ctx context.Context, in *LoginOnceReq, opts ...grpc.CallOption) (*LoginOnceRsp, error)
+	CreateRole(ctx context.Context, in *pb_common.CreateRoleReq, opts ...grpc.CallOption) (*pb_common.CreateRoleRsp, error)
+	LoginOnce(ctx context.Context, in *pb_common.LoginOnceReq, opts ...grpc.CallOption) (*pb_common.LoginOnceRsp, error)
 }
 
 type gameNodeServiceClient struct {
@@ -52,8 +53,8 @@ func (c *gameNodeServiceClient) Stream(ctx context.Context, opts ...grpc.CallOpt
 }
 
 type GameNodeService_StreamClient interface {
-	Send(*NodePacket) error
-	Recv() (*NodePacket, error)
+	Send(*pb_common.NodePacket) error
+	Recv() (*pb_common.NodePacket, error)
 	grpc.ClientStream
 }
 
@@ -61,20 +62,20 @@ type gameNodeServiceStreamClient struct {
 	grpc.ClientStream
 }
 
-func (x *gameNodeServiceStreamClient) Send(m *NodePacket) error {
+func (x *gameNodeServiceStreamClient) Send(m *pb_common.NodePacket) error {
 	return x.ClientStream.SendMsg(m)
 }
 
-func (x *gameNodeServiceStreamClient) Recv() (*NodePacket, error) {
-	m := new(NodePacket)
+func (x *gameNodeServiceStreamClient) Recv() (*pb_common.NodePacket, error) {
+	m := new(pb_common.NodePacket)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
 	return m, nil
 }
 
-func (c *gameNodeServiceClient) CreateRole(ctx context.Context, in *CreateRoleReq, opts ...grpc.CallOption) (*CreateRoleRsp, error) {
-	out := new(CreateRoleRsp)
+func (c *gameNodeServiceClient) CreateRole(ctx context.Context, in *pb_common.CreateRoleReq, opts ...grpc.CallOption) (*pb_common.CreateRoleRsp, error) {
+	out := new(pb_common.CreateRoleRsp)
 	err := c.cc.Invoke(ctx, GameNodeService_CreateRole_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -82,8 +83,8 @@ func (c *gameNodeServiceClient) CreateRole(ctx context.Context, in *CreateRoleRe
 	return out, nil
 }
 
-func (c *gameNodeServiceClient) LoginOnce(ctx context.Context, in *LoginOnceReq, opts ...grpc.CallOption) (*LoginOnceRsp, error) {
-	out := new(LoginOnceRsp)
+func (c *gameNodeServiceClient) LoginOnce(ctx context.Context, in *pb_common.LoginOnceReq, opts ...grpc.CallOption) (*pb_common.LoginOnceRsp, error) {
+	out := new(pb_common.LoginOnceRsp)
 	err := c.cc.Invoke(ctx, GameNodeService_LoginOnce_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -97,8 +98,8 @@ func (c *gameNodeServiceClient) LoginOnce(ctx context.Context, in *LoginOnceReq,
 type GameNodeServiceServer interface {
 	Stream(GameNodeService_StreamServer) error
 	// 登录服创建玩家
-	CreateRole(context.Context, *CreateRoleReq) (*CreateRoleRsp, error)
-	LoginOnce(context.Context, *LoginOnceReq) (*LoginOnceRsp, error)
+	CreateRole(context.Context, *pb_common.CreateRoleReq) (*pb_common.CreateRoleRsp, error)
+	LoginOnce(context.Context, *pb_common.LoginOnceReq) (*pb_common.LoginOnceRsp, error)
 	mustEmbedUnimplementedGameNodeServiceServer()
 }
 
@@ -109,10 +110,10 @@ type UnimplementedGameNodeServiceServer struct {
 func (UnimplementedGameNodeServiceServer) Stream(GameNodeService_StreamServer) error {
 	return status.Errorf(codes.Unimplemented, "method Stream not implemented")
 }
-func (UnimplementedGameNodeServiceServer) CreateRole(context.Context, *CreateRoleReq) (*CreateRoleRsp, error) {
+func (UnimplementedGameNodeServiceServer) CreateRole(context.Context, *pb_common.CreateRoleReq) (*pb_common.CreateRoleRsp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateRole not implemented")
 }
-func (UnimplementedGameNodeServiceServer) LoginOnce(context.Context, *LoginOnceReq) (*LoginOnceRsp, error) {
+func (UnimplementedGameNodeServiceServer) LoginOnce(context.Context, *pb_common.LoginOnceReq) (*pb_common.LoginOnceRsp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method LoginOnce not implemented")
 }
 func (UnimplementedGameNodeServiceServer) mustEmbedUnimplementedGameNodeServiceServer() {}
@@ -133,8 +134,8 @@ func _GameNodeService_Stream_Handler(srv interface{}, stream grpc.ServerStream) 
 }
 
 type GameNodeService_StreamServer interface {
-	Send(*NodePacket) error
-	Recv() (*NodePacket, error)
+	Send(*pb_common.NodePacket) error
+	Recv() (*pb_common.NodePacket, error)
 	grpc.ServerStream
 }
 
@@ -142,12 +143,12 @@ type gameNodeServiceStreamServer struct {
 	grpc.ServerStream
 }
 
-func (x *gameNodeServiceStreamServer) Send(m *NodePacket) error {
+func (x *gameNodeServiceStreamServer) Send(m *pb_common.NodePacket) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func (x *gameNodeServiceStreamServer) Recv() (*NodePacket, error) {
-	m := new(NodePacket)
+func (x *gameNodeServiceStreamServer) Recv() (*pb_common.NodePacket, error) {
+	m := new(pb_common.NodePacket)
 	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -155,7 +156,7 @@ func (x *gameNodeServiceStreamServer) Recv() (*NodePacket, error) {
 }
 
 func _GameNodeService_CreateRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateRoleReq)
+	in := new(pb_common.CreateRoleReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -167,13 +168,13 @@ func _GameNodeService_CreateRole_Handler(srv interface{}, ctx context.Context, d
 		FullMethod: GameNodeService_CreateRole_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GameNodeServiceServer).CreateRole(ctx, req.(*CreateRoleReq))
+		return srv.(GameNodeServiceServer).CreateRole(ctx, req.(*pb_common.CreateRoleReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _GameNodeService_LoginOnce_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(LoginOnceReq)
+	in := new(pb_common.LoginOnceReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -185,7 +186,7 @@ func _GameNodeService_LoginOnce_Handler(srv interface{}, ctx context.Context, de
 		FullMethod: GameNodeService_LoginOnce_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GameNodeServiceServer).LoginOnce(ctx, req.(*LoginOnceReq))
+		return srv.(GameNodeServiceServer).LoginOnce(ctx, req.(*pb_common.LoginOnceReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -194,7 +195,7 @@ func _GameNodeService_LoginOnce_Handler(srv interface{}, ctx context.Context, de
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var GameNodeService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "game.GameNodeService",
+	ServiceName: "pb_game.GameNodeService",
 	HandlerType: (*GameNodeServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -218,7 +219,7 @@ var GameNodeService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	GatewayNodeService_NotifyInfo_FullMethodName = "/game.GatewayNodeService/NotifyInfo"
+	GatewayNodeService_NotifyInfo_FullMethodName = "/pb_game.GatewayNodeService/NotifyInfo"
 )
 
 // GatewayNodeServiceClient is the client API for GatewayNodeService service.
@@ -226,7 +227,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type GatewayNodeServiceClient interface {
 	// 登录服创建玩家
-	NotifyInfo(ctx context.Context, in *NotifyInfoReq, opts ...grpc.CallOption) (*NotifyInfoRsp, error)
+	NotifyInfo(ctx context.Context, in *pb_common.NotifyInfoReq, opts ...grpc.CallOption) (*pb_common.NotifyInfoRsp, error)
 }
 
 type gatewayNodeServiceClient struct {
@@ -237,8 +238,8 @@ func NewGatewayNodeServiceClient(cc grpc.ClientConnInterface) GatewayNodeService
 	return &gatewayNodeServiceClient{cc}
 }
 
-func (c *gatewayNodeServiceClient) NotifyInfo(ctx context.Context, in *NotifyInfoReq, opts ...grpc.CallOption) (*NotifyInfoRsp, error) {
-	out := new(NotifyInfoRsp)
+func (c *gatewayNodeServiceClient) NotifyInfo(ctx context.Context, in *pb_common.NotifyInfoReq, opts ...grpc.CallOption) (*pb_common.NotifyInfoRsp, error) {
+	out := new(pb_common.NotifyInfoRsp)
 	err := c.cc.Invoke(ctx, GatewayNodeService_NotifyInfo_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -251,7 +252,7 @@ func (c *gatewayNodeServiceClient) NotifyInfo(ctx context.Context, in *NotifyInf
 // for forward compatibility
 type GatewayNodeServiceServer interface {
 	// 登录服创建玩家
-	NotifyInfo(context.Context, *NotifyInfoReq) (*NotifyInfoRsp, error)
+	NotifyInfo(context.Context, *pb_common.NotifyInfoReq) (*pb_common.NotifyInfoRsp, error)
 	mustEmbedUnimplementedGatewayNodeServiceServer()
 }
 
@@ -259,7 +260,7 @@ type GatewayNodeServiceServer interface {
 type UnimplementedGatewayNodeServiceServer struct {
 }
 
-func (UnimplementedGatewayNodeServiceServer) NotifyInfo(context.Context, *NotifyInfoReq) (*NotifyInfoRsp, error) {
+func (UnimplementedGatewayNodeServiceServer) NotifyInfo(context.Context, *pb_common.NotifyInfoReq) (*pb_common.NotifyInfoRsp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method NotifyInfo not implemented")
 }
 func (UnimplementedGatewayNodeServiceServer) mustEmbedUnimplementedGatewayNodeServiceServer() {}
@@ -276,7 +277,7 @@ func RegisterGatewayNodeServiceServer(s grpc.ServiceRegistrar, srv GatewayNodeSe
 }
 
 func _GatewayNodeService_NotifyInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(NotifyInfoReq)
+	in := new(pb_common.NotifyInfoReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -288,7 +289,7 @@ func _GatewayNodeService_NotifyInfo_Handler(srv interface{}, ctx context.Context
 		FullMethod: GatewayNodeService_NotifyInfo_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GatewayNodeServiceServer).NotifyInfo(ctx, req.(*NotifyInfoReq))
+		return srv.(GatewayNodeServiceServer).NotifyInfo(ctx, req.(*pb_common.NotifyInfoReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -297,7 +298,7 @@ func _GatewayNodeService_NotifyInfo_Handler(srv interface{}, ctx context.Context
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var GatewayNodeService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "game.GatewayNodeService",
+	ServiceName: "pb_game.GatewayNodeService",
 	HandlerType: (*GatewayNodeServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

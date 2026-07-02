@@ -1,18 +1,18 @@
 syntax = "proto3";
-package game;
-option go_package = "./pb";
+package pb_game;
+option go_package = "server.slg.com/api/protocol/pb/pb_game";
 
 import "proto_common.proto";
 
 service GameNodeService {
-  rpc Stream(stream NodePacket) returns (stream NodePacket) {}
+  rpc Stream(stream pb_common.NodePacket) returns (stream pb_common.NodePacket) {}
   // 登录服创建玩家
-  rpc CreateRole(CreateRoleReq) returns (CreateRoleRsp);
-  rpc LoginOnce(LoginOnceReq) returns (LoginOnceRsp);
+  rpc CreateRole(pb_common.CreateRoleReq) returns (pb_common.CreateRoleRsp);
+  rpc LoginOnce(pb_common.LoginOnceReq) returns (pb_common.LoginOnceRsp);
 }
 
 service GatewayNodeService {
   // 登录服创建玩家
-  rpc NotifyInfo(NotifyInfoReq) returns (NotifyInfoRsp);
+  rpc NotifyInfo(pb_common.NotifyInfoReq) returns (pb_common.NotifyInfoRsp);
 }
 

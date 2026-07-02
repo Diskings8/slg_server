@@ -1,6 +1,6 @@
 syntax = "proto3";
-package game;
-option go_package = "./pb";
+package pb_common;
+option go_package = "server.slg.com/api/protocol/pb/pb_common";
 
 message NodePacket {
   uint32 msgId = 1;
