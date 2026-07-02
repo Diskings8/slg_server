@@ -29,7 +29,7 @@ func main() {
 	configs.LoadEnvConf(vgc.GetEnvPath())
 
 	loggers.Init()
-	loggers.Log.Info("游戏服务启动")
+	loggers.Logger.Info("游戏服务启动")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -65,7 +65,7 @@ func main() {
 	for {
 		select {
 		case <-quit:
-			loggers.Log.Info("收到关闭信号，开始优雅关闭服务...")
+			loggers.Logger.Info("收到关闭信号，开始优雅关闭服务...")
 			cancel()
 			time.Sleep(3 * time.Second)
 			return

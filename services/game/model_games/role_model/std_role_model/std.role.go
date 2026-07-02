@@ -8,6 +8,7 @@ import (
 
 var _ pools.IHandler = (*Role)(nil)
 
+// Role 角色逻辑模型，实现 IHandler 接口，提供缓存和数据库持久化能力
 type Role struct {
 	Id    uint64
 	dirty atomic.Bool

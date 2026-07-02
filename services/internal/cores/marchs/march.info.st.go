@@ -7,18 +7,18 @@ import (
 	"server.slg.com/services/internal/cores/cores_declarations"
 )
 
+// MarchInfo 行军信息，记录行军的完整状态，包括起止点、行军类型、时间、队伍、战报和 AOI 通行数据
 type MarchInfo struct {
 	rwLock          sync.RWMutex
 	MarchID         cores_declarations.MarchID
-	MarchType       cores_declarations.MarchType
 	Team            *Team
 	FromServerID    uint32
 	ToServerID      uint32
 	FromRoleID      uint64
 	ToRoleID        uint64
-	SrcFromMapID    uint32
-	FromMapID       uint32
-	ToMapID         uint32
+	SrcFromMapID    cores_declarations.MapID
+	FromMapID       cores_declarations.MapID
+	ToMapID         cores_declarations.MapID
 	MarchState      cores_declarations.MarchState
 	StartTimeUx     int64
 	EndTimeUx       int64
@@ -90,12 +90,6 @@ func (mi *MarchInfo) IsSaving() bool {
 
 //--------------------------Get----------------------//
 
-func (mi *MarchInfo) GetMarchType() cores_declarations.MarchType {
-	mi.rwLock.RLock()
-	defer mi.rwLock.RUnlock()
-	return mi.MarchType
-}
-
 func (mi *MarchInfo) GetActionUse() []cores_declarations.AnyThingUse {
 	mi.rwLock.RLock()
 	defer mi.rwLock.RUnlock()
@@ -108,25 +102,25 @@ func (mi *MarchInfo) GetMarchStartAndEndTimeUx() (int64, int64) {
 	return mi.StartTimeUx, mi.EndTimeUx
 }
 
-func (mi *MarchInfo) GetMapIDs() (uint32, uint32, uint32) {
+func (mi *MarchInfo) GetMapIDs() (cores_declarations.MapID, cores_declarations.MapID, cores_declarations.MapID) {
 	mi.rwLock.RLock()
 	defer mi.rwLock.RUnlock()
 	return mi.FromMapID, mi.ToMapID, mi.SrcFromMapID
 }
 
-func (mi *MarchInfo) GetFromMapID() uint32 {
+func (mi *MarchInfo) GetFromMapID() cores_declarations.MapID {
 	mi.rwLock.RLock()
 	defer mi.rwLock.RUnlock()
 	return mi.FromMapID
 }
 
-func (mi *MarchInfo) GetToMapID() uint32 {
+func (mi *MarchInfo) GetToMapID() cores_declarations.MapID {
 	mi.rwLock.RLock()
 	defer mi.rwLock.RUnlock()
 	return mi.ToMapID
 }
 
-func (mi *MarchInfo) GetSrcFromMapID() uint32 {
+func (mi *MarchInfo) GetSrcFromMapID() cores_declarations.MapID {
 	mi.rwLock.RLock()
 	defer mi.rwLock.RUnlock()
 	return mi.SrcFromMapID

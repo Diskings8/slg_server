@@ -8,7 +8,8 @@ import (
 	"server.slg.com/services/internal/cores/map_datas"
 )
 
-type MarchInfoManage struct {
+// MarchInfoManager 行军信息管理器，维护所有行军的集合，提供行军添加和按类型组织的能力
+type MarchInfoManager struct {
 	TickChan             chan *MarchInfo
 	MarchTimeType        cores_declarations.MarchTimeType // 行军时间类型
 	allMarch             map[cores_declarations.MarchID]*MarchInfo
@@ -19,9 +20,9 @@ type MarchInfoManage struct {
 	save                 atomic.Bool
 }
 
-func (mm *MarchInfoManage) GetConfig() map_datas.MapConfigI { return mm.mapConfig }
+func (mm *MarchInfoManager) GetConfig() map_datas.MapConfigI { return mm.mapConfig }
 
-func (mm *MarchInfoManage) addMarchInfo(add *MarchInfo) {
+func (mm *MarchInfoManager) addMarchInfo(add *MarchInfo) {
 	mm.allMarchLock.Lock()
 	defer mm.allMarchLock.Unlock()
 	mm.allMarch[add.MarchID] = add

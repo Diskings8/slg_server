@@ -12,6 +12,7 @@ import (
 	"server.slg.com/services/gateway/session_gateways"
 )
 
+// TcpServer TCP 服务器，管理 TCP 监听、连接接受和客户端会话生命周期
 type TcpServer struct {
 	config  Config
 	ctx     context.Context
@@ -32,12 +33,12 @@ func (s *TcpServer) Run() error {
 		return err
 	}
 
-	loggers.Log.Info(fmt.Sprintf("tcp 服务启动成功: %s", s.config.Addr))
+	loggers.Logger.Info(fmt.Sprintf("tcp 服务启动成功: %s", s.config.Addr))
 
 	go func() {
 		defer func() {
 			if e := recover(); e != nil {
-				loggers.Log.Error(fmt.Sprintf("%+v", e))
+				loggers.Logger.Error(fmt.Sprintf("%+v", e))
 			}
 		}()
 		for {

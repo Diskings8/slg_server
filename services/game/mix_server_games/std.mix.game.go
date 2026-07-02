@@ -8,6 +8,7 @@ import (
 
 var _ gsi.GRPCServiceI = (*GameServer)(nil)
 
+// GameServer 游戏混合服务，实现 GameNodeService gRPC 接口，用于接收网关转发的请求
 type GameServer struct {
 	pb.UnimplementedGameNodeServiceServer
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 )
 
+// mysql MySQL 数据库连接配置
 type mysql struct {
 	User         string `yaml:"user"`
 	Pass         string `yaml:"pass"`
@@ -13,6 +14,7 @@ type mysql struct {
 	Params       string `yaml:"params"`
 }
 
+// redis Redis 缓存连接配置
 type redis struct {
 	Addr     string `yaml:"addr"`
 	Port     string `yaml:"port"`
@@ -24,6 +26,7 @@ func (r redis) Dsn() string {
 	return fmt.Sprintf("%s:%s", r.Addr, r.Port)
 }
 
+// etcd Etcd 服务发现连接配置
 type etcd struct {
 	Addr string `yaml:"addr"`
 	Port string `yaml:"port"`
@@ -33,11 +36,13 @@ func (e etcd) Dsn() string {
 	return fmt.Sprintf("%s:%s", e.Addr, e.Port)
 }
 
+// snowflake Snowflake ID 生成器配置，包含数据中心 ID 和工作节点 ID
 type snowflake struct {
 	DatacenterID int64 `yaml:"datacenter_id"`
 	WorkerID     int64 `yaml:"worker_id"`
 }
 
+// gateway 网关节点网络配置，包含 TCP 和 RPC 监听地址
 type gateway struct {
 	Addr    string `yaml:"addr"`
 	TcpPort string `yaml:"tcp_port"`
@@ -52,6 +57,7 @@ func (gw gateway) RpcDsn() string {
 	return fmt.Sprintf("%s:%s", gw.Addr, gw.RpcPort)
 }
 
+// server 通用服务节点地址配置
 type server struct {
 	Addr string `yaml:"addr"`
 	Port string `yaml:"port"`
@@ -65,6 +71,7 @@ func (ms *mysql) Dsn() string {
 	return fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?%s", ms.User, ms.Pass, ms.Addr, ms.Port, ms.DbNamePrefix, ms.Params)
 }
 
+// Config 全局环境配置聚合，包含 MySQL、Redis、Etcd、Snowflake、Gateway 和各服务节点的配置
 type Config struct {
 	MysqlCommon mysql     `yaml:"mysql_common"`
 	MysqlGame   mysql     `yaml:"mysql_game"`

@@ -2,6 +2,7 @@ package marchs
 
 import "server.slg.com/services/internal/cores/cores_declarations"
 
+// Team 行军队伍，包含出征的武将和士兵集合，提供存活数、受伤数和战斗能力检查
 type Team struct {
 	Heros    []cores_declarations.MarchHero
 	Soldiers []cores_declarations.MarchSoldier

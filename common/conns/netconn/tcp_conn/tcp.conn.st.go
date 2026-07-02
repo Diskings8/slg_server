@@ -9,6 +9,7 @@ import (
 	"server.slg.com/common/conns/netconn/packets"
 )
 
+// NetConn TCP 网络连接封装，实现 NetConnI 接口，提供基于 TCP 的数据包读写能力
 type NetConn struct {
 	conn net.Conn
 }

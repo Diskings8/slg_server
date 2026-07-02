@@ -23,12 +23,12 @@ func Init() {
 
 	n, err := snowflake.NewNode(nodeID)
 	if err != nil {
-		loggers.Log.Fatal("雪花算法初始化失败", zap.Error(err))
+		loggers.Logger.Fatal("雪花算法初始化失败", zap.Error(err))
 		panic(err)
 	}
 	node = n
 
-	loggers.Log.Info("雪花算法初始化成功",
+	loggers.Logger.Info("雪花算法初始化成功",
 		zap.Int64("datacenter_id", cfg.DatacenterID),
 		zap.Int64("worker_id", cfg.WorkerID),
 		zap.Int64("node_id", nodeID),

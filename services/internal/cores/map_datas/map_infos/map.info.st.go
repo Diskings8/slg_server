@@ -3,18 +3,17 @@ package map_infos
 import (
 	"sync"
 
-	"server.slg.com/services/internal/cores/map_datas"
+	"server.slg.com/services/internal/cores/cores_declarations"
 	"server.slg.com/services/internal/cores/map_datas/map_buildings"
 	"server.slg.com/services/internal/cores/map_datas/map_declarations"
 	"server.slg.com/services/internal/cores/map_datas/map_events"
 )
 
-var _ map_datas.MapInfoI = (*MapInfo)(nil)
-
+// MapInfo 地图格子信息，包含格子的坐标、等级、类型、归属服务器以及叠加的建筑和事件
 type MapInfo struct {
 	rwLock           sync.RWMutex
-	mapID            uint64
-	baseMapID        uint64
+	mapID            cores_declarations.MapID
+	baseMapID        cores_declarations.MapID
 	x                int
 	y                int
 	serverID         uint32
@@ -26,11 +25,11 @@ type MapInfo struct {
 	overlayBuilding  *map_buildings.OverlayBuilding
 }
 
-func (mi *MapInfo) MapID() uint64 {
+func (mi *MapInfo) MapID() cores_declarations.MapID {
 	return mi.mapID
 }
 
-func (mi *MapInfo) BaseMapID() uint64 {
+func (mi *MapInfo) BaseMapID() cores_declarations.MapID {
 	return mi.baseMapID
 }
 

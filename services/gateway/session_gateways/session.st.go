@@ -8,6 +8,7 @@ import (
 	"server.slg.com/common/loggers"
 )
 
+// Session 客户端会话，持有一个网络连接并提供数据收发和转发能力
 type Session struct {
 	conn   netconn.NetConnI
 	closed bool
@@ -29,13 +30,13 @@ func (s *Session) Close() {
 func (s *Session) RunToReceiveFromConn() {
 	defer func() {
 		if e := recover(); e != nil {
-			loggers.Log.Error(fmt.Sprintf("session RunToReceiveFromConn error :%+v", e))
+			loggers.Logger.Error(fmt.Sprintf("session RunToReceiveFromConn error :%+v", e))
 		}
 	}()
 	for {
 		packet, err := s.conn.ReadFromConn()
 		if err != nil {
-			loggers.Log.Info(fmt.Sprintf("客户端断开: %v", err))
+			loggers.Logger.Info(fmt.Sprintf("客户端断开: %v", err))
 			return
 		}
 		//
@@ -47,7 +48,7 @@ func (s *Session) RunToReceiveFromConn() {
 func (s *Session) RunToSendToConn() {
 	defer func() {
 		if e := recover(); e != nil {
-			loggers.Log.Error(fmt.Sprintf("session RunToSendToConn error :%+v", e))
+			loggers.Logger.Error(fmt.Sprintf("session RunToSendToConn error :%+v", e))
 		}
 	}()
 	// todo 收到来自game 服务的stream链接信息

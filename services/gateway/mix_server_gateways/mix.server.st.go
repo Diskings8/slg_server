@@ -13,6 +13,7 @@ import (
 
 var _ gsi.GRPCServiceI = (*MixServer)(nil)
 
+// MixServer 网关混合服务，实现 GatewayNodeService gRPC 接口，用于与其他节点通信
 type MixServer struct {
 	pb.UnimplementedGatewayNodeServiceServer
 }
@@ -26,6 +27,6 @@ func (m *MixServer) Register(srv *grpc.Server) {
 }
 
 func (m *MixServer) NotifyInfo(ctx context.Context, req *pb.NotifyInfoReq) (*pb.NotifyInfoRsp, error) {
-	loggers.Log.Info(fmt.Sprintf("[gateway] NotifyInfo: %s", req.GetInfo()))
+	loggers.Logger.Info(fmt.Sprintf("[gateway] NotifyInfo: %s", req.GetInfo()))
 	return &pb.NotifyInfoRsp{Result: true}, nil
 }

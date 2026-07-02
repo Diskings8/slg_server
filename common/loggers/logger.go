@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-var Log *zap.Logger
+var Logger *zap.Logger
 
 func Init() {
 	encoder := zapcore.NewConsoleEncoder(zapcore.EncoderConfig{
@@ -22,6 +22,6 @@ func Init() {
 	})
 
 	core := zapcore.NewCore(encoder, zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout)), zap.DebugLevel)
-	Log = zap.New(core, zap.AddCaller(), zap.AddCallerSkip(0))
-	zap.ReplaceGlobals(Log)
+	Logger = zap.New(core, zap.AddCaller(), zap.AddCallerSkip(0))
+	zap.ReplaceGlobals(Logger)
 }

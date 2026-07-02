@@ -11,6 +11,7 @@ import (
 
 var _ dbconn_interface.DbcI = (*MysqlDriver)(nil)
 
+// MysqlDriver MySQL 数据库驱动实现，基于 GORM 封装，提供连接池配置和自动迁移能力
 type MysqlDriver struct {
 	db *gorm.DB
 }

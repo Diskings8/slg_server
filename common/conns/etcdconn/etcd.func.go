@@ -56,12 +56,12 @@ func GetNodeTypeServerAddr(nodeType NodeService) (string, error) {
 func registerWithLease(key, value string) {
 	resp, err := etcdClient.Grant(context.Background(), 10)
 	if err != nil {
-		loggers.Log.Warn(fmt.Sprintf("etcd租约失败: %v", err))
+		loggers.Logger.Warn(fmt.Sprintf("etcd租约失败: %v", err))
 		return
 	}
 	_, err = etcdClient.Put(context.Background(), key, value, clientv3.WithLease(resp.ID))
 	if err != nil {
-		loggers.Log.Warn(fmt.Sprintf("etcd注册失败: %v", err))
+		loggers.Logger.Warn(fmt.Sprintf("etcd注册失败: %v", err))
 		return
 	}
 	// 自动续租

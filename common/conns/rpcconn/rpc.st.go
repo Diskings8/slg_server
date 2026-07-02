@@ -12,6 +12,7 @@ import (
 	"google.golang.org/grpc/keepalive"
 )
 
+// NodeConn gRPC 节点连接，封装了目标地址和 gRPC 客户端连接，通过 Alive 标记连接可用状态
 type NodeConn struct {
 	Addr string
 	*grpc.ClientConn
@@ -34,6 +35,7 @@ func CloseAll() {
 
 var defaultPool = newNodeConnPool()
 
+// nodeConnPool gRPC 节点连接池，提供按地址的连接复用和统一生命周期管理
 type nodeConnPool struct {
 	rwLock sync.RWMutex
 	pool   map[string]*NodeConn

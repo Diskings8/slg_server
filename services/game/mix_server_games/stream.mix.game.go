@@ -13,7 +13,7 @@ func (m *GameServer) Stream(stream pb.GameNodeService_StreamServer) error {
 		if err != nil {
 			return err
 		}
-		loggers.Log.Info(fmt.Sprintf("[game] Stream recv: msgId=%d", packet.GetMsgId()))
+		loggers.Logger.Info(fmt.Sprintf("[game] Stream recv: msgId=%d", packet.GetMsgId()))
 
 		if err := stream.Send(&pb.NodePacket{MsgId: packet.GetMsgId(), Body: packet.GetBody()}); err != nil {
 			return err

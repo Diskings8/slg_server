@@ -7,6 +7,7 @@ import (
 	"server.slg.com/services/internal/cores/cores_declarations"
 )
 
+// MapAttribute 地图行军属性，管理地图上的驻守队伍和经过的行军集合
 type MapAttribute struct {
 	assistSlice  []*MarchInfo // 驻守队伍
 	assistLocker sync.RWMutex

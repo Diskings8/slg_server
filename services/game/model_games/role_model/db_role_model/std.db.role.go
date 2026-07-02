@@ -6,6 +6,7 @@ import (
 
 var _ db_model_interface.DbIModel = (*RoleDb)(nil)
 
+// RoleDb 角色数据库模型，映射数据库中的角色表结构
 type RoleDb struct {
 	Id uint64 `gorm:"primary_key;column:id;type:bigint(20);not null"`
 }

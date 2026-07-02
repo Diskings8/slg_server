@@ -1,5 +1,6 @@
 package packets
 
+// Packet 网络通信数据包，包含消息长度、序列号、消息ID和消息体
 type Packet struct {
 	Length uint32
 	Seq    uint32
