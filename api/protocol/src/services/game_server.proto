@@ -2,7 +2,7 @@ syntax = "proto3";
 package pb_game;
 option go_package = "server.slg.com/api/protocol/pb/pb_game";
 
-import "proto_common.proto";
+import "common.proto";
 
 service GameNodeService {
   rpc Stream(stream pb_common.NodePacket) returns (stream pb_common.NodePacket) {}
@@ -11,8 +11,6 @@ service GameNodeService {
   rpc LoginOnce(pb_common.LoginOnceReq) returns (pb_common.LoginOnceRsp);
 }
 
-service GatewayNodeService {
-  // 登录服创建玩家
-  rpc NotifyInfo(pb_common.NotifyInfoReq) returns (pb_common.NotifyInfoRsp);
-}
+
+
 

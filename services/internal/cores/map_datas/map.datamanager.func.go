@@ -8,5 +8,5 @@ func (mdm *MapDataManager) Clear(mapIDs []cores_declarations.MapID) {
 }
 
 func (mdm *MapDataManager) SetRoleMainCity(roleCityState cores_declarations.RoleMainCityState, dataSlice []*MapInfo, role any) {
-	
+
 }

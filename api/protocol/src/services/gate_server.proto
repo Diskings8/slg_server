@@ -1,0 +1,11 @@
+syntax = "proto3";
+package pb_gateway;
+option go_package = "server.slg.com/api/protocol/pb/pb_gateway";
+
+import "common.proto";
+
+
+service GatewayNodeService {
+  // 登录服创建玩家
+  rpc NotifyInfo(pb_common.NotifyInfoReq) returns (pb_common.NotifyInfoRsp);
+}

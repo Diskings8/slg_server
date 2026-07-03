@@ -1,26 +1,31 @@
 $src = Resolve-Path (Join-Path $PSScriptRoot "..\api\protocol\src")
 $out = Resolve-Path (Join-Path $PSScriptRoot "..\api\protocol")
-$module = "module=server.slg.com/api/protocol"
-$commonM = "Mproto_common.proto=server.slg.com/api/protocol/pb/pb_common"
+$module = "server.slg.com/api/protocol"
 
-Write-Host "[protobuf] 编译所有协议文件..."
+Write-Host "[protobuf] 清理旧文件..."
+Remove-Item (Join-Path $out "pb") -Recurse -ErrorAction SilentlyContinue
 
-Get-ChildItem $src -Recurse *.proto | ForEach-Object {
-    if ($_.Name -eq "game_server.proto") {
-        # game_server.proto:
-        #   --go_out         依赖 proto 内 go_package=pb_game  → 输出到 pb/pb_game/
-        #   --go-grpc_out    M 参数覆盖为 pb_server           → 输出到 pb/pb_server/
-        protoc --proto_path="$src" `
-          --go_out="${commonM},module=server.slg.com/api/protocol:${out}" `
-          --go-grpc_out="${commonM},Mservices/game_server.proto=server.slg.com/api/protocol/pb/pb_server,module=server.slg.com/api/protocol:${out}" `
-          $_.FullName
+Write-Host "[protobuf] 编译协议文件..."
+
+$files = Get-ChildItem $src -Recurse *.proto
+foreach ($file in $files) {
+    $raw = Get-Content -Raw $file.FullName
+
+    if ($raw -match 'go_package\s*=\s*"([^"]+)"') {
+        $pkg = $matches[1]
+    } else {
+        Write-Host "  [skip] $($file.Name) no go_package"
+        continue
     }
-    else {
-        # proto_common.proto: 纯 message，无 service
-        protoc --proto_path="$src" `
-          --go_out="${module}:${out}" `
-          $_.FullName
+
+    Write-Host "  [编译] $($file.Name) -> $pkg"
+
+    protoc --proto_path="$src" --go_out="module=${module}:${out}" $file.FullName
+
+    if ($raw -match 'service\s+\w+') {
+        Write-Host "  [gRPC] $($file.Name) stub"
+        protoc --proto_path="$src" --go-grpc_out="module=${module}:${out}" $file.FullName
     }
 }
 
-Write-Host "[protobuf] 完成"
+Write-Host "[protobuf] done"
