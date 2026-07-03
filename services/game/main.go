@@ -14,7 +14,8 @@ import (
 	vgc "server.slg.com/common/globals/common_globals"
 	"server.slg.com/common/loggers"
 	"server.slg.com/common/servers"
-	"server.slg.com/services/game/mix_server_games"
+	"server.slg.com/services/game/game_servers/game_handlers"
+	"server.slg.com/services/game/game_servers/game_streams"
 )
 
 func parseFlagVar() {
@@ -48,7 +49,10 @@ func main() {
 	}
 
 	srv := servers.BuildRpcServer(ctx, conf)
-	srv.RegisterServices(&mix_server_games.GameServer{})
+	srv.RegisterServices(
+		&game_streams.StreamServer{},
+		&game_handlers.HandlerServer{},
+	)
 
 	serverCount := atomic.Int32{}
 	serverChan := make(chan struct{}, 1)

@@ -2,9 +2,11 @@ syntax = "proto3";
 package common;
 option go_package = "server.slg.com/api/protocol/pb/pb_common";
 
+import "protocol.proto";
+
 message NodePacket {
-  uint32 msgId = 1;
-  repeated bytes body = 2;
+  protocol.MsgID msgId = 1;
+  bytes body = 2;
 }
 
 message CreateRoleReq{

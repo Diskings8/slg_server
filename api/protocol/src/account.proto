@@ -1,0 +1,36 @@
+syntax = "proto3";
+package account;
+option go_package = "server.slg.com/api/protocol/pb/pb_account";
+
+import "role.proto";
+
+enum ChannelType {
+    Mine = 0;
+}
+
+message RoleSelectList {
+    role.RoleSimpleInfo last_use = 1;
+    repeated role.RoleSimpleInfo simple_info = 2;
+}
+
+message CreateAccountReq {
+    ChannelType channelType = 1;
+    string account_name     = 2;
+    string password         = 3;
+}
+
+message CreateAccountResp {
+    uint64 account_id           = 1;
+    RoleSelectList role_list    = 2;
+}
+
+message LoginAccountReq {
+    ChannelType channelType = 1;
+    string account_name     = 2;
+    string password         = 3;
+}
+
+message LoginAccountResp {
+    uint64 account_id           = 1;
+    RoleSelectList role_list    = 2;
+}

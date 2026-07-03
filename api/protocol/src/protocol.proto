@@ -1,0 +1,10 @@
+syntax = "proto3";
+package protocol;
+option go_package = "server.slg.com/api/protocol/pb/pb_protocol";
+
+enum MsgID {
+  None            = 0;
+  Base_Heat       = 1;
+
+  Common_Auth     = 11;
+}

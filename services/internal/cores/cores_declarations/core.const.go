@@ -63,3 +63,14 @@ const (
 	// ServerMapBlockRowCutNum 本服地图每行切块数量
 	ServerMapBlockRowCutNum = 5
 )
+
+type ScaleLevel int
+
+const (
+	ScaleLevel0 ScaleLevel = iota
+	ScaleLevel1
+	ScaleLevel2
+	ScaleLevel3
+	ScaleLevel4
+	ScaleLevel5
+)

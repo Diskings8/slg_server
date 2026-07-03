@@ -4,13 +4,15 @@ option go_package = "server.slg.com/api/protocol/pb/pb_game";
 
 import "common.proto";
 
-service GameNodeService {
-  rpc Stream(stream common.NodePacket) returns (stream common.NodePacket) {}
-  // 登录服创建玩家
-  rpc CreateRole(common.CreateRoleReq) returns (common.CreateRoleRsp);
-  rpc LoginOnce(common.LoginOnceReq) returns (common.LoginOnceRsp);
+service GameService {
+    rpc Stream(stream common.NodePacket) returns (stream common.NodePacket) {}
 }
 
+service Handler {
+    // 登录服创建玩家
+    rpc CreateRole(common.CreateRoleReq) returns (common.CreateRoleRsp);
+    rpc LoginOnce(common.LoginOnceReq) returns (common.LoginOnceRsp);
+}
 
 
 

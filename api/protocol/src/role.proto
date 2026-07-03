@@ -2,37 +2,53 @@ syntax = "proto3";
 package role;
 option go_package = "server.slg.com/api/protocol/pb/pb_role";
 
+
+message RoleSimpleInfo {
+    uint32 server_id                       = 1;   // 所在区服 id
+    uint32 move_server_id                  = 2;   // 迁城后的服务器ID(未迁城则为0)
+    string server_name                     = 3;   // 所在区服名称
+    uint64 role_id                         = 4;   // 角色 id
+    string role_name                       = 5;   // 角色名称
+    uint32 head_system_avatar              = 6;   // 角色头像图标
+    uint32 head_border                     = 7;   // 角色头像框
+    int32  vip_level                       = 8;   // vip 等级
+}
+
 message RoleBaseInfo {
-  uint32 server_id                       = 1;   // 所在区服 id
-  uint32 move_server_id                  = 2;   // 迁城后的服务器ID(未迁城则为0)
-  string server_name                     = 3;   // 所在区服名称
-  uint64 id                              = 4;   // 角色 id
-  string name                            = 5;   // 角色名称
-  uint32 head_system_avatar              = 6;   // 角色头像图标
-  uint32 head_border                     = 7;   // 角色头像框
-  int32  vip_level                       = 8;   // vip 等级
-  uint64 union_id                        = 9;   // 联盟 id
-  string union_short_name                = 10;  // 联盟简称
-  int32  city_map_id                     = 11;  // 总部坐标
+    RoleSimpleInfo simple_info             = 1;   // 所在区服 id
+    uint64 union_id                        = 2;   // 联盟 id
+    string union_short_name                = 3;  // 联盟简称
+    int32  city_map_id                     = 4;  // 总部坐标
+}
+
+
+message RoleUnionSimpleInfo {
+    uint64 union_id          = 1;   // 联盟 id
+    string union_short_name  = 2;   // 联盟简称
+    string union_name        = 3;   // 联盟名称
+    int32 union_flag         = 4;   // 联盟旗帜
 }
 
 // 角色联盟基础信息
 message RoleUnionBaseInfo {
-  uint64 union_id          = 1;   // 联盟 id
-  string union_short_name  = 2;   // 联盟简称
-  string union_name        = 3;   // 联盟名称
-  int32 union_flag         = 4;   // 联盟旗帜
-  int32 union_position     = 5;   // 联盟职位
-  int32 union_permission   = 6;   // 联盟权限
-  int64 union_leave_time   = 7;   // 离开联盟时间戳
-  bool is_first_join_union = 8;   // 是否第一次加入联盟
-  int64 union_join_time    = 9;  // 加入联盟时间戳
+    RoleUnionSimpleInfo simple_info = 1;
+    int32 union_position            = 2;   // 联盟职位
+    int32 union_permission          = 3;   // 联盟权限
+    int64 union_leave_time          = 4;   // 离开联盟时间戳
+    bool is_first_join_union        = 5;   // 是否第一次加入联盟
+    int64 union_join_time           = 6;  // 加入联盟时间戳
 }
 
 // RoleBrief 角色简略数据，例如排行榜等情况使用
 message RoleBrief {
-  RoleBaseInfo role_base_info            = 1;  // 基础信息
-  RoleUnionBaseInfo union_base_info      = 2;  // 联盟基础信息
-  int64 logout_at                        = 3;  // 最后登出时间戳，秒
-  int64 login_at                         = 4;  // 最新登入时间戳，秒
+    RoleBaseInfo role_base_info            = 1;  // 基础信息
+    RoleUnionBaseInfo union_base_info      = 2;  // 联盟基础信息
+    int64 logout_at                        = 3;  // 最后登出时间戳，秒
+    int64 login_at                         = 4;  // 最新登入时间戳，秒
+}
+
+message RoleTransfer {
+    uint64 role_id                         = 1;   // 角色 id
+    uint32 server_id                       = 2;   // 所在区服 id
+    int32  city_map_id                     = 3;   // 总部坐标
 }
