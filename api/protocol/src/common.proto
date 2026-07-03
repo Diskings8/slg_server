@@ -1,5 +1,5 @@
 syntax = "proto3";
-package pb_common;
+package common;
 option go_package = "server.slg.com/api/protocol/pb/pb_common";
 
 message NodePacket {

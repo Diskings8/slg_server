@@ -13,10 +13,11 @@ import (
 type MapInfo struct {
 	rwLock           sync.RWMutex
 	mapID            cores_declarations.MapID
-	baseMapID        cores_declarations.MapID
+	coreMapID        cores_declarations.MapID
 	x                int
 	y                int
 	serverID         uint32
+	ownerID          uint64
 	level            map_declarations.MapLevel
 	configID         uint32
 	elementType      map_declarations.ElementType
@@ -30,7 +31,7 @@ func (mi *MapInfo) GetMapID() cores_declarations.MapID {
 }
 
 func (mi *MapInfo) GetBaseMapID() cores_declarations.MapID {
-	return mi.baseMapID
+	return mi.coreMapID
 }
 
 func (mi *MapInfo) GetPointX() int {
@@ -61,4 +62,9 @@ func (mi *MapInfo) TryLock() bool {
 
 func (mi *MapInfo) Unlock() {
 	mi.rwLock.Unlock()
+}
+
+// -------------------
+func (mi *MapInfo) Free() {
+	// todo
 }

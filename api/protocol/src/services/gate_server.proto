@@ -7,5 +7,5 @@ import "common.proto";
 
 service GatewayNodeService {
   // 登录服创建玩家
-  rpc NotifyInfo(pb_common.NotifyInfoReq) returns (pb_common.NotifyInfoRsp);
+  rpc NotifyInfo(common.NotifyInfoReq) returns (common.NotifyInfoRsp);
 }

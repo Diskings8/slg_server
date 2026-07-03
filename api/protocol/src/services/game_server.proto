@@ -5,10 +5,10 @@ option go_package = "server.slg.com/api/protocol/pb/pb_game";
 import "common.proto";
 
 service GameNodeService {
-  rpc Stream(stream pb_common.NodePacket) returns (stream pb_common.NodePacket) {}
+  rpc Stream(stream common.NodePacket) returns (stream common.NodePacket) {}
   // 登录服创建玩家
-  rpc CreateRole(pb_common.CreateRoleReq) returns (pb_common.CreateRoleRsp);
-  rpc LoginOnce(pb_common.LoginOnceReq) returns (pb_common.LoginOnceRsp);
+  rpc CreateRole(common.CreateRoleReq) returns (common.CreateRoleRsp);
+  rpc LoginOnce(common.LoginOnceReq) returns (common.LoginOnceRsp);
 }
 
 

@@ -1,0 +1,10 @@
+
+syntax = "proto3";
+package pb_worldmap;
+option go_package = "server.slg.com/api/protocol/pb/pb_worldmap";
+
+import "common.proto";
+
+service WorldMapNodeService {
+  rpc Stream(stream common.NodePacket) returns (stream common.NodePacket) {}
+}

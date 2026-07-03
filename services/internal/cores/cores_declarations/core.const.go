@@ -44,3 +44,15 @@ const (
 	RoleMainCityStateNormal RoleMainCityState = iota
 	RoleMainCityStatePortable
 )
+
+const (
+	RoleMainCityStateNormalCoverCount   = 9
+	RoleMainCityStatePortableCoverCount = 1
+)
+
+const (
+	// Land1CoverBaseKey 1*1主位置在那一个键里。
+	Land1CoverBaseKey = 1
+	// Land3CoverBaseKey 3*3主位置在那一个键里。
+	Land3CoverBaseKey = 4
+)

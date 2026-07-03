@@ -2,10 +2,10 @@ $src = Resolve-Path (Join-Path $PSScriptRoot "..\api\protocol\src")
 $out = Resolve-Path (Join-Path $PSScriptRoot "..\api\protocol")
 $module = "server.slg.com/api/protocol"
 
-Write-Host "[protobuf] 清理旧文件..."
+Write-Host "[protobuf] Clean old files..."
 Remove-Item (Join-Path $out "pb") -Recurse -ErrorAction SilentlyContinue
 
-Write-Host "[protobuf] 编译协议文件..."
+Write-Host "[protobuf] protoc files..."
 
 $files = Get-ChildItem $src -Recurse *.proto
 foreach ($file in $files) {
@@ -18,7 +18,7 @@ foreach ($file in $files) {
         continue
     }
 
-    Write-Host "  [编译] $($file.Name) -> $pkg"
+    Write-Host "  [compile] $($file.Name) -> $pkg"
 
     protoc --proto_path="$src" --go_out="module=${module}:${out}" $file.FullName
 
