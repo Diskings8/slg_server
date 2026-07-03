@@ -2,5 +2,5 @@ package map_datas
 
 type MapConfigI interface {
 	// MapCount 地图总数
-	MapCount() int32
+	MapCount() uint32
 }

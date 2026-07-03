@@ -1,4 +1,4 @@
-package map_infos
+package map_datas
 
 import (
 	"sync"
@@ -25,31 +25,31 @@ type MapInfo struct {
 	overlayBuilding  *map_buildings.OverlayBuilding
 }
 
-func (mi *MapInfo) MapID() cores_declarations.MapID {
+func (mi *MapInfo) GetMapID() cores_declarations.MapID {
 	return mi.mapID
 }
 
-func (mi *MapInfo) BaseMapID() cores_declarations.MapID {
+func (mi *MapInfo) GetBaseMapID() cores_declarations.MapID {
 	return mi.baseMapID
 }
 
-func (mi *MapInfo) PointX() int {
+func (mi *MapInfo) GetPointX() int {
 	return mi.x
 }
 
-func (mi *MapInfo) PointY() int {
+func (mi *MapInfo) GetPointY() int {
 	return mi.y
 }
 
-func (mi *MapInfo) ServerID() uint32 {
+func (mi *MapInfo) GetServerID() uint32 {
 	return mi.serverID
 }
 
-func (mi *MapInfo) Level() map_declarations.MapLevel {
+func (mi *MapInfo) GetLevel() map_declarations.MapLevel {
 	return mi.level
 }
 
-func (mi *MapInfo) ElementID() uint32 {
+func (mi *MapInfo) GetElementID() uint32 {
 	return mi.configID
 }
 

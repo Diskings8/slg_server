@@ -1,7 +1,7 @@
 package marchdos
 
 import (
-	"server.slg.com/services/internal/cores/map_datas/map_infos"
+	"server.slg.com/services/internal/cores/map_datas"
 	"server.slg.com/services/internal/cores/map_managers"
 	"server.slg.com/services/internal/cores/marchs"
 )
@@ -9,8 +9,8 @@ import (
 // BaseMarch 行军执行器基类，封装行军锁定和解锁逻辑，提供来源和目标地图格子的并发安全访问
 type BaseMarch struct {
 	marchManage   *marchs.MarchInfoManager // 行军管理
-	fromMapInfo   *map_infos.MapInfo       // 来源地图信息
-	toMapInfo     *map_infos.MapInfo       // 目标地图信息
+	fromMapInfo   *map_datas.MapInfo       // 来源地图信息
+	toMapInfo     *map_datas.MapInfo       // 目标地图信息
 	marchLockOk   bool
 	fromMapLockOk bool
 	toMapLockOk   bool

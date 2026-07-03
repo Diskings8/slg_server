@@ -2,7 +2,11 @@ package cores_declarations
 
 type MarchID uint64
 
-type MapID uint32
+type MapID int32
+
+const (
+	InvalidMapID = -1
+)
 
 type MarchTimeType int
 
@@ -32,4 +36,11 @@ type MapGroup uint32
 
 const (
 	MapGroupBase MapGroup = iota
+)
+
+type RoleMainCityState int
+
+const (
+	RoleMainCityStateNormal RoleMainCityState = iota
+	RoleMainCityStatePortable
 )
