@@ -56,3 +56,10 @@ const (
 	// Land3CoverBaseKey 3*3主位置在那一个键里。
 	Land3CoverBaseKey = 4
 )
+
+const (
+	// ServerMapBlockCutNum 本服地图切块数量
+	ServerMapBlockCutNum = 25
+	// ServerMapBlockRowCutNum 本服地图每行切块数量
+	ServerMapBlockRowCutNum = 5
+)

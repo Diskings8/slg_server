@@ -9,3 +9,11 @@ type ScreenData struct {
 func (sd *ScreenData) MapDataAdd(mapID cores_declarations.MapID) {
 
 }
+
+func (sd *ScreenData) GetScreen(id cores_declarations.MarchID) *Screen[int32] {
+	return nil
+}
+
+func (sd *ScreenData) MovePath(x int32, y int32, x2 int32, y2 int32, i *[]*Screen[int32]) []*Screen[int32] {
+	return nil
+}
