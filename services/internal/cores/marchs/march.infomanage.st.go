@@ -5,7 +5,6 @@ import (
 	"sync/atomic"
 
 	"server.slg.com/services/internal/cores/cores_declarations"
-	"server.slg.com/services/internal/cores/map_datas"
 )
 
 // MarchInfoManager 行军信息管理器，维护所有行军的集合，提供行军添加和按类型组织的能力
@@ -16,12 +15,12 @@ type MarchInfoManager struct {
 	allMarchLock         sync.RWMutex
 	allAssembleMarch     map[cores_declarations.MarchID][]*MarchInfo
 	allAssembleMarchLock sync.RWMutex
-	mapConfig            map_datas.MapConfigI
+	mapConfig            cores_declarations.MapConfigI
 	tableName            string
 	save                 atomic.Bool
 }
 
-func (mm *MarchInfoManager) GetConfig() map_datas.MapConfigI { return mm.mapConfig }
+func (mm *MarchInfoManager) GetConfig() cores_declarations.MapConfigI { return mm.mapConfig }
 
 func (mm *MarchInfoManager) addMarchInfo(add *MarchInfo) {
 	mm.allMarchLock.Lock()

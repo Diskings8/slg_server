@@ -12,7 +12,7 @@ import (
 type MapDataManager struct {
 	Id        uint64
 	waitSave  hashmaps.Map[cores_declarations.MapID, *MapInfo]
-	config    MapConfigI
+	config    cores_declarations.MapConfigI
 	tableName string
 	saving    atomic.Bool
 
@@ -20,7 +20,7 @@ type MapDataManager struct {
 	mapData []MapInfo
 }
 
-func (mdm *MapDataManager) GetConfig() MapConfigI {
+func (mdm *MapDataManager) GetConfig() cores_declarations.MapConfigI {
 	return mdm.config
 }
 

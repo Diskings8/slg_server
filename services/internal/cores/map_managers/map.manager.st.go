@@ -40,6 +40,6 @@ func (mm *MapManager) GetBlock() *map_blocks.MapBlock {
 	return mm.mapBlock
 }
 
-func (mm *MapManager) GetConf() map_datas.MapConfigI {
+func (mm *MapManager) GetConf() cores_declarations.MapConfigI {
 	return mm.mapDataManager.GetConfig()
 }

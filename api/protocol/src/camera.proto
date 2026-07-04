@@ -1,0 +1,7 @@
+syntax = "proto3";
+package camera;
+option go_package = "server.slg.com/api/protocol/pb/pb_camera";
+
+enum CameraLayer {
+  Layer0 = 0;
+}
