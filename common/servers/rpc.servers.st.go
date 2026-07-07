@@ -6,7 +6,7 @@ import (
 	"net"
 
 	"google.golang.org/grpc"
-	"server.slg.com/common/conns/rpcconn"
+	"server.slg.com/common/conns/rpcconn/rpc_conns"
 	"server.slg.com/common/loggers"
 	gsi "server.slg.com/common/servers/grpc_server_interfaces"
 )
@@ -58,7 +58,7 @@ func (s *RpcServer) Run() error {
 	go func() {
 		select {
 		case <-s.ctx.Done():
-			rpcconn.CloseAll()
+			rpc_conns.CloseAll()
 			s.server.GracefulStop()
 		}
 	}()

@@ -1,4 +1,4 @@
-package rpcconn
+package rpc_conns
 
 import (
 	"context"
