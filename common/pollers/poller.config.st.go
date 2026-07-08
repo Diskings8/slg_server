@@ -1,4 +1,4 @@
-package pools
+package pollers
 
 import "time"
 

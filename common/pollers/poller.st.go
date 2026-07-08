@@ -1,10 +1,8 @@
-package pools
+package pollers
 
 // Handle 数据操作句柄，使用完后必须 Release
-type Handle[T IHandler] struct {
-	id   uint64
-	data T
-	pool *Pool[T]
+type Poller[M DataI] struct {
+	manager *Poller[M]
 }
 
 func (h *Handle[T]) Data() T {

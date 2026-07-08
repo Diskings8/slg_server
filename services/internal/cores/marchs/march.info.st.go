@@ -26,7 +26,7 @@ type MarchInfo struct {
 	EndTimeUx       int64
 	BaseEndTimeUx   int64
 	FollowMarchID   cores_declarations.MarchID
-	UnionID         uint32
+	UnionID         uint64
 	BaseMarchSpeed  uint32
 	ActionUse       []cores_declarations.AnyThingUse
 	Path            []cores_declarations.MarchID `gorm:"type:json;serializer:json;not null;COMMENT:路线;"`
