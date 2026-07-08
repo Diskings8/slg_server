@@ -4,9 +4,15 @@ option go_package = "server.slg.com/api/protocol/pb/pb_common";
 
 import "protocol.proto";
 
+message MessagePacket {
+  bytes body = 1;
+  string dev_msg = 2;
+  protocol.ErrorCode err_code = 3;
+}
+
 message NodePacket {
   protocol.MsgID msgId = 1;
-  bytes body = 2;
+  MessagePacket message = 2;
 }
 
 message CreateRoleReq{

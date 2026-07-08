@@ -18,13 +18,13 @@ type streamClientOptions struct {
 
 type StreamClientOptionFunc func(*streamClientOptions)
 
-func evalClientOptions(cliOptFuncs []StreamClientOptionFunc) *streamClientOptions {
+func evalClientOptions(ctx context.Context, cliOptFs []StreamClientOptionFunc) *streamClientOptions {
 	opt := &streamClientOptions{
 		closeChan:     make(chan struct{}),
-		ctx:           context.Background(),
+		ctx:           ctx,
 		reConnectTime: reConnectDefaultTime,
 	}
-	for _, o := range cliOptFuncs {
+	for _, o := range cliOptFs {
 		o(opt)
 	}
 	return opt
@@ -44,32 +44,18 @@ func WithClientReConnectTime(t time.Duration) StreamClientOptionFunc {
 	}
 }
 
-// WithClientCloseChan 断开通道
-func WithClientCloseChan(ch chan struct{}) StreamClientOptionFunc {
-	return func(o *streamClientOptions) {
-		o.closeChan = ch
-	}
-}
-
-// WithClientContext 携带context
-func WithClientContext(ctx context.Context) StreamClientOptionFunc {
-	return func(o *streamClientOptions) {
-		o.ctx = ctx
-	}
-}
-
 type StreamServerOptionFunc func(*streamServerOptions)
 
 type streamServerOptions struct {
+	ctx         context.Context
 	receiveFunc func(stream grpc.ServerStream) error
-	closeChan   chan struct{}
 }
 
-func evalServerOptions(cliOptFuncs []StreamServerOptionFunc) *streamServerOptions {
+func evalServerOptions(ctx context.Context, cliOptFs []StreamServerOptionFunc) *streamServerOptions {
 	opt := &streamServerOptions{
-		closeChan: make(chan struct{}),
+		ctx: ctx,
 	}
-	for _, o := range cliOptFuncs {
+	for _, o := range cliOptFs {
 		o(opt)
 	}
 	return opt
@@ -79,12 +65,5 @@ func evalServerOptions(cliOptFuncs []StreamServerOptionFunc) *streamServerOption
 func WithServerReceiveFunc(f func(stream grpc.ServerStream) error) StreamServerOptionFunc {
 	return func(o *streamServerOptions) {
 		o.receiveFunc = f
-	}
-}
-
-// WithServerCloseChan 断开通道
-func WithServerCloseChan(ch chan struct{}) StreamServerOptionFunc {
-	return func(o *streamServerOptions) {
-		o.closeChan = ch
 	}
 }

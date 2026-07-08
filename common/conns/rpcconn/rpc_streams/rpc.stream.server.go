@@ -30,14 +30,12 @@ func (s *GrpcStreamServer) Send(msg any) error {
 }
 
 func (s *GrpcStreamServer) Close() {
-	if s.closed.CompareAndSwap(0, 1) {
-		close(s.opts.closeChan)
-	}
+	s.closed.CompareAndSwap(0, 1)
 }
 
 func (s *GrpcStreamServer) WaitDone() {
 	select {
-	case <-s.opts.closeChan:
+	case <-s.opts.ctx.Done():
 		loggers.Logger.Info(" 本服务主动断开", zap.String("name", s.Name()))
 	case <-s.conn.Context().Done():
 		loggers.Logger.Info(" 服务链接断开", zap.String("name", s.Name()))
@@ -48,7 +46,7 @@ func (s *GrpcStreamServer) loop() {
 	var err error
 	for {
 		select {
-		case <-s.opts.closeChan:
+		case <-s.opts.ctx.Done():
 			loggers.Logger.Info(s.Name() + " 本服务主动断开")
 			return
 		case <-s.conn.Context().Done():
