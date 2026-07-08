@@ -1,6 +1,7 @@
 package aois
 
 import (
+	"math"
 	"sync/atomic"
 
 	"server.slg.com/common/utils/maths"
@@ -79,7 +80,7 @@ func (sd *ScreenData) AroundByScreen(screen *Screen[cores_declarations.ScreenID]
 	// 填入nil保证返回数量9
 	for _, screenID := range screenIDs {
 		if screenID > 0 && screenID < sd.count {
-			tmp = append(tmp, screen)
+			tmp = append(tmp, sd.GetScreenByScreenID(cores_declarations.ScreenID(screenID)))
 		} else {
 			tmp = append(tmp, nil)
 		}
@@ -151,6 +152,47 @@ func (sd *ScreenData) Move(conn cores_declarations.MapRoleConnectI, newMapID cor
 	}
 }
 
-func (sd *ScreenData) MovePath(x int32, y int32, x2 int32, y2 int32, i *[]*Screen[cores_declarations.ScreenID]) []*Screen[cores_declarations.ScreenID] {
-	return nil
+func (sd *ScreenData) MovePath(startX, startY, endX, endY int32, path *[]*Screen[cores_declarations.ScreenID]) []*Screen[cores_declarations.ScreenID] {
+	startScreenID := sd.XY2ScreenID(startX, startY)
+	*path = append(*path, sd.GetScreenByScreenID(cores_declarations.ScreenID(startScreenID)))
+
+	var distance float64
+	num1 := float64(endX - startX)
+	num2 := float64(endY - startY)
+	d := num1*num1 + num2*num2
+	step := float64(sd.screenScopeHalf * 2)
+	if d == 0 || step == 0 || step > 0 && d <= step*step {
+		goto EndLabel
+	}
+	// 算了两个点的距离
+	distance = min(math.Sqrt(d), float64(sd.mapConf.MapScope()))
+	distance -= step // 去掉最后一个位置，在下面有判断是否同格
+
+	if num1 >= 0 {
+		num1 = 1
+	} else {
+		num1 = -1
+	}
+	if num2 >= 0 {
+		num2 = 1
+	} else {
+		num2 = -1
+	}
+	// x := 1 - 2*int32(math.Float64bits(num1)>>63)	// >=0为1，<0为-1
+	// y := 1 - 2*int32(math.Float64bits(num2)>>63)	// >=0为1，<0为-1
+	for distanceStep := step; distanceStep < distance; distanceStep += step {
+		screenID := sd.XY2ScreenID(startX+int32(num1*distanceStep), startY+int32(num2*distanceStep))
+		if screenID > 0 {
+			*path = append(*path, sd.GetScreenByScreenID(cores_declarations.ScreenID(screenID)))
+		}
+
+	}
+
+EndLabel:
+	screenID2 := sd.XY2ScreenID(endX, endY)
+	if startScreenID != screenID2 {
+		*path = append(*path, sd.GetScreenByScreenID(cores_declarations.ScreenID(screenID2)))
+	}
+
+	return *path
 }
