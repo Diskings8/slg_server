@@ -26,7 +26,7 @@ func (mdm *MapDataManager) GetConfig() cores_declarations.MapConfigI {
 
 func (mdm *MapDataManager) Init(mapD []MapInfo) {
 	mdm.mapData = mapD
-	for mapID := uint32(0); mapID < mdm.config.MapCount(); mapID++ {
+	for mapID := int32(0); mapID < mdm.config.MapCount(); mapID++ {
 		v := &mdm.mapData[mapID]
 		if v.GetMapID() == cores_declarations.InvalidMapID {
 			continue

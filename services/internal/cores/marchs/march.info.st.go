@@ -29,7 +29,7 @@ type MarchInfo struct {
 	UnionID         uint32
 	BaseMarchSpeed  uint32
 	ActionUse       []cores_declarations.AnyThingUse
-	Path            []cores_declarations.MarchID `gorm:"type:json;serializer:json;not null;COMMENT:路线;"`
+	Path            []cores_declarations.MapID `gorm:"type:json;serializer:json;not null;COMMENT:路线;"`
 	PVPWinCount     uint32
 	PVEWinCount     uint32
 	VirtualData     uint64

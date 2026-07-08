@@ -8,6 +8,8 @@ const (
 	InvalidMapID = -1
 )
 
+type ScreenID int32
+
 type MarchTimeType int
 
 const (
@@ -44,6 +46,9 @@ const (
 	RoleMainCityStateNormal RoleMainCityState = iota
 	RoleMainCityStatePortable
 )
+
+// ScreenWeight 屏幕宽度
+const ScreenWeight = 40
 
 const (
 	RoleMainCityStateNormalCoverCount   = 9

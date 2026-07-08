@@ -4,6 +4,7 @@ import (
 	"slices"
 
 	"server.slg.com/services/internal/cores/aois"
+	"server.slg.com/services/internal/cores/cores_declarations"
 	"server.slg.com/services/internal/cores/marchs"
 )
 
@@ -22,18 +23,18 @@ func (mm *MapManager) MarchAOISetup(marchInfo *marchs.MarchInfo, startX, startY,
 		marchInfo.RwLock.RUnlock()
 
 		for _, mapID := range path {
-			mm.GetMapDataManager().AOI.GetScreen(mapID).MarchAdd(marchInfo)
+			mm.GetMapDataManager().AOI.GetScreenByMapID(mapID).MarchAdd(marchInfo)
 			break
 		}
 	} else {
-		screenList := mm.GetMapDataManager().AOI.MovePath(startX, startY, endX, endY, &([]*aois.Screen[int32]{}))
+		screenList := mm.GetMapDataManager().AOI.MovePath(startX, startY, endX, endY, &([]*aois.Screen[cores_declarations.ScreenID]{}))
 		screenLen := len(screenList)
 		for index, v := range screenList {
 			if index == 0 || index == screenLen-1 {
 				v.MarchAdd(marchInfo)
 				continue
 			}
-			v.CrossMarchAdd(marchInfo)
+			v.PassingMarchAdd(marchInfo)
 		}
 	}
 }

@@ -1,6 +1,6 @@
 package cores_declarations
 
-import "server.slg.com/api/protocol/pb/pb_camera"
+import "server.slg.com/api/protocol/pb/pb_common"
 
 type AoiScreenI interface {
 }
@@ -31,21 +31,23 @@ type MarchDoFuncHandleI interface {
 	Leave() error
 }
 
-// MapRoleConnect 地图服务上的角色连接
-type MapRoleConnect interface {
-	// GetOldScreenMapID 取得上次城外屏幕中心点
-	GetOldScreenMapID() MapID
+// MapRoleConnectI 地图服务上的角色连接
+type MapRoleConnectI interface {
 	// GetRoleID 取得角色ID
 	GetRoleID() uint64
-	// GetScaleLevel 取得显示等级
-	GetScaleLevel() pb_camera.CameraLayer
 	// GetScreenMapID 地图ID
 	GetScreenMapID() MapID
+	// SetScreenMapID 设置屏幕的地图ID
+	SetScreenMapID(id MapID)
+	//Send 发包
+	Send(packet *pb_common.NodePacket) error
 }
 
 type MapConfigI interface {
 	// MapCount 地图总数
-	MapCount() uint32
+	MapCount() int32
+	// MapScope 地图每行格子数量
+	MapScope() int32
 
 	MapID2XY(id MapID) (x, y int32)
 
