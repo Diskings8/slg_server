@@ -16,6 +16,10 @@ type ScreenData struct {
 	count           int32 // 总数
 }
 
+func (sd *ScreenData) MapDataAdd(id cores_declarations.MapID) {
+	panic("implement me")
+}
+
 //---------------------------Get-------------------------------------//
 
 // GetScreenIDByMapID 用MapId获取视野ID

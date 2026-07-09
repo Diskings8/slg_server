@@ -10,6 +10,8 @@ const (
 
 type ScreenID int32
 
+type BornBlockID int32
+
 type MarchTimeType int
 
 const (
