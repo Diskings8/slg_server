@@ -4,8 +4,8 @@ import (
 	"sync/atomic"
 
 	"server.slg.com/common/utils/hashmaps"
-	"server.slg.com/services/internal/cores/aois"
 	"server.slg.com/services/internal/cores/cores_declarations"
+	"server.slg.com/services/internal/cores/map_aois"
 )
 
 // MapDataManager 地图数据管理器，负责地图格子的初始化、保存和 AOI 管理
@@ -16,7 +16,7 @@ type MapDataManager struct {
 	tableName string
 	saving    atomic.Bool
 
-	AOI     *aois.ScreenData
+	AOI     *map_aois.ScreenData
 	mapData []MapInfo
 }
 

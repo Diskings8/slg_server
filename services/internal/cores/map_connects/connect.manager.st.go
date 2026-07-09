@@ -14,17 +14,17 @@ import (
 	"server.slg.com/common/conns/rpcconn/rpc_declarations"
 	"server.slg.com/common/conns/rpcconn/rpc_streams"
 	"server.slg.com/common/loggers"
-	"server.slg.com/services/internal/cores/aois"
 	"server.slg.com/services/internal/cores/cores_declarations"
+	"server.slg.com/services/internal/cores/map_aois"
 )
 
 type RoleConnectManager struct {
 	connects map[uint64]*RoleConnect
-	aoi      *aois.ScreenData
+	aoi      *map_aois.ScreenData
 	sync.RWMutex
 }
 
-func NewRoleConnectManager(aoi *aois.ScreenData) *RoleConnectManager {
+func NewRoleConnectManager(aoi *map_aois.ScreenData) *RoleConnectManager {
 	manager := &RoleConnectManager{
 		connects: make(map[uint64]*RoleConnect),
 		aoi:      aoi,

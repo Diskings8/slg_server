@@ -1,4 +1,4 @@
-package aois
+package map_aois
 
 import (
 	"go.uber.org/zap"

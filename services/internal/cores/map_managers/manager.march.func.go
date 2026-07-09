@@ -3,8 +3,8 @@ package map_managers
 import (
 	"slices"
 
-	"server.slg.com/services/internal/cores/aois"
 	"server.slg.com/services/internal/cores/cores_declarations"
+	"server.slg.com/services/internal/cores/map_aois"
 	"server.slg.com/services/internal/cores/marchs"
 )
 
@@ -27,7 +27,7 @@ func (mm *MapManager) MarchAOISetup(marchInfo *marchs.MarchInfo, startX, startY,
 			break
 		}
 	} else {
-		screenList := mm.GetMapDataManager().AOI.MovePath(startX, startY, endX, endY, &([]*aois.Screen[cores_declarations.ScreenID]{}))
+		screenList := mm.GetMapDataManager().AOI.MovePath(startX, startY, endX, endY, &([]*map_aois.Screen[cores_declarations.ScreenID]{}))
 		screenLen := len(screenList)
 		for index, v := range screenList {
 			if index == 0 || index == screenLen-1 {
