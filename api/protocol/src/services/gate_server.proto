@@ -5,7 +5,11 @@ option go_package = "server.slg.com/api/protocol/pb/pb_gateway";
 import "common.proto";
 
 
-service GatewayNodeService {
+service GatewayService {
+  rpc Stream(stream common.NodePacket) returns (stream common.NodePacket) {}
+}
+
+service GatewayHandler {
   // 登录服创建玩家
   rpc NotifyInfo(common.NotifyInfoReq) returns (common.NotifyInfoRsp);
 }

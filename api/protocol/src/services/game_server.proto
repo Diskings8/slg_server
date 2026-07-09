@@ -8,7 +8,7 @@ service GameService {
     rpc Stream(stream common.NodePacket) returns (stream common.NodePacket) {}
 }
 
-service Handler {
+service GameHandler {
     // 登录服创建玩家
     rpc CreateRole(common.CreateRoleReq) returns (common.CreateRoleRsp);
     rpc LoginOnce(common.LoginOnceReq) returns (common.LoginOnceRsp);

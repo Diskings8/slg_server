@@ -5,6 +5,10 @@ option go_package = "server.slg.com/api/protocol/pb/pb_worldmap";
 
 import "common.proto";
 
-service WorldMapNodeService {
+service WorldMapService {
   rpc Stream(stream common.NodePacket) returns (stream common.NodePacket) {}
+}
+
+service WorldMapHandler {
+
 }

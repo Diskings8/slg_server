@@ -1,7 +1,6 @@
 package rpc_conns
 
 import (
-	"server.slg.com/api/protocol/pb/pb_gateway"
 	"server.slg.com/common/conns/etcdconn"
 )
 
@@ -12,12 +11,4 @@ func GetConnByNodeType(nodeType etcdconn.NodeService) (*NodeConn, error) {
 		return nil, err
 	}
 	return GetConn(addr)
-}
-
-func GetGameServiceNodeCli() (pb_gateway.GatewayNodeServiceClient, error) {
-	nodeC, err := GetConnByNodeType(etcdconn.NodeGameService)
-	if err != nil {
-		return nil, err
-	}
-	return pb_gateway.NewGatewayNodeServiceClient(nodeC.ClientConn), nil
 }
