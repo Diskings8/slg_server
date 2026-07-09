@@ -16,8 +16,10 @@ type MarchSoldier interface {
 
 type MarchInfoI interface {
 	GetMarchID() MarchID
+	GetUnionID() uint64
 	AddPassingAOIBlock(AoiScreenI)
 	AddAOIBlock(AoiScreenI)
+	GetRelocationVal() uint64 // 获取拆迁值
 }
 
 // MarchDoFuncHandleI 行军处理接口
@@ -65,4 +67,13 @@ type MapConfigI interface {
 
 	// SortByDis 距离排序
 	SortByDis(mapID MapID, mapIDs []MapID)
+}
+
+type BaseBuildingsConfI interface {
+	GetBuildingsMaxHp(buildingId uint32, buildingLv uint32) uint64
+	GetBuildingsMaxLevel() uint32
+}
+
+type NpcBuildingsConfI interface {
+	BaseBuildingsConfI
 }

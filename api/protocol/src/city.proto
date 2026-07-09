@@ -1,0 +1,28 @@
+syntax = "proto3";
+package city;
+option go_package = "server.slg.com/api/protocol/pb/pb_city";
+
+
+// BuildingType 建筑类型
+enum BuildingType {
+    None       = 0;
+    UrbanArea  = 1; // 城区
+    CityCenter = 2; // 城中心
+    Pass       = 3; // 关隘
+    Fortress   = 4; // 要塞
+}
+
+// FirstOccRecordData 首占记录数据
+message FirstOccRecordData {
+    string role_name    = 1; // 记录名称
+    uint64 record_score = 2; // 记录得分
+    int32  rank         = 3; // 记录排名
+}
+
+// CityFirstOccRecord 城市首占记录
+message CityFirstOccRecord {
+    uint64 occ_union_id = 1; // 占领联盟id
+    string occ_union_name = 2; // 占领联盟名称
+    repeated FirstOccRecordData kill_garrison_record_data = 3; // 记录数据
+    repeated FirstOccRecordData demolition_record_data    = 4; // 记录数据
+}

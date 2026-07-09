@@ -113,6 +113,10 @@ func (mi *MarchInfo) GetMarchID() cores_declarations.MarchID {
 	return mi.MarchID
 }
 
+func (mi *MarchInfo) GetUnionID() uint64 {
+	return mi.UnionID
+}
+
 func (mi *MarchInfo) GetActionUse() []cores_declarations.AnyThingUse {
 	mi.RwLock.RLock()
 	defer mi.RwLock.RUnlock()
