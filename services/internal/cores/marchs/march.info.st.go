@@ -42,6 +42,11 @@ type MarchInfo struct {
 	PassingAoiBlock []cores_declarations.AoiScreenI
 }
 
+func (mi *MarchInfo) GetRelocationVal() uint64 {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (mi *MarchInfo) TableName() string {
 	//TODO implement me
 	panic("implement me")
