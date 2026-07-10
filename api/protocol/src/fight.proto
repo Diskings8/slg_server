@@ -1,0 +1,6 @@
+syntax = "proto3";
+package  fight;
+option go_package = "server.slg.com/api/protocol/pb/pb_fight";
+
+
+

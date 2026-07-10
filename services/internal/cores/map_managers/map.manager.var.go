@@ -1,24 +1,27 @@
 package map_managers
 
-import "sync"
+import (
+	"sync"
+
+	"server.slg.com/api/protocol/pb/pb_camera"
+)
 
 var mapPBPool = &sync.Pool{
 	New: func() any { return nil },
 }
 
-// MapPBGet todo
-func MapPBGet() any {
-	//d := mapPBPool.Get()
-	//if d != nil {
-	//	d.(*pb_wmcamera.MapInfo).Reset()
-	//	return d.(*pb_wmcamera.MapInfo)
-	//}
-	//return &pb_wmcamera.MapInfo{}
-	return nil
+// MapPBGet 池子获取
+func MapPBGet() *pb_camera.MapInfo {
+	d := mapPBPool.Get()
+	if d != nil {
+		d.(*pb_camera.MapInfo).Reset()
+		return d.(*pb_camera.MapInfo)
+	}
+	return &pb_camera.MapInfo{}
 }
 
-// MapPBPut todo
-func MapPBPut(l ...any) {
+// MapPBPut 放回池子
+func MapPBPut(l ...*pb_camera.MapInfo) {
 	for _, v := range l {
 		mapPBPool.Put(v)
 	}

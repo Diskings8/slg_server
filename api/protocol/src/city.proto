@@ -26,3 +26,7 @@ message CityFirstOccRecord {
     repeated FirstOccRecordData kill_garrison_record_data = 3; // 记录数据
     repeated FirstOccRecordData demolition_record_data    = 4; // 记录数据
 }
+
+message CityData {
+
+}

@@ -2,6 +2,50 @@ syntax = "proto3";
 package camera;
 option go_package = "server.slg.com/api/protocol/pb/pb_camera";
 
+import "march.proto";
+import "city.proto";
+
 enum CameraLayer {
   Layer0 = 0;
+}
+
+// MapInfo 地图数据
+message MapInfo {
+  int32 map_id                                    = 1;  // 地图ID
+  uint32 server_id                                = 2;  // 服务器ID
+  int32 land_cover                                = 3;  // 占地范围
+  uint64 role_id                                  = 4;  // 角色ID
+  uint64 union_id                                 = 5;  // 联盟id
+  city.CityData city                              = 10; // 城数据
+}
+
+
+// 初始化镜头, 42200
+message CameraInitReq {
+  uint32 serverID = 1;  // 镜头需要查看的服务器ID
+}
+
+message CameraInitResp {
+  uint32 gridWidth                            = 1;  // 格子div宽度
+  uint32 gridHeight                           = 2;  // 格子div高度
+  repeated maps.march.MarchInfo march          = 3;  // 本人的行军数据
+}
+
+// 镜头移动, 42202
+message CameraMoveReq {
+  int32 x           = 1;  // x坐标
+  int32 y           = 2;  // y坐标
+}
+
+message CameraMoveResp {
+  repeated MapInfo map                        = 1;  // 地图数据
+  repeated maps.march.MarchInfo march          = 2;  // 行军数据
+  repeated uint32 delete_screen_id            = 3;  // 删除的视野块ID
+  repeated int32 union_member_map_id          = 4;  // 盟友地图ID(只会在3级视野返回)
+}
+
+
+//---------------------------------------//
+message PushMapInfo {
+  repeated MapInfo map_infos = 1;  // 地图数据
 }

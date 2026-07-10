@@ -1,0 +1,20 @@
+syntax = "proto3";
+package  battle;
+option go_package = "server.slg.com/api/protocol/pb/pb_battle";
+
+import "hero.proto";
+
+
+// TeamSlotInfo 布阵队伍slot信息
+message TeamSlotInfo {
+  int32 slot_id                 = 1;  // 位置:
+  hero.HeroInfo hero_info       = 2;  // 英雄信息
+  uint32 max_soldier_num        = 3;  // 士兵数量
+  uint32 cur_alive_num          = 4;  // 当前可用数量
+  uint32 cur_injured_num        = 5;  // 当前伤兵数量
+}
+
+// TeamInfo 布阵队伍时信息
+message TeamInfo {
+    repeated TeamSlotInfo slot_info = 1;//
+}

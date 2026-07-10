@@ -7,6 +7,12 @@ enum MsgID {
   Base_Heat       = 1;
 
   Common_Auth     = 11;
+
+  // ---------------- 推送下推的信息-----------------//
+  PushServerMainTain                    = 10000001;  // 服务器维护
+  PushClientVersion                     = 10000002;  // 前端版本更新通知
+  PushMapInfo                           = 11000001;  // 地图信息推送
+  PushMarchInfo                         = 11000002;  // 行军信息推送
 }
 
 

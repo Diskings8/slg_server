@@ -5,6 +5,7 @@ import (
 
 	"server.slg.com/services/internal/cores/cores_declarations"
 	"server.slg.com/services/internal/cores/map_blocks"
+	"server.slg.com/services/internal/cores/map_connects"
 	"server.slg.com/services/internal/cores/map_datas"
 	"server.slg.com/services/internal/cores/marchs"
 )
@@ -19,17 +20,18 @@ func NewMapManager(
 	op ...Option,
 ) *MapManager {
 	mm := &MapManager{
-		RoomID:            roomID,
-		MapGroup:          mapGroup,
-		mapDataManager:    mapDataManager,
-		marchManage:       marchManage,
-		mapBlock:          map_blocks.NewMapBlock(mapDataManager),
-		marchDoFunc:       marchDoFunc,
-		marchDoFuncHandle: marchDoHandleFunc,
-		timeMarch:         make(map[int64]map[cores_declarations.MarchID]struct{}),
-		timeMap:           make(map[int64]map[cores_declarations.MapID]struct{}),
-		waitUpdateMapID:   make(map[cores_declarations.MapID]struct{}),
-		opts:              evaluateOptions(op),
+		RoomID:             roomID,
+		MapGroup:           mapGroup,
+		mapDataManager:     mapDataManager,
+		marchManage:        marchManage,
+		roleConnectManager: map_connects.NewRoleConnectManager(mapDataManager.AOI),
+		mapBlock:           map_blocks.NewMapBlock(mapDataManager),
+		marchDoFunc:        marchDoFunc,
+		marchDoFuncHandle:  marchDoHandleFunc,
+		timeMarch:          make(map[int64]map[cores_declarations.MarchID]struct{}),
+		timeMap:            make(map[int64]map[cores_declarations.MapID]struct{}),
+		waitUpdateMapID:    make(map[cores_declarations.MapID]struct{}),
+		opts:               evaluateOptions(op),
 	}
 	return mm
 }
@@ -134,10 +136,6 @@ func (mm *MapManager) loopTickAccept() {
 			go mm.TickerAddMarch(marchInfo.GetMarchID(), marchInfo.GetEndTimeUx())
 		}
 	}
-}
-
-func (mm *MapManager) upMapSync() {
-
 }
 
 func (mm *MapManager) clearMapFunc(mapIDs map[cores_declarations.MapID]struct{}, nowTime int64) {

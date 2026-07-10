@@ -1,0 +1,28 @@
+syntax = "proto3";
+package maps.march;
+option go_package = "server.slg.com/api/protocol/pb/pb_maps_march";
+
+import "battle.proto";
+
+enum MarchState {
+  Error       = 0 ; // 异常状态
+  Idle        = 1 ; // 等待中
+  Move        = 2 ; // 行军中
+  Station     = 3 ; // 驻守中
+  Battle      = 4 ; // 战斗中
+  Back        = 5 ; // 返回中
+}
+
+message MarchInfo {
+  uint64 march_id                                = 1;   // 行军ID
+  uint64 from_role_id                            = 2;   // 归属角色ID
+  uint64 exec_role_id                            = 3;   // 执行角色ID
+  uint64 union_id                                = 4;    // unionID
+  MarchState state                               = 5;   // 行军状态
+  int32 src_from_map_id                          = 11;   // 原始起始地图ID
+  int32 from_map_id                              = 12;   // 起始地图坐标
+  int32 to_map_id                                = 13;   // 目标地图坐标
+  int64 start_time                               = 21;   // 行军开始时间
+  int64 end_time                                 = 22;   // 行军结束时间
+  battle.TeamInfo team_info                      = 23;   // 配将队伍信息
+}

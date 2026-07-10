@@ -4,6 +4,7 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"server.slg.com/api/protocol/pb/pb_maps_march"
 	"server.slg.com/services/internal/cores/cores_declarations"
 )
 
@@ -11,35 +12,35 @@ var _ cores_declarations.MarchInfoI = (*MarchInfo)(nil)
 
 // MarchInfo 行军信息，记录行军的完整状态，包括起止点、行军类型、时间、队伍、战报和 AOI 通行数据
 type MarchInfo struct {
-	RwLock          sync.RWMutex
-	MarchID         cores_declarations.MarchID
-	Team            *Team
-	FromServerID    uint32
-	ToServerID      uint32
-	FromRoleID      uint64
-	ToRoleID        uint64
-	SrcFromMapID    cores_declarations.MapID
-	FromMapID       cores_declarations.MapID
-	ToMapID         cores_declarations.MapID
-	MarchState      cores_declarations.MarchState
-	StartTimeUx     int64
-	EndTimeUx       int64
-	BaseEndTimeUx   int64
-	FollowMarchID   cores_declarations.MarchID
-	UnionID         uint64
-	BaseMarchSpeed  uint32
-	ActionUse       []cores_declarations.AnyThingUse
-	Path            []cores_declarations.MapID `gorm:"type:json;serializer:json;not null;COMMENT:路线;"`
-	PVPWinCount     uint32
-	PVEWinCount     uint32
-	VirtualData     uint64
-	isVirtual       atomic.Bool
-	isNeedSave      atomic.Bool
-	isNeedDelete    atomic.Bool
-	saving          atomic.Bool
-	marchDoLocker   sync.Mutex
-	AoiBlock        []cores_declarations.AoiScreenI
-	PassingAoiBlock []cores_declarations.AoiScreenI
+	RwLock          sync.RWMutex                     `gorm:"-"`
+	MarchID         cores_declarations.MarchID       `gorm:"primaryKey;COMMENT:行军ID;"`
+	Team            *Team                            `gorm:"type:json;not null;COMMENT:部队数据;"`
+	FromServerID    uint32                           `gorm:"not null;COMMENT:所属服务器;"`
+	ToServerID      uint32                           `gorm:"not null;COMMENT:目标服务器;"`
+	FromRoleID      uint64                           `gorm:"not null;COMMENT:归属者角色ID;"` // 当前归属者角色ID
+	ExecRoleID      uint64                           `gorm:"not null;COMMENT:执行者角色ID;"` // 当前执行者角色ID
+	SrcFromMapID    cores_declarations.MapID         `gorm:"not null;COMMENT:最开始的起始地图ID;"`
+	FromMapID       cores_declarations.MapID         `gorm:"not null;COMMENT:当前行军起始地图ID;"`
+	ToMapID         cores_declarations.MapID         `gorm:"not null;COMMENT:当前行军目标地图ID;"`
+	MarchState      pb_maps_march.MarchState         `gorm:"not null;COMMENT:行军状态;"`
+	StartTimeUx     int64                            `gorm:"not null;COMMENT:行军开始时间;"`
+	EndTimeUx       int64                            `gorm:"not null;COMMENT:行军结束时间;"`
+	FollowMarchID   cores_declarations.MarchID       `gorm:"not null;COMMENT:跟随的行军;"`
+	UnionID         uint64                           `gorm:"not null;COMMENT:同盟ID;"`
+	BaseMarchSpeed  uint32                           `gorm:"not null;COMMENT:基础行军速度;"`
+	FinalMarchSpeed uint32                           `gorm:"not null;COMMENT:最后行军速度;"`
+	ActionUse       []cores_declarations.AnyThingUse `gorm:"type:json;not null;COMMENT:行军消耗;"`
+	Path            []cores_declarations.MapID       `gorm:"type:json;not null;COMMENT:路线;"`
+	PVPWinCount     uint32                           `gorm:"not null;COMMENT:PVP连胜数量;"`
+	PVEWinCount     uint32                           `gorm:"not null;COMMENT:PVE连胜数量;"`
+	VirtualData     uint64                           `gorm:"not null;COMMENT:虚拟行军数据;"`
+	isVirtual       bool                             `gorm:"not null;COMMENT:是否为虚拟行军;"`
+	isNeedSave      atomic.Bool                      `gorm:"-"`
+	isNeedDelete    atomic.Bool                      `gorm:"-"`
+	saving          atomic.Bool                      `gorm:"-"`
+	marchDoLocker   sync.Mutex                       `gorm:"-"`
+	AoiBlock        []cores_declarations.AoiScreenI  `gorm:"-"`
+	PassingAoiBlock []cores_declarations.AoiScreenI  `gorm:"-"`
 }
 
 func (mi *MarchInfo) GetRelocationVal() uint64 {
@@ -100,7 +101,7 @@ func (mi *MarchInfo) AddPassingAoiBlock(b cores_declarations.AoiScreenI) {
 //------------------Is----------------//
 
 func (mi *MarchInfo) IsVirtual() bool {
-	return mi.isVirtual.Load()
+	return mi.isVirtual
 }
 func (mi *MarchInfo) IsNeedSave() bool {
 	return mi.isNeedSave.Load()
@@ -158,7 +159,7 @@ func (mi *MarchInfo) GetSrcFromMapID() cores_declarations.MapID {
 	return mi.SrcFromMapID
 }
 
-func (mi *MarchInfo) GetMarchState() cores_declarations.MarchState {
+func (mi *MarchInfo) GetMarchState() pb_maps_march.MarchState {
 	mi.RwLock.RLock()
 	defer mi.RwLock.RUnlock()
 	return mi.MarchState
@@ -170,10 +171,10 @@ func (mi *MarchInfo) GetFromRoleID() uint64 {
 	return mi.FromRoleID
 }
 
-func (mi *MarchInfo) GetToRoleID() uint64 {
+func (mi *MarchInfo) GetExecRoleID() uint64 {
 	mi.RwLock.RLock()
 	defer mi.RwLock.RUnlock()
-	return mi.ToRoleID
+	return mi.ExecRoleID
 }
 
 func (mi *MarchInfo) GetFollowID() cores_declarations.MarchID {
@@ -198,12 +199,6 @@ func (mi *MarchInfo) GetEndTimeUx() int64 {
 	mi.RwLock.RLock()
 	defer mi.RwLock.RUnlock()
 	return mi.EndTimeUx
-}
-
-func (mi *MarchInfo) GetBaseEndTimeUx() int64 {
-	mi.RwLock.RLock()
-	defer mi.RwLock.RUnlock()
-	return mi.BaseEndTimeUx
 }
 
 func (mi *MarchInfo) GetFromServerID() uint32 {

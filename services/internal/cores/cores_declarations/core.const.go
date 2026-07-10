@@ -2,13 +2,25 @@ package cores_declarations
 
 type MarchID uint64
 
+func (i MarchID) Uint64() uint64 {
+	return uint64(i)
+}
+
 type MapID int32
+
+func (i MapID) Int32() int32 {
+	return int32(i)
+}
 
 const (
 	InvalidMapID = -1
 )
 
 type ScreenID int32
+
+func (i ScreenID) Int32() int32 {
+	return int32(i)
+}
 
 type BornBlockID int32
 
@@ -24,16 +36,10 @@ const (
 	MarchType_110101 MarchType = 110101
 )
 
-type MarchState uint32
-
 const (
-	MarchState_Idle MarchState = iota
-)
-
-const (
-	HeroPose_0 = iota
-	HeroPose_1
-	HeroPose_2
+	TeamSlot_1 = iota + 1
+	TeamSlot_2
+	TeamSlot_3
 )
 
 type MapGroup uint32
