@@ -5,10 +5,10 @@ import "server.slg.com/api/protocol/pb/pb_common"
 type AoiScreenI interface {
 }
 
-type MarchHero interface {
+type MarchHeroI interface {
 }
 
-type MarchSoldier interface {
+type MarchSoldierI interface {
 	GetCurCount() uint64
 	GetMaxCount() uint64
 	GetInjuredCount() uint64

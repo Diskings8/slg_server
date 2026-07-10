@@ -77,3 +77,7 @@ func (b *BaseBuildings) ReduceBuildingsHp(reduce uint64) (right uint64, isBroken
 	}
 	return
 }
+
+func (b *BaseBuildings) BeAttack(info cores_declarations.MarchInfoI) (right uint64, isBroken bool) {
+	return b.ReduceBuildingsHp(info.GetRelocationVal())
+}
