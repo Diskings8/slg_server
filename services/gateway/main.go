@@ -37,9 +37,10 @@ func main() {
 	// pprof
 
 	//etcd
+	etcdconn.InitEtcd(configs.GEnvConf.Etcd.Dsn())
 	rpcAddr := configs.GEnvConf.GateWay.RpcDsn()
 	tcpAddr := configs.GEnvConf.GateWay.TcpDsn()
-	etcdconn.RegisterServiceByNodeType(etcdconn.NodeGatewayService, *vgc.CommonGlobalVarInstance, rpcAddr)
+	etcdconn.RegisterServiceByNodeType(ctx, etcdconn.NodeGatewayService, *vgc.CommonGlobalVarInstance, rpcAddr)
 
 	// init system
 
@@ -92,7 +93,7 @@ func main() {
 		case <-quit:
 			loggers.Logger.Info("收到关闭信号，开始优雅关闭服务...")
 			cancel()
-			time.Sleep(time.Second * 3)
+			time.Sleep(time.Second * 1)
 			return
 		case <-serverChan:
 			serverCount.Add(-1)

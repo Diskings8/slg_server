@@ -10,8 +10,11 @@ import (
 
 // Session 客户端会话，持有一个网络连接并提供数据收发和转发能力
 type Session struct {
-	conn   netconn.NetConnI
-	closed bool
+	conn      netconn.NetConnI
+	closed    bool
+	roleID    uint64
+	accountID uint64
+	serverID  uint32
 }
 
 func NewSession(conn netconn.NetConnI) *Session {
@@ -39,6 +42,7 @@ func (s *Session) RunToReceiveFromConn() {
 			loggers.Logger.Info(fmt.Sprintf("客户端断开: %v", err))
 			return
 		}
+		fmt.Printf("%+v/n", packet)
 		//
 		s.switchForward(packet)
 		packet.Release()

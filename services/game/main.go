@@ -37,7 +37,7 @@ func main() {
 
 	// etcd
 	rpcAddr := configs.GEnvConf.GameServer.Dsn()
-	etcdconn.RegisterServiceByNodeType(etcdconn.NodeGameService, *vgc.CommonGlobalVarInstance, rpcAddr)
+	etcdconn.RegisterServiceByNodeType(ctx, etcdconn.NodeGameService, *vgc.CommonGlobalVarInstance, rpcAddr)
 
 	// init rpc server
 	conf := servers.Config{
