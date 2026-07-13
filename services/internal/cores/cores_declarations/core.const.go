@@ -64,6 +64,10 @@ const (
 )
 
 const (
+	// HallLandCover 玩家城边长
+	HallLandCover = 3
+	// HallCoverCount 玩家城占地位置数量
+	HallCoverCount = 9
 	// Land1CoverBaseKey 1*1主位置在那一个键里。
 	Land1CoverBaseKey = 1
 	// Land3CoverBaseKey 3*3主位置在那一个键里。

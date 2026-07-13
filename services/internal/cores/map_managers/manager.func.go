@@ -60,7 +60,7 @@ func (mm *MapManager) loopTickCheck() {
 			nowTime := time.Now().Unix()
 
 			// 地图推送处理
-			go mm.upMapSync()
+			go mm.upMapAsync()
 
 			// 行军处理
 			mm.timeMarchLock.Lock()

@@ -16,7 +16,10 @@ type MapDataManager struct {
 	tableName string
 	saving    atomic.Bool
 
-	AOI     *map_aois.ScreenData
+	AOI *map_aois.ScreenData
+	// 出生块
+	BornAts cores_declarations.BornBlockI
+
 	mapData []MapInfo
 }
 
@@ -112,4 +115,25 @@ func (mdm *MapDataManager) Save(list ...*MapInfo) {
 
 func (mdm *MapDataManager) SaveDo() {
 
+}
+
+type LockMapSlice struct {
+	data []*MapInfo
+	mdm  *MapDataManager
+}
+
+// Unlock 解锁
+func (l LockMapSlice) Unlock() {
+	if l.mdm == nil {
+		return
+	}
+	l.mdm.Unlock(l.data)
+}
+
+// Data 数据
+func (l LockMapSlice) Data() []*MapInfo {
+	if l.mdm == nil {
+		return nil
+	}
+	return l.data
 }
