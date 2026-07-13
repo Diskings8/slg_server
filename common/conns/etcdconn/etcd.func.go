@@ -3,6 +3,7 @@ package etcdconn
 import (
 	"context"
 	"fmt"
+	"time"
 
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"server.slg.com/common/loggers"
@@ -20,14 +21,14 @@ func GetServiceKeyByNodeType(nodeType NodeService) string {
 }
 
 // RegisterServiceByNodeType 注册etcd
-func RegisterServiceByNodeType(nodeType NodeService, instance string, addr string) {
+func RegisterServiceByNodeType(ctx context.Context, nodeType NodeService, instance string, addr string) {
 	var key = GetServiceKeyByNodeType(nodeType) + instance + "/"
-	registerWithLease(key, addr)
+	registerWithLease(ctx, key, addr)
 }
 
-func GetNodeTypeServerList(nodeType NodeService) ([]string, error) {
+func GetNodeTypeServerList(ctx context.Context, nodeType NodeService) ([]string, error) {
 	key := GetServiceKeyByNodeType(nodeType)
-	resp, err := etcdClient.Get(context.Background(), key, clientv3.WithPrefix())
+	resp, err := etcdClient.Get(ctx, key, clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
 	}
@@ -53,19 +54,21 @@ func GetNodeTypeServerAddr(nodeType NodeService) (string, error) {
 	return string(resp.Kvs[0].Value), nil
 }
 
-func registerWithLease(key, value string) {
-	resp, err := etcdClient.Grant(context.Background(), 10)
+func registerWithLease(ctx context.Context, key, value string) {
+	resp, err := etcdClient.Grant(ctx, 10)
 	if err != nil {
 		loggers.Logger.Warn(fmt.Sprintf("etcd租约失败: %v", err))
 		return
 	}
-	_, err = etcdClient.Put(context.Background(), key, value, clientv3.WithLease(resp.ID))
+	ctxTime, cancelFunc := context.WithTimeout(ctx, 3*time.Second)
+	defer cancelFunc()
+	_, err = etcdClient.Put(ctxTime, key, value, clientv3.WithLease(resp.ID))
 	if err != nil {
 		loggers.Logger.Warn(fmt.Sprintf("etcd注册失败: %v", err))
 		return
 	}
 	// 自动续租
-	ch, err := etcdClient.KeepAlive(context.Background(), resp.ID)
+	ch, err := etcdClient.KeepAlive(ctx, resp.ID)
 	if err != nil {
 		return
 	}

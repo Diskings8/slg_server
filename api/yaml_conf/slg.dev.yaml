@@ -28,7 +28,7 @@ etcd:
   addr: "127.0.0.1"
   port: "2379"
 
-gateWay:
+gateway:
   addr: "127.0.0.1"
   tcp_port: "13001"
   rpc_port: "13002"
