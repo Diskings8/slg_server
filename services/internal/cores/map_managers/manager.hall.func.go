@@ -1,22 +1,25 @@
 package map_managers
 
-import "server.slg.com/api/protocol/pb/pb_role"
+import (
+	"server.slg.com/api/protocol/pb/pb_role"
+	"server.slg.com/services/internal/cores/cores_declarations"
+)
 
 // CreateRole 创建角色位置
-func (mm *MapManager) CreateRole(roleBrief *pb_role.RoleBrief) ([]int32, error) {
-	mapIDs, lockMapSlice, _, baseMapID, freeBornFunc, err := mm.GetMapDataManager().GetFreeBorn(areaLevel)
+func (mm *MapManager) CreateRole(roleBrief *pb_role.RoleBrief) ([]cores_declarations.MapID, error) {
+	mapIDs, lockMapSlice, _, baseMapID, freeBornFunc, err := mm.GetMapDataManager().GetFreeBorn()
 	if err != nil {
 		return nil, err
 	}
 
 	defer lockMapSlice.Unlock()
-	err = m.Map().SetHall(lockMapSlice.Data(), roleBrief)
+	err = mm.mapDataManager.SetHall(lockMapSlice.Data(), roleBrief)
 	if err != nil {
 		freeBornFunc()
 		return nil, err
 	}
 
-	m.UpMap(baseMapID)
+	mm.UpdateMapPush(baseMapID)
 
 	return mapIDs, err
 }

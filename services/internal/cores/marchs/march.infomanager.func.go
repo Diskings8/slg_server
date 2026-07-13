@@ -1,8 +1,10 @@
 package marchs
 
-import "server.slg.com/common/conns/dbconn/dbconn_interface"
+import (
+	"server.slg.com/common/common_declarations"
+)
 
-func (mm *MarchInfoManager) Init(dbc dbconn_interface.DbcI) ([]*MarchInfo, error) {
+func (mm *MarchInfoManager) Init(dbc common_declarations.DbcI) ([]*MarchInfo, error) {
 	if err := mm.checkAutoMigrate(dbc); err != nil {
 		return nil, err
 	}
@@ -22,11 +24,11 @@ func (mm *MarchInfoManager) Init(dbc dbconn_interface.DbcI) ([]*MarchInfo, error
 	return marchList, nil
 }
 
-func (mm *MarchInfoManager) checkAutoMigrate(dbc dbconn_interface.DbcI) error {
+func (mm *MarchInfoManager) checkAutoMigrate(dbc common_declarations.DbcI) error {
 	return dbc.Table(mm.GetTableName()).AutoMigrate(&MarchInfo{})
 }
 
-func (mm *MarchInfoManager) findMarchList(dbc dbconn_interface.DbcI, marchList []*MarchInfo) error {
+func (mm *MarchInfoManager) findMarchList(dbc common_declarations.DbcI, marchList []*MarchInfo) error {
 	return dbc.Table(mm.GetTableName()).Find(&marchList)
 
 }

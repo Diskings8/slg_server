@@ -3,8 +3,12 @@ package map_datas
 import (
 	"errors"
 
+	"go.uber.org/zap"
 	"server.slg.com/api/protocol/pb/pb_role"
+	"server.slg.com/common/globals/common_globals"
+	"server.slg.com/common/loggers"
 	"server.slg.com/services/internal/cores/cores_declarations"
+	"server.slg.com/services/internal/cores/roles"
 )
 
 func (mdm *MapDataManager) Clear(mapIDs []cores_declarations.MapID) {
@@ -26,7 +30,10 @@ func (mdm *MapDataManager) SetRoleMainCity(roleCityState cores_declarations.Role
 		}
 		coreIndex = cores_declarations.Land3CoverBaseKey
 	}
-	// 检测位置可使用情况 todo
+	// 检测位置可使用情况
+	if !CheckRoleBornSiteSafeByMapInfos(false, dataSlice...) {
+		return errors.New("地块校验不合法")
+	}
 
 	//
 	coreMapInfo := dataSlice[coreIndex]
@@ -40,68 +47,68 @@ func (mdm *MapDataManager) SetRoleMainCity(roleCityState cores_declarations.Role
 	}
 	mdm.Save(dataSlice...)
 
-	// 更新角色数据 todo
-
+	// 更新角色数据
+	roleData, releaseFunc, saveFunc, err := roles.Get(roleBrief.GetRoleBaseInfo().GetSimpleInfo().GetRoleId())
+	if err != nil {
+		loggers.Logger.Error(err.Error())
+	} else {
+		roleData.GetBrief().RoleBrief = roleBrief
+		saveFunc()
+		releaseFunc()
+	}
 	// aoi更新
-
 	return nil
 }
 
 // GetFreeBorn 可用出生点,失败要调用freeBornFunc放回到出生块里
 // 注意：取出的mapSlice是带锁的
-func (mdm *MapDataManager) GetFreeBorn() (mapIDs []int32, lockMapSlice LockMapSlice, bornID int32, baseMapID int32, freeBornFunc func(), err error) {
+func (mdm *MapDataManager) GetFreeBorn() (mapIDs []cores_declarations.MapID, lockMapSlice LockMapSlice, bornID cores_declarations.BornBlockID, coreMapID cores_declarations.MapID, freeBornFunc func(), err error) {
 	mdm.BornAts.Range(func(bornIDTmp cores_declarations.BornBlockID, v map[int32]struct{}) bool {
 		// 随机找一个四块地都是空地
 		for mapID := range v {
 			mapIDsTmp := mdm.GetConfig().CoverMapIDs(mapID, 1, cores_declarations.HallLandCover/2)
-			if len(mapIDsTmp) != gamemap.HallCoverCount {
+			if len(mapIDsTmp) != cores_declarations.HallCoverCount {
 				continue
 			}
 
-			mapSliceTmp := l.GetSlice(mapIDsTmp)
-			if !l.TryLock(mapSliceTmp) {
+			// 尝试上锁当前种子附件的地块
+			mapSliceTmp := mdm.GetMapInfoSlice(mapIDsTmp)
+			if !mdm.TryLock(mapSliceTmp) {
 				continue
 			}
+			// 判断已上锁的地块数是否和所需一致
 			if len(mapSliceTmp) != len(mapIDsTmp) {
-				l.UnLock(mapSliceTmp)
+				mdm.Unlock(mapSliceTmp)
 				return true
 			}
 
-			if areaID > 0 {
-				for _, v := range mapSliceTmp {
-					if v.AreaLevel != areaID {
-						l.UnLock(mapSliceTmp)
-						return true
-					}
-				}
-			}
-
-			if CheckCreateRoleSiteByMaps(false, mapSliceTmp...) {
+			if CheckRoleBornSiteSafeByMapInfos(false, mapSliceTmp...) {
+				// 赋值返回的数据
 				mapIDs = mapIDsTmp
 				bornID = bornIDTmp
 				lockMapSlice = LockMapSlice{
 					data: mapSliceTmp,
-					m:    l,
+					mdm:  mdm,
 				}
-				baseMapID = mapIDsTmp[gamemap.Land3CoverBaseKey]
+				coreMapID = mapIDsTmp[cores_declarations.Land3CoverBaseKey]
 
-				l.BornAts.Use(bornID)
+				mdm.BornAts.Use(bornID)
 
 				freeBornFunc = func() {
-					l.BornAts.Free(bornID)
+					mdm.BornAts.Free(bornID)
 				}
 
 				return false
 			}
-			l.UnLock(mapSliceTmp)
+			mdm.Unlock(mapSliceTmp)
 		}
 
-		if config.Get().IsDevelop() {
+		if common_globals.IsDev() {
 			// 这个地块一个9块空地都找不到，直接将这块地置为不可创建，打印出错误提示
-			logger.Get().Warn("在一个可放置玩家的位置，找不到一个1格相连的空地，打印出错误信息", zap.Int32("bornIDTmp", bornIDTmp), zap.Any("v", v))
+			loggers.Logger.Warn("在一个可放置玩家的位置，找不到一个1格相连的空地，打印出错误信息", zap.Int32("coreMapID", int32(coreMapID)), zap.Any("v", v))
 		}
 
-		l.BornAts.Delete(bornIDTmp)
+		mdm.BornAts.Delete(bornIDTmp)
 
 		return true
 	})
@@ -109,5 +116,5 @@ func (mdm *MapDataManager) GetFreeBorn() (mapIDs []int32, lockMapSlice LockMapSl
 	if bornID < 1 {
 		err = errors.New("没有空佘的位置可创号")
 	}
-	return mapIDs, lockMapSlice, bornID, baseMapID, freeBornFunc, err
+	return mapIDs, lockMapSlice, bornID, coreMapID, freeBornFunc, err
 }

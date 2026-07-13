@@ -7,3 +7,15 @@ func GetEnvPath() string {
 	}
 	return ""
 }
+
+func IsDev() bool {
+	return *CommonGlobalVarEnv == "dev"
+}
+
+func IsProd() bool {
+	return *CommonGlobalVarEnv == "prod"
+}
+
+func IsTest() bool {
+	return *CommonGlobalVarEnv == "test"
+}

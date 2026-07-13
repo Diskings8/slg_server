@@ -27,9 +27,9 @@ type RoleSimpleInfo struct {
 
 	ServerId         uint32 `protobuf:"varint,1,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"`                           // 所在区服 id
 	MoveServerId     uint32 `protobuf:"varint,2,opt,name=move_server_id,json=moveServerId,proto3" json:"move_server_id,omitempty"`             // 迁城后的服务器ID(未迁城则为0)
-	ServerName       string `protobuf:"bytes,3,opt,name=server_name,json=serverName,proto3" json:"server_name,omitempty"`                      // 所在区服名称
+	ServerName       string `protobuf:"util_bytes,3,opt,name=server_name,json=serverName,proto3" json:"server_name,omitempty"`                      // 所在区服名称
 	RoleId           uint64 `protobuf:"varint,4,opt,name=role_id,json=roleId,proto3" json:"role_id,omitempty"`                                 // 角色 id
-	RoleName         string `protobuf:"bytes,5,opt,name=role_name,json=roleName,proto3" json:"role_name,omitempty"`                            // 角色名称
+	RoleName         string `protobuf:"util_bytes,5,opt,name=role_name,json=roleName,proto3" json:"role_name,omitempty"`                            // 角色名称
 	HeadSystemAvatar uint32 `protobuf:"varint,6,opt,name=head_system_avatar,json=headSystemAvatar,proto3" json:"head_system_avatar,omitempty"` // 角色头像图标
 	HeadBorder       uint32 `protobuf:"varint,7,opt,name=head_border,json=headBorder,proto3" json:"head_border,omitempty"`                     // 角色头像框
 	VipLevel         int32  `protobuf:"varint,8,opt,name=vip_level,json=vipLevel,proto3" json:"vip_level,omitempty"`                           // vip 等级
@@ -126,9 +126,9 @@ type RoleBaseInfo struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	SimpleInfo     *RoleSimpleInfo `protobuf:"bytes,1,opt,name=simple_info,json=simpleInfo,proto3" json:"simple_info,omitempty"`               // 所在区服 id
+	SimpleInfo     *RoleSimpleInfo `protobuf:"util_bytes,1,opt,name=simple_info,json=simpleInfo,proto3" json:"simple_info,omitempty"`               // 所在区服 id
 	UnionId        uint64          `protobuf:"varint,2,opt,name=union_id,json=unionId,proto3" json:"union_id,omitempty"`                       // 联盟 id
-	UnionShortName string          `protobuf:"bytes,3,opt,name=union_short_name,json=unionShortName,proto3" json:"union_short_name,omitempty"` // 联盟简称
+	UnionShortName string          `protobuf:"util_bytes,3,opt,name=union_short_name,json=unionShortName,proto3" json:"union_short_name,omitempty"` // 联盟简称
 	CityMapId      int32           `protobuf:"varint,4,opt,name=city_map_id,json=cityMapId,proto3" json:"city_map_id,omitempty"`               // 总部坐标
 }
 
@@ -196,8 +196,8 @@ type RoleUnionSimpleInfo struct {
 	unknownFields protoimpl.UnknownFields
 
 	UnionId        uint64 `protobuf:"varint,1,opt,name=union_id,json=unionId,proto3" json:"union_id,omitempty"`                       // 联盟 id
-	UnionShortName string `protobuf:"bytes,2,opt,name=union_short_name,json=unionShortName,proto3" json:"union_short_name,omitempty"` // 联盟简称
-	UnionName      string `protobuf:"bytes,3,opt,name=union_name,json=unionName,proto3" json:"union_name,omitempty"`                  // 联盟名称
+	UnionShortName string `protobuf:"util_bytes,2,opt,name=union_short_name,json=unionShortName,proto3" json:"union_short_name,omitempty"` // 联盟简称
+	UnionName      string `protobuf:"util_bytes,3,opt,name=union_name,json=unionName,proto3" json:"union_name,omitempty"`                  // 联盟名称
 	UnionFlag      int32  `protobuf:"varint,4,opt,name=union_flag,json=unionFlag,proto3" json:"union_flag,omitempty"`                 // 联盟旗帜
 }
 
@@ -265,7 +265,7 @@ type RoleUnionBaseInfo struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	SimpleInfo       *RoleUnionSimpleInfo `protobuf:"bytes,1,opt,name=simple_info,json=simpleInfo,proto3" json:"simple_info,omitempty"`
+	SimpleInfo       *RoleUnionSimpleInfo `protobuf:"util_bytes,1,opt,name=simple_info,json=simpleInfo,proto3" json:"simple_info,omitempty"`
 	UnionPosition    int32                `protobuf:"varint,2,opt,name=union_position,json=unionPosition,proto3" json:"union_position,omitempty"`              // 联盟职位
 	UnionPermission  int32                `protobuf:"varint,3,opt,name=union_permission,json=unionPermission,proto3" json:"union_permission,omitempty"`        // 联盟权限
 	UnionLeaveTime   int64                `protobuf:"varint,4,opt,name=union_leave_time,json=unionLeaveTime,proto3" json:"union_leave_time,omitempty"`         // 离开联盟时间戳
@@ -351,8 +351,8 @@ type RoleBrief struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	RoleBaseInfo  *RoleBaseInfo      `protobuf:"bytes,1,opt,name=role_base_info,json=roleBaseInfo,proto3" json:"role_base_info,omitempty"`    // 基础信息
-	UnionBaseInfo *RoleUnionBaseInfo `protobuf:"bytes,2,opt,name=union_base_info,json=unionBaseInfo,proto3" json:"union_base_info,omitempty"` // 联盟基础信息
+	RoleBaseInfo  *RoleBaseInfo      `protobuf:"util_bytes,1,opt,name=role_base_info,json=roleBaseInfo,proto3" json:"role_base_info,omitempty"`    // 基础信息
+	UnionBaseInfo *RoleUnionBaseInfo `protobuf:"util_bytes,2,opt,name=union_base_info,json=unionBaseInfo,proto3" json:"union_base_info,omitempty"` // 联盟基础信息
 	LogoutAt      int64              `protobuf:"varint,3,opt,name=logout_at,json=logoutAt,proto3" json:"logout_at,omitempty"`                 // 最后登出时间戳，秒
 	LoginAt       int64              `protobuf:"varint,4,opt,name=login_at,json=loginAt,proto3" json:"login_at,omitempty"`                    // 最新登入时间戳，秒
 }

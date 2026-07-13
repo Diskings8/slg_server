@@ -16,8 +16,8 @@ type ScreenData struct {
 	count           int32 // 总数
 }
 
-func (sd *ScreenData) MapDataAdd(id cores_declarations.MapID) {
-	panic("implement me")
+func (sd *ScreenData) MapDataAdd(mapID cores_declarations.MapID) {
+	sd.GetScreenByMapID(mapID)
 }
 
 //---------------------------Get-------------------------------------//

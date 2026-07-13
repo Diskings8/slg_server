@@ -20,10 +20,20 @@ type redis struct {
 	Port     string `yaml:"port"`
 	Password string `yaml:"password"`
 	DB       int    `yaml:"db"`
+	NodeType string `yaml:"node_type"`
+	Prefix   string `yaml:"prefix"`
 }
 
 func (r redis) Dsn() string {
 	return fmt.Sprintf("%s:%s", r.Addr, r.Port)
+}
+
+func (r redis) GetNodeType() string {
+	return r.NodeType
+}
+
+func (r redis) GetPrefix() string {
+	return r.Prefix
 }
 
 // etcd Etcd 服务发现连接配置
@@ -73,13 +83,22 @@ func (ms *mysql) Dsn() string {
 
 // Config 全局环境配置聚合，包含 MySQL、Redis、Etcd、Snowflake、Gateway 和各服务节点的配置
 type Config struct {
-	MysqlCommon mysql     `yaml:"mysql_common"`
-	MysqlGame   mysql     `yaml:"mysql_game"`
-	Redis       redis     `yaml:"redis"`
-	Snowflake   snowflake `yaml:"snowflake"`
-	Etcd        etcd      `yaml:"etcd"`
-	GateWay     gateway   `yaml:"gateway"`
+	MysqlCommon  mysql     `yaml:"mysql_common"`
+	MysqlGame    mysql     `yaml:"mysql_game"`
+	Redis        redis     `yaml:"redis"`
+	Snowflake    snowflake `yaml:"snowflake"`
+	Etcd         etcd      `yaml:"etcd"`
+	GateWay      gateway   `yaml:"gateway"`
+	GameServer   server    `yaml:"game_server"`
+	BattleServer server    `yaml:"battle_server"`
 
-	GameServer   server `yaml:"game_server"`
-	BattleServer server `yaml:"battle_server"`
+	NodeType string
+}
+
+func (c *Config) SetNodeType(nodeType string) {
+	c.NodeType = nodeType
+}
+
+func (c *Config) GetNodeType() string {
+	return c.NodeType
 }

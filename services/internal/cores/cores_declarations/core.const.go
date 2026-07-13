@@ -91,3 +91,22 @@ const (
 	ScaleLevel4
 	ScaleLevel5
 )
+
+type MapLevel int
+
+// ElementType 地块元素类型
+type ElementType int
+
+func (i ElementType) IsCantBornUse() bool {
+	return i != ElementType_Terrain_1 && i != ElementType_Terrain_2
+}
+
+const (
+	ElementType_None        ElementType = iota
+	ElementType_Resources_1             // 资源1
+	ElementType_Resources_2             // 资源2
+	ElementType_Resources_3             // 资源3
+	ElementType_Resources_4             // 资源4
+	ElementType_Terrain_1               // 地形1--山
+	ElementType_Terrain_2               // 地形1--水
+)

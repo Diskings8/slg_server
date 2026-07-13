@@ -5,7 +5,6 @@ import (
 
 	"server.slg.com/services/internal/cores/cores_declarations"
 	"server.slg.com/services/internal/cores/map_datas/map_buildings"
-	"server.slg.com/services/internal/cores/map_datas/map_declarations"
 	"server.slg.com/services/internal/cores/map_datas/map_events"
 )
 
@@ -18,9 +17,9 @@ type MapInfo struct {
 	y                int
 	serverID         uint32
 	ownerID          uint64
-	level            map_declarations.MapLevel
+	Level            cores_declarations.MapLevel
 	configID         uint32
-	elementType      map_declarations.ElementType
+	ElementType      cores_declarations.ElementType
 	protectedEndTime int64
 	overlayEvent     *map_events.OverlayEvent
 	overlayBuilding  *map_buildings.OverlayBuilding
@@ -46,12 +45,20 @@ func (mi *MapInfo) GetServerID() uint32 {
 	return mi.serverID
 }
 
-func (mi *MapInfo) GetLevel() map_declarations.MapLevel {
-	return mi.level
+func (mi *MapInfo) GetLevel() cores_declarations.MapLevel {
+	mi.rwLock.RLock()
+	defer mi.rwLock.RUnlock()
+	return mi.Level
 }
 
 func (mi *MapInfo) GetElementID() uint32 {
 	return mi.configID
+}
+
+func (mi *MapInfo) GetElementType() cores_declarations.ElementType {
+	mi.rwLock.RLock()
+	defer mi.rwLock.RUnlock()
+	return mi.ElementType
 }
 
 //----------------Lock----------------//

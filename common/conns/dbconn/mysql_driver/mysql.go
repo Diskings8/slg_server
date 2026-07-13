@@ -5,15 +5,24 @@ import (
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"server.slg.com/common/conns/dbconn/dbconn_interface"
-	"server.slg.com/common/models/db_model_interface"
+	"server.slg.com/common/common_declarations"
 )
 
-var _ dbconn_interface.DbcI = (*MysqlDriver)(nil)
+var _ common_declarations.DbcI = (*MysqlDriver)(nil)
 
 // MysqlDriver MySQL 数据库驱动实现，基于 GORM 封装，提供连接池配置和自动迁移能力
 type MysqlDriver struct {
 	db *gorm.DB
+}
+
+func (m MysqlDriver) Table(tableName string) common_declarations.DbcI {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (m MysqlDriver) Find(model common_declarations.DbModelI) error {
+	//TODO implement me
+	panic("implement me")
 }
 
 func NewDriver(dsn string) (*MysqlDriver, error) {
@@ -37,6 +46,6 @@ func NewDriver(dsn string) (*MysqlDriver, error) {
 	return driver, nil
 }
 
-func (m MysqlDriver) AutoMigrate(model db_model_interface.DbIModel) error {
+func (m MysqlDriver) AutoMigrate(model common_declarations.DbModelI) error {
 	return m.db.AutoMigrate(model)
 }

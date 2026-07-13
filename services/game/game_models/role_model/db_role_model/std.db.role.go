@@ -1,10 +1,10 @@
 package db_role_model
 
 import (
-	"server.slg.com/common/models/db_model_interface"
+	"server.slg.com/common/common_declarations"
 )
 
-var _ db_model_interface.DbIModel = (*RoleDb)(nil)
+var _ common_declarations.DbModelI = (*RoleDb)(nil)
 
 // RoleDb 角色数据库模型，映射数据库中的角色表结构
 type RoleDb struct {

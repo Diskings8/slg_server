@@ -82,7 +82,7 @@ type FirstOccRecordData struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	RoleName    string `protobuf:"bytes,1,opt,name=role_name,json=roleName,proto3" json:"role_name,omitempty"`           // 记录名称
+	RoleName    string `protobuf:"util_bytes,1,opt,name=role_name,json=roleName,proto3" json:"role_name,omitempty"`           // 记录名称
 	RecordScore uint64 `protobuf:"varint,2,opt,name=record_score,json=recordScore,proto3" json:"record_score,omitempty"` // 记录得分
 	Rank        int32  `protobuf:"varint,3,opt,name=rank,proto3" json:"rank,omitempty"`                                  // 记录排名
 }
@@ -145,9 +145,9 @@ type CityFirstOccRecord struct {
 	unknownFields protoimpl.UnknownFields
 
 	OccUnionId             uint64                `protobuf:"varint,1,opt,name=occ_union_id,json=occUnionId,proto3" json:"occ_union_id,omitempty"`                                      // 占领联盟id
-	OccUnionName           string                `protobuf:"bytes,2,opt,name=occ_union_name,json=occUnionName,proto3" json:"occ_union_name,omitempty"`                                 // 占领联盟名称
-	KillGarrisonRecordData []*FirstOccRecordData `protobuf:"bytes,3,rep,name=kill_garrison_record_data,json=killGarrisonRecordData,proto3" json:"kill_garrison_record_data,omitempty"` // 记录数据
-	DemolitionRecordData   []*FirstOccRecordData `protobuf:"bytes,4,rep,name=demolition_record_data,json=demolitionRecordData,proto3" json:"demolition_record_data,omitempty"`         // 记录数据
+	OccUnionName           string                `protobuf:"util_bytes,2,opt,name=occ_union_name,json=occUnionName,proto3" json:"occ_union_name,omitempty"`                                 // 占领联盟名称
+	KillGarrisonRecordData []*FirstOccRecordData `protobuf:"util_bytes,3,rep,name=kill_garrison_record_data,json=killGarrisonRecordData,proto3" json:"kill_garrison_record_data,omitempty"` // 记录数据
+	DemolitionRecordData   []*FirstOccRecordData `protobuf:"util_bytes,4,rep,name=demolition_record_data,json=demolitionRecordData,proto3" json:"demolition_record_data,omitempty"`         // 记录数据
 }
 
 func (x *CityFirstOccRecord) Reset() {

@@ -26,8 +26,8 @@ type MessagePacket struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Body    []byte                `protobuf:"bytes,1,opt,name=body,proto3" json:"body,omitempty"`
-	DevMsg  string                `protobuf:"bytes,2,opt,name=dev_msg,json=devMsg,proto3" json:"dev_msg,omitempty"`
+	Body    []byte                `protobuf:"util_bytes,1,opt,name=body,proto3" json:"body,omitempty"`
+	DevMsg  string                `protobuf:"util_bytes,2,opt,name=dev_msg,json=devMsg,proto3" json:"dev_msg,omitempty"`
 	ErrCode pb_protocol.ErrorCode `protobuf:"varint,3,opt,name=err_code,json=errCode,proto3,enum=protocol.ErrorCode" json:"err_code,omitempty"`
 }
 
@@ -88,7 +88,7 @@ type NodePacket struct {
 	unknownFields protoimpl.UnknownFields
 
 	MsgId   pb_protocol.MsgID `protobuf:"varint,1,opt,name=msgId,proto3,enum=protocol.MsgID" json:"msgId,omitempty"`
-	Message *MessagePacket    `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	Message *MessagePacket    `protobuf:"util_bytes,2,opt,name=message,proto3" json:"message,omitempty"`
 }
 
 func (x *NodePacket) Reset() {
@@ -141,7 +141,7 @@ type CreateRoleReq struct {
 	unknownFields protoimpl.UnknownFields
 
 	UserId   uint64 `protobuf:"varint,1,opt,name=userId,proto3" json:"userId,omitempty"`
-	RoleName string `protobuf:"bytes,2,opt,name=roleName,proto3" json:"roleName,omitempty"`
+	RoleName string `protobuf:"util_bytes,2,opt,name=roleName,proto3" json:"roleName,omitempty"`
 }
 
 func (x *CreateRoleReq) Reset() {
@@ -328,7 +328,7 @@ type NotifyInfoReq struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Info string `protobuf:"bytes,1,opt,name=info,proto3" json:"info,omitempty"`
+	Info string `protobuf:"util_bytes,1,opt,name=info,proto3" json:"info,omitempty"`
 }
 
 func (x *NotifyInfoReq) Reset() {

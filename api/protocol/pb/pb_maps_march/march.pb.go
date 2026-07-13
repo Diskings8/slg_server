@@ -94,7 +94,7 @@ type MarchInfo struct {
 	ToMapId      int32               `protobuf:"varint,13,opt,name=to_map_id,json=toMapId,proto3" json:"to_map_id,omitempty"`                  // 目标地图坐标
 	StartTime    int64               `protobuf:"varint,21,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`              // 行军开始时间
 	EndTime      int64               `protobuf:"varint,22,opt,name=end_time,json=endTime,proto3" json:"end_time,omitempty"`                    // 行军结束时间
-	TeamInfo     *pb_battle.TeamInfo `protobuf:"bytes,23,opt,name=team_info,json=teamInfo,proto3" json:"team_info,omitempty"`                  // 配将队伍信息
+	TeamInfo     *pb_battle.TeamInfo `protobuf:"util_bytes,23,opt,name=team_info,json=teamInfo,proto3" json:"team_info,omitempty"`                  // 配将队伍信息
 }
 
 func (x *MarchInfo) Reset() {

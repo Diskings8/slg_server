@@ -18,6 +18,7 @@ redis:
   addr: "127.0.0.1"
   port: "6379"
   password: ""
+  node_type: "single"
   db: 0
 
 snowflake:

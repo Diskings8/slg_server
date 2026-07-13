@@ -28,7 +28,7 @@ type TeamSlotInfo struct {
 	unknownFields protoimpl.UnknownFields
 
 	SlotId        int32             `protobuf:"varint,1,opt,name=slot_id,json=slotId,proto3" json:"slot_id,omitempty"`                        // 位置:
-	HeroInfo      *pb_hero.HeroInfo `protobuf:"bytes,2,opt,name=hero_info,json=heroInfo,proto3" json:"hero_info,omitempty"`                   // 英雄信息
+	HeroInfo      *pb_hero.HeroInfo `protobuf:"util_bytes,2,opt,name=hero_info,json=heroInfo,proto3" json:"hero_info,omitempty"`                   // 英雄信息
 	MaxSoldierNum uint32            `protobuf:"varint,3,opt,name=max_soldier_num,json=maxSoldierNum,proto3" json:"max_soldier_num,omitempty"` // 士兵数量
 	CurAliveNum   uint32            `protobuf:"varint,4,opt,name=cur_alive_num,json=curAliveNum,proto3" json:"cur_alive_num,omitempty"`       // 当前可用数量
 	CurInjuredNum uint32            `protobuf:"varint,5,opt,name=cur_injured_num,json=curInjuredNum,proto3" json:"cur_injured_num,omitempty"` // 当前伤兵数量
@@ -105,7 +105,7 @@ type TeamInfo struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	SlotInfo []*TeamSlotInfo `protobuf:"bytes,1,rep,name=slot_info,json=slotInfo,proto3" json:"slot_info,omitempty"` //
+	SlotInfo []*TeamSlotInfo `protobuf:"util_bytes,1,rep,name=slot_info,json=slotInfo,proto3" json:"slot_info,omitempty"` //
 }
 
 func (x *TeamInfo) Reset() {

@@ -326,15 +326,15 @@ type HeroInfo struct {
 	CurStatus        Status       `protobuf:"varint,4,opt,name=cur_status,json=curStatus,proto3,enum=hero.Status" json:"cur_status,omitempty"`     // 当前状态
 	CurLevel         uint32       `protobuf:"varint,5,opt,name=cur_level,json=curLevel,proto3" json:"cur_level,omitempty"`                         // 当前等级
 	CurExp           uint32       `protobuf:"varint,6,opt,name=cur_exp,json=curExp,proto3" json:"cur_exp,omitempty"`                               // 当前经验
-	AttrAttack       *Cultivate   `protobuf:"bytes,11,opt,name=attr_attack,json=attrAttack,proto3" json:"attr_attack,omitempty"`                   // 攻击属性
-	AttrDefense      *Cultivate   `protobuf:"bytes,12,opt,name=attr_defense,json=attrDefense,proto3" json:"attr_defense,omitempty"`                // 防御属性
-	AttrIntelligence *Cultivate   `protobuf:"bytes,13,opt,name=attr_intelligence,json=attrIntelligence,proto3" json:"attr_intelligence,omitempty"` // 智力属性
-	AttrMovement     *Cultivate   `protobuf:"bytes,14,opt,name=attr_movement,json=attrMovement,proto3" json:"attr_movement,omitempty"`             // 移动属性
-	AttrRelocation   *Cultivate   `protobuf:"bytes,15,opt,name=attr_relocation,json=attrRelocation,proto3" json:"attr_relocation,omitempty"`       // 拆迁属性
+	AttrAttack       *Cultivate   `protobuf:"util_bytes,11,opt,name=attr_attack,json=attrAttack,proto3" json:"attr_attack,omitempty"`                   // 攻击属性
+	AttrDefense      *Cultivate   `protobuf:"util_bytes,12,opt,name=attr_defense,json=attrDefense,proto3" json:"attr_defense,omitempty"`                // 防御属性
+	AttrIntelligence *Cultivate   `protobuf:"util_bytes,13,opt,name=attr_intelligence,json=attrIntelligence,proto3" json:"attr_intelligence,omitempty"` // 智力属性
+	AttrMovement     *Cultivate   `protobuf:"util_bytes,14,opt,name=attr_movement,json=attrMovement,proto3" json:"attr_movement,omitempty"`             // 移动属性
+	AttrRelocation   *Cultivate   `protobuf:"util_bytes,15,opt,name=attr_relocation,json=attrRelocation,proto3" json:"attr_relocation,omitempty"`       // 拆迁属性
 	WageWarCityId    int32        `protobuf:"varint,21,opt,name=wage_war_city_id,json=wageWarCityId,proto3" json:"wage_war_city_id,omitempty"`     // 征战城市id
-	Skills           []*Skill     `protobuf:"bytes,22,rep,name=skills,proto3" json:"skills,omitempty"`                                             // 技能信息
+	Skills           []*Skill     `protobuf:"util_bytes,22,rep,name=skills,proto3" json:"skills,omitempty"`                                             // 技能信息
 	CurTroopTypeId   int32        `protobuf:"varint,31,opt,name=cur_troop_type_id,json=curTroopTypeId,proto3" json:"cur_troop_type_id,omitempty"`  // 当前兵种类型id
-	OptTroopType     []*TroopType `protobuf:"bytes,32,rep,name=opt_troop_type,json=optTroopType,proto3" json:"opt_troop_type,omitempty"`           // 所有兵种信息
+	OptTroopType     []*TroopType `protobuf:"util_bytes,32,rep,name=opt_troop_type,json=optTroopType,proto3" json:"opt_troop_type,omitempty"`           // 所有兵种信息
 }
 
 func (x *HeroInfo) Reset() {

@@ -3,6 +3,7 @@ package map_datas
 import (
 	"sync/atomic"
 
+	"server.slg.com/api/protocol/pb/pb_role"
 	"server.slg.com/common/utils/hashmaps"
 	"server.slg.com/services/internal/cores/cores_declarations"
 	"server.slg.com/services/internal/cores/map_aois"
@@ -115,6 +116,11 @@ func (mdm *MapDataManager) Save(list ...*MapInfo) {
 
 func (mdm *MapDataManager) SaveDo() {
 
+}
+
+func (mdm *MapDataManager) SetHall(data []*MapInfo, brief *pb_role.RoleBrief) error {
+	panic("implement me")
+	return nil
 }
 
 type LockMapSlice struct {

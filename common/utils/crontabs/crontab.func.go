@@ -1,8 +1,9 @@
 package crontabs
 
 import (
-	"github.com/robfig/cron/v3"
 	"sync/atomic"
+
+	"github.com/robfig/cron/v3"
 )
 
 func AddNotRaceFunc(spec string, cmd func()) (cron.EntryID, error) {
@@ -19,4 +20,9 @@ func AddNotRaceFunc(spec string, cmd func()) (cron.EntryID, error) {
 		defer d.valid.Store(false)
 		d.f()
 	})
+}
+
+// AddFunc 添加任务
+func AddFunc(spec string, cmd func()) (cron.EntryID, error) {
+	return Get().AddFunc(spec, cmd)
 }

@@ -67,8 +67,8 @@ type MapConfigI interface {
 
 	// SortByDis 距离排序
 	SortByDis(mapID MapID, mapIDs []MapID)
-	// CoverMapIDs
-	CoverMapIDs(id int32, i int, i2 any) []int32
+	// CoverMapIDs 获取覆盖到的地图id
+	CoverMapIDs(id int32, i int, i2 any) []MapID
 }
 
 type BaseBuildingsConfI interface {

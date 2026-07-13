@@ -69,8 +69,8 @@ type RoleSelectList struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	LastUse    *pb_role.RoleSimpleInfo   `protobuf:"bytes,1,opt,name=last_use,json=lastUse,proto3" json:"last_use,omitempty"`
-	SimpleInfo []*pb_role.RoleSimpleInfo `protobuf:"bytes,2,rep,name=simple_info,json=simpleInfo,proto3" json:"simple_info,omitempty"`
+	LastUse    *pb_role.RoleSimpleInfo   `protobuf:"util_bytes,1,opt,name=last_use,json=lastUse,proto3" json:"last_use,omitempty"`
+	SimpleInfo []*pb_role.RoleSimpleInfo `protobuf:"util_bytes,2,rep,name=simple_info,json=simpleInfo,proto3" json:"simple_info,omitempty"`
 }
 
 func (x *RoleSelectList) Reset() {
@@ -123,8 +123,8 @@ type CreateAccountReq struct {
 	unknownFields protoimpl.UnknownFields
 
 	ChannelType ChannelType `protobuf:"varint,1,opt,name=channelType,proto3,enum=account.ChannelType" json:"channelType,omitempty"`
-	AccountName string      `protobuf:"bytes,2,opt,name=account_name,json=accountName,proto3" json:"account_name,omitempty"`
-	Password    string      `protobuf:"bytes,3,opt,name=password,proto3" json:"password,omitempty"`
+	AccountName string      `protobuf:"util_bytes,2,opt,name=account_name,json=accountName,proto3" json:"account_name,omitempty"`
+	Password    string      `protobuf:"util_bytes,3,opt,name=password,proto3" json:"password,omitempty"`
 }
 
 func (x *CreateAccountReq) Reset() {
@@ -184,7 +184,7 @@ type CreateAccountResp struct {
 	unknownFields protoimpl.UnknownFields
 
 	AccountId uint64          `protobuf:"varint,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
-	RoleList  *RoleSelectList `protobuf:"bytes,2,opt,name=role_list,json=roleList,proto3" json:"role_list,omitempty"`
+	RoleList  *RoleSelectList `protobuf:"util_bytes,2,opt,name=role_list,json=roleList,proto3" json:"role_list,omitempty"`
 }
 
 func (x *CreateAccountResp) Reset() {
@@ -237,8 +237,8 @@ type LoginAccountReq struct {
 	unknownFields protoimpl.UnknownFields
 
 	ChannelType ChannelType `protobuf:"varint,1,opt,name=channelType,proto3,enum=account.ChannelType" json:"channelType,omitempty"`
-	AccountName string      `protobuf:"bytes,2,opt,name=account_name,json=accountName,proto3" json:"account_name,omitempty"`
-	Password    string      `protobuf:"bytes,3,opt,name=password,proto3" json:"password,omitempty"`
+	AccountName string      `protobuf:"util_bytes,2,opt,name=account_name,json=accountName,proto3" json:"account_name,omitempty"`
+	Password    string      `protobuf:"util_bytes,3,opt,name=password,proto3" json:"password,omitempty"`
 }
 
 func (x *LoginAccountReq) Reset() {
@@ -298,7 +298,7 @@ type LoginAccountResp struct {
 	unknownFields protoimpl.UnknownFields
 
 	AccountId uint64          `protobuf:"varint,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
-	RoleList  *RoleSelectList `protobuf:"bytes,2,opt,name=role_list,json=roleList,proto3" json:"role_list,omitempty"`
+	RoleList  *RoleSelectList `protobuf:"util_bytes,2,opt,name=role_list,json=roleList,proto3" json:"role_list,omitempty"`
 }
 
 func (x *LoginAccountResp) Reset() {

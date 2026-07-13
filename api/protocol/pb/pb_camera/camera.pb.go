@@ -76,7 +76,7 @@ type MapInfo struct {
 	LandCover int32             `protobuf:"varint,3,opt,name=land_cover,json=landCover,proto3" json:"land_cover,omitempty"` // 占地范围
 	RoleId    uint64            `protobuf:"varint,4,opt,name=role_id,json=roleId,proto3" json:"role_id,omitempty"`          // 角色ID
 	UnionId   uint64            `protobuf:"varint,5,opt,name=union_id,json=unionId,proto3" json:"union_id,omitempty"`       // 联盟id
-	City      *pb_city.CityData `protobuf:"bytes,10,opt,name=city,proto3" json:"city,omitempty"`                            // 城数据
+	City      *pb_city.CityData `protobuf:"util_bytes,10,opt,name=city,proto3" json:"city,omitempty"`                            // 城数据
 }
 
 func (x *MapInfo) Reset() {
@@ -204,7 +204,7 @@ type CameraInitResp struct {
 
 	GridWidth  uint32                     `protobuf:"varint,1,opt,name=gridWidth,proto3" json:"gridWidth,omitempty"`   // 格子div宽度
 	GridHeight uint32                     `protobuf:"varint,2,opt,name=gridHeight,proto3" json:"gridHeight,omitempty"` // 格子div高度
-	March      []*pb_maps_march.MarchInfo `protobuf:"bytes,3,rep,name=march,proto3" json:"march,omitempty"`            // 本人的行军数据
+	March      []*pb_maps_march.MarchInfo `protobuf:"util_bytes,3,rep,name=march,proto3" json:"march,omitempty"`            // 本人的行军数据
 }
 
 func (x *CameraInitResp) Reset() {
@@ -317,8 +317,8 @@ type CameraMoveResp struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Map              []*MapInfo                 `protobuf:"bytes,1,rep,name=map,proto3" json:"map,omitempty"`                                                               // 地图数据
-	March            []*pb_maps_march.MarchInfo `protobuf:"bytes,2,rep,name=march,proto3" json:"march,omitempty"`                                                           // 行军数据
+	Map              []*MapInfo                 `protobuf:"util_bytes,1,rep,name=map,proto3" json:"map,omitempty"`                                                               // 地图数据
+	March            []*pb_maps_march.MarchInfo `protobuf:"util_bytes,2,rep,name=march,proto3" json:"march,omitempty"`                                                           // 行军数据
 	DeleteScreenId   []uint32                   `protobuf:"varint,3,rep,packed,name=delete_screen_id,json=deleteScreenId,proto3" json:"delete_screen_id,omitempty"`         // 删除的视野块ID
 	UnionMemberMapId []int32                    `protobuf:"varint,4,rep,packed,name=union_member_map_id,json=unionMemberMapId,proto3" json:"union_member_map_id,omitempty"` // 盟友地图ID(只会在3级视野返回)
 }
@@ -387,7 +387,7 @@ type PushMapInfo struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	MapInfos []*MapInfo `protobuf:"bytes,1,rep,name=map_infos,json=mapInfos,proto3" json:"map_infos,omitempty"` // 地图数据
+	MapInfos []*MapInfo `protobuf:"util_bytes,1,rep,name=map_infos,json=mapInfos,proto3" json:"map_infos,omitempty"` // 地图数据
 }
 
 func (x *PushMapInfo) Reset() {
