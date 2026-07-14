@@ -1,7 +1,6 @@
 package marchdos
 
 import (
-	"server.slg.com/services/internal/cores/cores_declarations"
 	"server.slg.com/services/internal/cores/map_managers"
 	"server.slg.com/services/internal/cores/marchs"
 )
@@ -11,7 +10,6 @@ type MultiMarch struct {
 	multi           []*marchs.MarchInfo
 	markOff         int32
 	marchLen        int
-	MarchType       cores_declarations.MarchType
 	arriveAfterFunc func(*map_managers.MapManager, []*marchs.MarchInfo)
 }
 
@@ -31,14 +29,14 @@ func (m *MultiMarch) TryLock(marchLock, fromLock, toLock bool) bool {
 		m.markOff = 0
 	}
 	if fromLock {
-		if !m.fromMapInfo.TryLock() {
+		if !m.fromMapInfo.LockMarchDo() {
 			m.unlock()
 			return false
 		}
 		m.fromMapLockOk = true
 	}
 	if toLock {
-		if !m.toMapInfo.TryLock() {
+		if !m.toMapInfo.LockMarchDo() {
 			m.unlock()
 			return false
 		}
@@ -58,11 +56,11 @@ func (m *MultiMarch) unlock() {
 		m.marchLockOk = false
 	}
 	if m.fromMapLockOk {
-		m.fromMapInfo.Unlock()
+		m.fromMapInfo.UnlockMarchDo()
 		m.fromMapLockOk = false
 	}
 	if m.toMapLockOk {
-		m.toMapInfo.Unlock()
+		m.toMapInfo.UnlockMarchDo()
 		m.toMapLockOk = false
 	}
 }

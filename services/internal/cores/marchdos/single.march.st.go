@@ -1,7 +1,6 @@
 package marchdos
 
 import (
-	"server.slg.com/services/internal/cores/cores_declarations"
 	"server.slg.com/services/internal/cores/map_managers"
 	"server.slg.com/services/internal/cores/marchs"
 )
@@ -15,7 +14,6 @@ func NewSingleMarch() *SingleMarch {
 type SingleMarch struct {
 	BaseMarch
 	single          *marchs.MarchInfo
-	MarchType       cores_declarations.MarchType
 	arriveAfterFunc func(*map_managers.MapManager, *marchs.MarchInfo)
 }
 
@@ -28,14 +26,14 @@ func (m *SingleMarch) TryLock(marchLock, fromLock, toLock bool) bool {
 		m.marchLockOk = true
 	}
 	if fromLock {
-		if !m.fromMapInfo.TryLock() {
+		if !m.fromMapInfo.LockMarchDo() {
 			m.unlock()
 			return false
 		}
 		m.fromMapLockOk = true
 	}
 	if toLock {
-		if !m.toMapInfo.TryLock() {
+		if !m.toMapInfo.LockMarchDo() {
 			m.unlock()
 			return false
 		}
@@ -50,11 +48,11 @@ func (m *SingleMarch) unlock() {
 		m.marchLockOk = false
 	}
 	if m.fromMapLockOk {
-		m.fromMapInfo.Unlock()
+		m.fromMapInfo.UnlockMarchDo()
 		m.fromMapLockOk = false
 	}
 	if m.toMapLockOk {
-		m.toMapInfo.Unlock()
+		m.toMapInfo.UnlockMarchDo()
 		m.toMapLockOk = false
 	}
 }

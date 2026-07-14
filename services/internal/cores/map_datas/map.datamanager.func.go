@@ -2,6 +2,7 @@ package map_datas
 
 import (
 	"errors"
+	"time"
 
 	"go.uber.org/zap"
 	"server.slg.com/api/protocol/pb/pb_role"
@@ -11,9 +12,33 @@ import (
 	"server.slg.com/services/internal/cores/roles"
 )
 
-func (mdm *MapDataManager) Clear(mapIDs []cores_declarations.MapID) {
-	// todo
-	panic("implement me")
+func (mdm *MapDataManager) Clear(mapIDs []cores_declarations.MapID, isNeedLock bool) {
+	mdm.ClearMapInfoSlice(mdm.GetMapInfoSlice(mapIDs), isNeedLock)
+}
+
+// ClearMapInfoSlice 清空地块
+func (mdm *MapDataManager) ClearMapInfoSlice(dataSlice []*MapInfo, lock bool) {
+	if lock {
+		for _, v := range dataSlice {
+			v.Lock()
+		}
+		defer mdm.UnLock(dataSlice)
+	}
+
+	clearTime := time.Now()
+	for _, d := range dataSlice {
+		mdm.Free(d, false, clearTime)
+	}
+}
+
+// Free 清空地块
+func (mdm *MapDataManager) Free(mapInfo *MapInfo, lock bool, clearTime time.Time) {
+	if lock {
+		mapInfo.Lock()
+		defer mapInfo.UnLock()
+	}
+	mapInfo.Free(clearTime)
+	mdm.Save(mapInfo)
 }
 
 func (mdm *MapDataManager) SetRoleMainCity(roleCityState cores_declarations.RoleMainCityState, dataSlice []*MapInfo, roleBrief *pb_role.RoleBrief) error {
@@ -36,9 +61,10 @@ func (mdm *MapDataManager) SetRoleMainCity(roleCityState cores_declarations.Role
 	}
 
 	//
+	updateNow := time.Now()
 	coreMapInfo := dataSlice[coreIndex]
 	for _, mapInfo := range dataSlice {
-		mapInfo.Free()
+		mapInfo.Free(updateNow)
 		mapInfo.serverID = roleBrief.GetRoleBaseInfo().GetSimpleInfo().GetServerId()
 		mapInfo.ownerID = roleBrief.GetRoleBaseInfo().GetSimpleInfo().GetRoleId()
 		mapInfo.coreMapID = coreMapInfo.mapID
@@ -78,7 +104,7 @@ func (mdm *MapDataManager) GetFreeBorn() (mapIDs []cores_declarations.MapID, loc
 			}
 			// 判断已上锁的地块数是否和所需一致
 			if len(mapSliceTmp) != len(mapIDsTmp) {
-				mdm.Unlock(mapSliceTmp)
+				mdm.UnLock(mapSliceTmp)
 				return true
 			}
 
@@ -100,7 +126,7 @@ func (mdm *MapDataManager) GetFreeBorn() (mapIDs []cores_declarations.MapID, loc
 
 				return false
 			}
-			mdm.Unlock(mapSliceTmp)
+			mdm.UnLock(mapSliceTmp)
 		}
 
 		if common_globals.IsDev() {
@@ -117,4 +143,27 @@ func (mdm *MapDataManager) GetFreeBorn() (mapIDs []cores_declarations.MapID, loc
 		err = errors.New("没有空佘的位置可创号")
 	}
 	return mapIDs, lockMapSlice, bornID, coreMapID, freeBornFunc, err
+}
+
+// Around 取得周围的地块数据,不包含中心地块
+func (mdm *MapDataManager) Around(mapID cores_declarations.MapID) (resp []*MapInfo) {
+	resp = mdm.filterAround(mapID, [][2]int32{{-1, 0}, {-1, 1}, {-1, -1}, {0, -1}, {0, 1}, {1, -1}, {1, 0}, {1, 1}})
+	return
+}
+
+// AroundCover 取得周围的地块数据,包含本地块，共9个
+func (mdm *MapDataManager) AroundCover(mapID cores_declarations.MapID) (resp []*MapInfo) {
+	resp = mdm.filterAround(mapID, [][2]int32{{-1, 0}, {-1, 1}, {-1, -1}, {0, -1}, {0, 0}, {0, 1}, {1, -1}, {1, 0}, {1, 1}})
+	return
+}
+
+func (mdm *MapDataManager) filterAround(mapID cores_declarations.MapID, filter [][2]int32) (resp []*MapInfo) {
+	x, y := mdm.config.MapID2XY(mapID)
+	for _, v := range filter {
+		loopMapId := mdm.config.XY2MapID(x+v[0], y+v[1])
+		if tmp, ok := mdm.GetMapInfo(loopMapId); ok {
+			resp = append(resp, tmp)
+		}
+	}
+	return
 }

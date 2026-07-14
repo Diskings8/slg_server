@@ -3,11 +3,21 @@ package map_datas
 import (
 	"sync/atomic"
 
-	"server.slg.com/api/protocol/pb/pb_role"
+	"go.uber.org/zap"
+	"server.slg.com/common/common_declarations"
+	"server.slg.com/common/conns/dbconn"
+	"server.slg.com/common/loggers"
+	"server.slg.com/common/utils/asyncsave_entity"
 	"server.slg.com/common/utils/hashmaps"
 	"server.slg.com/services/internal/cores/cores_declarations"
 	"server.slg.com/services/internal/cores/map_aois"
 )
+
+const (
+	maxSaveLen = 1000
+)
+
+var _ common_declarations.AsyncSaveEntityI = new(MapDataManager)
 
 // MapDataManager 地图数据管理器，负责地图格子的初始化、保存和 AOI 管理
 type MapDataManager struct {
@@ -91,36 +101,72 @@ func (mdm *MapDataManager) TryLock(mapList []*MapInfo) bool {
 	return true
 failUnlock:
 	for _, mapD := range locked {
-		mapD.Unlock()
+		mapD.UnLock()
 	}
 	return false
 }
 
-func (mdm *MapDataManager) Unlock(mapList []*MapInfo) {
+func (mdm *MapDataManager) UnLock(mapList []*MapInfo) {
 	exMapID := make(map[cores_declarations.MapID]bool, len(mapList))
 	for _, mapD := range mapList {
 		if _, ok := exMapID[mapD.GetMapID()]; ok {
 			continue
 		}
-		mapD.Unlock()
+		mapD.UnLock()
 		exMapID[mapD.GetMapID()] = true
 	}
+}
+
+func (mdm *MapDataManager) IsDelete() bool {
+	return false
+}
+
+func (mdm *MapDataManager) Saving() bool {
+	return mdm.saving.Load()
 }
 
 func (mdm *MapDataManager) Save(list ...*MapInfo) {
 	for _, m := range list {
 		mdm.waitSave.Store(m.GetMapID(), m)
 	}
-	// todo save
+	asyncsave_entity.EntitySaveFunc(mdm)
+}
+
+// save 批量保存
+func (mdm *MapDataManager) save(db common_declarations.DbcI, waitSlice [maxSaveLen]*MapInfo, num int) {
+	tmp := waitSlice[:num]
+	err := db.Table(mdm.tableName).Save(tmp).Error()
+	if err != nil {
+		loggers.Logger.Error("save map data failed", zap.Error(err))
+	}
+
+	for _, v := range tmp {
+		if err == nil {
+			mdm.waitSave.Delete(v.GetMapID())
+		}
+		v.UnLock() // 外层上锁
+	}
 }
 
 func (mdm *MapDataManager) SaveDo() {
+	dbWriter := dbconn.GetWriteDbConn()
+	num := 0
+	waitSlice := [maxSaveLen]*MapInfo{}
+	mdm.waitSave.Range(func(_ cores_declarations.MapID, v *MapInfo) bool {
+		if v.TryLock() {
+			waitSlice[num] = v
+			num++
 
-}
-
-func (mdm *MapDataManager) SetHall(data []*MapInfo, brief *pb_role.RoleBrief) error {
-	panic("implement me")
-	return nil
+			if num >= maxSaveLen {
+				mdm.save(dbWriter, waitSlice, num)
+				num = 0
+			}
+		}
+		return true
+	})
+	if num > 0 {
+		mdm.save(dbWriter, waitSlice, num)
+	}
 }
 
 type LockMapSlice struct {
@@ -133,7 +179,7 @@ func (l LockMapSlice) Unlock() {
 	if l.mdm == nil {
 		return
 	}
-	l.mdm.Unlock(l.data)
+	l.mdm.UnLock(l.data)
 }
 
 // Data 数据

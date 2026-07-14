@@ -82,7 +82,7 @@ func (rcm *RoleConnectManager) WaitDone(conn *RoleConnect) {
 func (rcm *RoleConnectManager) SetRoleScreen(roleID uint64, mapID cores_declarations.MapID) {
 	conn, ok := rcm.LoadRoleConnect(roleID)
 	if ok {
-		conn.SetScreenMapID(mapID)
+		rcm.aoi.Move(conn, mapID)
 	}
 }
 

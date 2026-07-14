@@ -2,6 +2,7 @@ package map_datas
 
 import (
 	"sync"
+	"time"
 
 	"server.slg.com/services/internal/cores/cores_declarations"
 	"server.slg.com/services/internal/cores/map_datas/map_buildings"
@@ -11,15 +12,16 @@ import (
 // MapInfo 地图格子信息，包含格子的坐标、等级、类型、归属服务器以及叠加的建筑和事件
 type MapInfo struct {
 	rwLock           sync.RWMutex
+	marchLocker      sync.Mutex
 	mapID            cores_declarations.MapID
 	coreMapID        cores_declarations.MapID
+	configID         uint32
+	Level            cores_declarations.MapLevel
+	ElementType      cores_declarations.ElementType
 	x                int
 	y                int
 	serverID         uint32
 	ownerID          uint64
-	Level            cores_declarations.MapLevel
-	configID         uint32
-	ElementType      cores_declarations.ElementType
 	protectedEndTime int64
 	overlayEvent     *map_events.OverlayEvent
 	overlayBuilding  *map_buildings.OverlayBuilding
@@ -67,11 +69,40 @@ func (mi *MapInfo) TryLock() bool {
 	return mi.rwLock.TryLock()
 }
 
-func (mi *MapInfo) Unlock() {
+func (mi *MapInfo) UnLock() {
 	mi.rwLock.Unlock()
 }
 
+func (mi *MapInfo) Lock() {
+	mi.rwLock.Lock()
+}
+
+// LockMarchDo 行军处理锁定
+func (mi *MapInfo) LockMarchDo() bool {
+	if mi == nil {
+		return true
+	}
+	return mi.marchLocker.TryLock()
+}
+
+// UnlockMarchDo 行军处理解锁
+func (mi *MapInfo) UnlockMarchDo() {
+	if mi == nil {
+		return
+	}
+	mi.marchLocker.Unlock()
+}
+
 // -------------------
-func (mi *MapInfo) Free() {
-	// todo
+
+// Free 地块被释放
+func (mi *MapInfo) Free(now time.Time) {
+	mi.rwLock.Lock()
+	defer mi.rwLock.Unlock()
+	mi.ownerID = 0
+	if mi.ElementType != cores_declarations.ElementType_Terrain_3 {
+		mi.protectedEndTime = now.Add(time.Hour).Unix()
+	}
+	mi.overlayEvent.AfterFree(now)
+	mi.overlayBuilding.AfterFree(now)
 }

@@ -8,20 +8,22 @@ import (
 	"server.slg.com/services/internal/cores/cores_declarations"
 )
 
-type BaseBuildings struct {
+var _ cores_declarations.BuildingI = new(BaseBuilding)
+
+type BaseBuilding struct {
 	BuildingsType          pb_city.BuildingType // 建筑类型
 	BuildingsMaxHp         uint64               // 最大血量
 	BuildingsCurHp         uint64               // 当前血量
 	BuildingsConfID        uint32               // 建筑配置ID
 	BuildingsLevel         uint32               // 当前等级
 	BuildingsRecoverHpTime int64                // 上次恢复hp血量时间
-	BuildingsConf          cores_declarations.BaseBuildingsConfI
+	BuildingsConf          cores_declarations.BaseBuildingConfI
 	buildingsRWLock        sync.RWMutex
 }
 
-func NewBaseBuildings(confID, curLv uint32, conf cores_declarations.BaseBuildingsConfI) *BaseBuildings {
+func NewBaseBuilding(confID, curLv uint32, conf cores_declarations.BaseBuildingConfI) *BaseBuilding {
 	maxHp := conf.GetBuildingsMaxHp(confID, curLv)
-	buildings := &BaseBuildings{
+	buildings := &BaseBuilding{
 		BuildingsConfID:        confID,
 		BuildingsCurHp:         maxHp,
 		BuildingsLevel:         curLv,
@@ -31,7 +33,19 @@ func NewBaseBuildings(confID, curLv uint32, conf cores_declarations.BaseBuilding
 	return buildings
 }
 
-func (b *BaseBuildings) LevelUp() {
+func (b *BaseBuilding) GetBuildingType() pb_city.BuildingType {
+	return b.BuildingsType
+}
+
+func (b *BaseBuilding) AfterFree(time.Time) {
+
+}
+
+func (b *BaseBuilding) BeforeBeAttack(cores_declarations.MarchInfoI) bool {
+	return true
+}
+
+func (b *BaseBuilding) LevelUp() {
 	b.buildingsRWLock.Lock()
 	defer b.buildingsRWLock.Unlock()
 	if b.BuildingsLevel < b.BuildingsConf.GetBuildingsMaxLevel() {
@@ -44,7 +58,7 @@ func (b *BaseBuildings) LevelUp() {
 //
 //	ip: add 增加的数值
 //	op: right  生效增加的数值
-func (b *BaseBuildings) AddBuildingsHp(add uint64) (right uint64) {
+func (b *BaseBuilding) AddBuildingsHp(add uint64) (right uint64) {
 	b.buildingsRWLock.Lock()
 	defer b.buildingsRWLock.Unlock()
 	maxHp := b.BuildingsConf.GetBuildingsMaxHp(b.BuildingsConfID, b.BuildingsLevel)
@@ -65,7 +79,7 @@ func (b *BaseBuildings) AddBuildingsHp(add uint64) (right uint64) {
 //	ip: reduce 减少的数值
 //	op: right  生效减少的数值
 //	op: isBroken 是否以及损毁
-func (b *BaseBuildings) ReduceBuildingsHp(reduce uint64) (right uint64, isBroken bool) {
+func (b *BaseBuilding) ReduceBuildingsHp(reduce uint64) (right uint64, isBroken bool) {
 	b.buildingsRWLock.Lock()
 	defer b.buildingsRWLock.Unlock()
 	if b.BuildingsCurHp < reduce {
@@ -78,6 +92,6 @@ func (b *BaseBuildings) ReduceBuildingsHp(reduce uint64) (right uint64, isBroken
 	return
 }
 
-func (b *BaseBuildings) BeAttack(info cores_declarations.MarchInfoI) (right uint64, isBroken bool) {
+func (b *BaseBuilding) BeAttack(info cores_declarations.MarchInfoI) (right uint64, isBroken bool) {
 	return b.ReduceBuildingsHp(info.GetRelocationVal())
 }

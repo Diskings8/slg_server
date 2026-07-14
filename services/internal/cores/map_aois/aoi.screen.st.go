@@ -7,6 +7,8 @@ import (
 	"server.slg.com/services/internal/cores/cores_declarations"
 )
 
+var _ cores_declarations.AoiScreenI = new(Screen[cores_declarations.ScreenID])
+
 type Screen[T cores_declarations.ScreenID] struct {
 	ID              T
 	connect         hashmaps.Map[uint64, cores_declarations.MapRoleConnectI]
