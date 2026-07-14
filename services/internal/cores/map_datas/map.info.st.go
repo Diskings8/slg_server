@@ -2,6 +2,7 @@ package map_datas
 
 import (
 	"sync"
+	"time"
 
 	"server.slg.com/services/internal/cores/cores_declarations"
 	"server.slg.com/services/internal/cores/map_datas/map_buildings"
@@ -13,13 +14,13 @@ type MapInfo struct {
 	rwLock           sync.RWMutex
 	mapID            cores_declarations.MapID
 	coreMapID        cores_declarations.MapID
+	configID         uint32
+	Level            cores_declarations.MapLevel
+	ElementType      cores_declarations.ElementType
 	x                int
 	y                int
 	serverID         uint32
 	ownerID          uint64
-	Level            cores_declarations.MapLevel
-	configID         uint32
-	ElementType      cores_declarations.ElementType
 	protectedEndTime int64
 	overlayEvent     *map_events.OverlayEvent
 	overlayBuilding  *map_buildings.OverlayBuilding
@@ -67,11 +68,24 @@ func (mi *MapInfo) TryLock() bool {
 	return mi.rwLock.TryLock()
 }
 
-func (mi *MapInfo) Unlock() {
+func (mi *MapInfo) UnLock() {
 	mi.rwLock.Unlock()
 }
 
+func (mi *MapInfo) Lock() {
+	mi.rwLock.Lock()
+}
+
 // -------------------
-func (mi *MapInfo) Free() {
-	// todo
+
+// Free 地块被释放
+func (mi *MapInfo) Free(now time.Time) {
+	mi.rwLock.Lock()
+	defer mi.rwLock.Unlock()
+	mi.ownerID = 0
+	if mi.ElementType != cores_declarations.ElementType_Terrain_3 {
+		mi.protectedEndTime = now.Add(time.Hour).Unix()
+	}
+	mi.overlayEvent.AfterFree(now)
+	mi.overlayBuilding.AfterFree(now)
 }

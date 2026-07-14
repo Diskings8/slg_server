@@ -1,6 +1,11 @@
 package cores_declarations
 
-import "server.slg.com/api/protocol/pb/pb_common"
+import (
+	"time"
+
+	"server.slg.com/api/protocol/pb/pb_city"
+	"server.slg.com/api/protocol/pb/pb_common"
+)
 
 type AoiScreenI interface {
 }
@@ -71,11 +76,19 @@ type MapConfigI interface {
 	CoverMapIDs(id int32, i int, i2 any) []MapID
 }
 
-type BaseBuildingsConfI interface {
+type BaseBuildingConfI interface {
 	GetBuildingsMaxHp(buildingId uint32, buildingLv uint32) uint64
 	GetBuildingsMaxLevel() uint32
 }
 
-type NpcBuildingsConfI interface {
-	BaseBuildingsConfI
+type NpcBuildingConfI interface {
+	BaseBuildingConfI
+}
+
+type BuildingI interface {
+	GetBuildingType() pb_city.BuildingType
+	AfterFree(freeTime time.Time)
+	BeforeBeAttack(info MarchInfoI) bool
+	BeAttack(info MarchInfoI) (right uint64, isBroken bool)
+	LevelUp()
 }

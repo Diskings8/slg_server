@@ -33,3 +33,11 @@ func NewAsyncSaveEntity(spec, tag string) (*AsyncSaveEntity, error) {
 func RemoveAsyncSave(tag string) {
 
 }
+
+func SaveEntity(entityI common_declarations.AsyncSaveEntityI) {
+	tmp, ok := asyncSaveManager.Load(entityI.Tag())
+	if !ok {
+		panic(entityI.Tag() + "未初始化！")
+	}
+	tmp.Save(entityI)
+}

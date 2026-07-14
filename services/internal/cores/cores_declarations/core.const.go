@@ -98,7 +98,9 @@ type MapLevel int
 type ElementType int
 
 func (i ElementType) IsCantBornUse() bool {
-	return i != ElementType_Terrain_1 && i != ElementType_Terrain_2
+	return i != ElementType_Terrain_1 &&
+		i != ElementType_Terrain_2 &&
+		i != ElementType_Terrain_3
 }
 
 const (
@@ -108,5 +110,6 @@ const (
 	ElementType_Resources_3             // 资源3
 	ElementType_Resources_4             // 资源4
 	ElementType_Terrain_1               // 地形1--山
-	ElementType_Terrain_2               // 地形1--水
+	ElementType_Terrain_2               // 地形2--水
+	ElementType_Terrain_3               // 地形3--战乱地
 )

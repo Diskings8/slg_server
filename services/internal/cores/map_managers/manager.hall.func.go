@@ -13,7 +13,7 @@ func (mm *MapManager) CreateRole(roleBrief *pb_role.RoleBrief) ([]cores_declarat
 	}
 
 	defer lockMapSlice.Unlock()
-	err = mm.mapDataManager.SetHall(lockMapSlice.Data(), roleBrief)
+	err = mm.mapDataManager.SetRoleMainCity(cores_declarations.RoleMainCityStateNormal, lockMapSlice.Data(), roleBrief)
 	if err != nil {
 		freeBornFunc()
 		return nil, err

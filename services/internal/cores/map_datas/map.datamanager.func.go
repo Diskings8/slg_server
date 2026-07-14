@@ -2,6 +2,7 @@ package map_datas
 
 import (
 	"errors"
+	"time"
 
 	"go.uber.org/zap"
 	"server.slg.com/api/protocol/pb/pb_role"
@@ -11,9 +12,33 @@ import (
 	"server.slg.com/services/internal/cores/roles"
 )
 
-func (mdm *MapDataManager) Clear(mapIDs []cores_declarations.MapID) {
-	// todo
-	panic("implement me")
+func (mdm *MapDataManager) Clear(mapIDs []cores_declarations.MapID, isNeedLock bool) {
+	mdm.ClearMapInfoSlice(mdm.GetMapInfoSlice(mapIDs), isNeedLock)
+}
+
+// ClearMapInfoSlice 清空地块
+func (mdm *MapDataManager) ClearMapInfoSlice(dataSlice []*MapInfo, lock bool) {
+	if lock {
+		for _, v := range dataSlice {
+			v.Lock()
+		}
+		defer mdm.UnLock(dataSlice)
+	}
+
+	clearTime := time.Now()
+	for _, d := range dataSlice {
+		mdm.Free(d, false, clearTime)
+	}
+}
+
+// Free 清空地块
+func (mdm *MapDataManager) Free(mapInfo *MapInfo, lock bool, clearTime time.Time) {
+	if lock {
+		mapInfo.Lock()
+		defer mapInfo.UnLock()
+	}
+	mapInfo.Free(clearTime)
+	mdm.Save(mapInfo)
 }
 
 func (mdm *MapDataManager) SetRoleMainCity(roleCityState cores_declarations.RoleMainCityState, dataSlice []*MapInfo, roleBrief *pb_role.RoleBrief) error {
@@ -36,9 +61,10 @@ func (mdm *MapDataManager) SetRoleMainCity(roleCityState cores_declarations.Role
 	}
 
 	//
+	updateNow := time.Now()
 	coreMapInfo := dataSlice[coreIndex]
 	for _, mapInfo := range dataSlice {
-		mapInfo.Free()
+		mapInfo.Free(updateNow)
 		mapInfo.serverID = roleBrief.GetRoleBaseInfo().GetSimpleInfo().GetServerId()
 		mapInfo.ownerID = roleBrief.GetRoleBaseInfo().GetSimpleInfo().GetRoleId()
 		mapInfo.coreMapID = coreMapInfo.mapID
@@ -78,7 +104,7 @@ func (mdm *MapDataManager) GetFreeBorn() (mapIDs []cores_declarations.MapID, loc
 			}
 			// 判断已上锁的地块数是否和所需一致
 			if len(mapSliceTmp) != len(mapIDsTmp) {
-				mdm.Unlock(mapSliceTmp)
+				mdm.UnLock(mapSliceTmp)
 				return true
 			}
 
@@ -100,7 +126,7 @@ func (mdm *MapDataManager) GetFreeBorn() (mapIDs []cores_declarations.MapID, loc
 
 				return false
 			}
-			mdm.Unlock(mapSliceTmp)
+			mdm.UnLock(mapSliceTmp)
 		}
 
 		if common_globals.IsDev() {

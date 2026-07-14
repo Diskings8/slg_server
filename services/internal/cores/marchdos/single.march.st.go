@@ -50,11 +50,11 @@ func (m *SingleMarch) unlock() {
 		m.marchLockOk = false
 	}
 	if m.fromMapLockOk {
-		m.fromMapInfo.Unlock()
+		m.fromMapInfo.UnLock()
 		m.fromMapLockOk = false
 	}
 	if m.toMapLockOk {
-		m.toMapInfo.Unlock()
+		m.toMapInfo.UnLock()
 		m.toMapLockOk = false
 	}
 }
