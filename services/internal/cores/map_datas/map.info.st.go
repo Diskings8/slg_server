@@ -12,6 +12,7 @@ import (
 // MapInfo 地图格子信息，包含格子的坐标、等级、类型、归属服务器以及叠加的建筑和事件
 type MapInfo struct {
 	rwLock           sync.RWMutex
+	marchLocker      sync.Mutex
 	mapID            cores_declarations.MapID
 	coreMapID        cores_declarations.MapID
 	configID         uint32
@@ -74,6 +75,22 @@ func (mi *MapInfo) UnLock() {
 
 func (mi *MapInfo) Lock() {
 	mi.rwLock.Lock()
+}
+
+// LockMarchDo 行军处理锁定
+func (mi *MapInfo) LockMarchDo() bool {
+	if mi == nil {
+		return true
+	}
+	return mi.marchLocker.TryLock()
+}
+
+// UnlockMarchDo 行军处理解锁
+func (mi *MapInfo) UnlockMarchDo() {
+	if mi == nil {
+		return
+	}
+	mi.marchLocker.Unlock()
 }
 
 // -------------------

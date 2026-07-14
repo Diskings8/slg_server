@@ -144,3 +144,26 @@ func (mdm *MapDataManager) GetFreeBorn() (mapIDs []cores_declarations.MapID, loc
 	}
 	return mapIDs, lockMapSlice, bornID, coreMapID, freeBornFunc, err
 }
+
+// Around 取得周围的地块数据,不包含中心地块
+func (mdm *MapDataManager) Around(mapID cores_declarations.MapID) (resp []*MapInfo) {
+	resp = mdm.filterAround(mapID, [][2]int32{{-1, 0}, {-1, 1}, {-1, -1}, {0, -1}, {0, 1}, {1, -1}, {1, 0}, {1, 1}})
+	return
+}
+
+// AroundCover 取得周围的地块数据,包含本地块，共9个
+func (mdm *MapDataManager) AroundCover(mapID cores_declarations.MapID) (resp []*MapInfo) {
+	resp = mdm.filterAround(mapID, [][2]int32{{-1, 0}, {-1, 1}, {-1, -1}, {0, -1}, {0, 0}, {0, 1}, {1, -1}, {1, 0}, {1, 1}})
+	return
+}
+
+func (mdm *MapDataManager) filterAround(mapID cores_declarations.MapID, filter [][2]int32) (resp []*MapInfo) {
+	x, y := mdm.config.MapID2XY(mapID)
+	for _, v := range filter {
+		loopMapId := mdm.config.XY2MapID(x+v[0], y+v[1])
+		if tmp, ok := mdm.GetMapInfo(loopMapId); ok {
+			resp = append(resp, tmp)
+		}
+	}
+	return
+}

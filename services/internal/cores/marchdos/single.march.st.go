@@ -28,14 +28,14 @@ func (m *SingleMarch) TryLock(marchLock, fromLock, toLock bool) bool {
 		m.marchLockOk = true
 	}
 	if fromLock {
-		if !m.fromMapInfo.TryLock() {
+		if !m.fromMapInfo.LockMarchDo() {
 			m.unlock()
 			return false
 		}
 		m.fromMapLockOk = true
 	}
 	if toLock {
-		if !m.toMapInfo.TryLock() {
+		if !m.toMapInfo.LockMarchDo() {
 			m.unlock()
 			return false
 		}
@@ -50,11 +50,11 @@ func (m *SingleMarch) unlock() {
 		m.marchLockOk = false
 	}
 	if m.fromMapLockOk {
-		m.fromMapInfo.UnLock()
+		m.fromMapInfo.UnlockMarchDo()
 		m.fromMapLockOk = false
 	}
 	if m.toMapLockOk {
-		m.toMapInfo.UnLock()
+		m.toMapInfo.UnlockMarchDo()
 		m.toMapLockOk = false
 	}
 }

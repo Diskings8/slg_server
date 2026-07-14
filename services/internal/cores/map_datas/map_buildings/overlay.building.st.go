@@ -2,6 +2,7 @@ package map_buildings
 
 import (
 	"sync"
+	"time"
 
 	"server.slg.com/services/internal/cores/cores_declarations"
 )
@@ -16,4 +17,8 @@ type OverlayBuilding struct {
 
 func (ob *OverlayBuilding) GetBuilding() cores_declarations.BuildingI {
 	return ob.building
+}
+
+func (ob *OverlayBuilding) AfterFree(now time.Time) {
+
 }
