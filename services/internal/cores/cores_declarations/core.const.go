@@ -24,12 +24,14 @@ func (i ScreenID) Int32() int32 {
 
 type BornBlockID int32
 
+// MarchTimeType 行军耗时类型
 type MarchTimeType int
 
 const (
-	MarchTimeType_Straight MarchTimeType = iota
+	MarchTimeTypeStraight MarchTimeType = iota
 )
 
+// MarchType 行军类型
 type MarchType uint32
 
 const (
@@ -40,10 +42,11 @@ const (
 	MarchTypeDevelop  MarchType = 10005 // 开发
 )
 
+// 布阵槽位
 const (
-	TeamSlot_1 = iota + 1
-	TeamSlot_2
-	TeamSlot_3
+	TeamSlot1 = iota + 1
+	TeamSlot2
+	TeamSlot3
 )
 
 type MapGroup uint32
@@ -76,6 +79,12 @@ const (
 	Land1CoverBaseKey = 1
 	// Land3CoverBaseKey 3*3主位置在那一个键里。
 	Land3CoverBaseKey = 4
+	// Land5CoverBaseKey 5*5主位置在那一个键里。
+	Land5CoverBaseKey = 12
+	// Land7CoverBaseKey 7*7主位置在那一个键里。
+	Land7CoverBaseKey = 24
+	// Land11CoverBaseKey 11*11主位置在那一个键里。
+	Land11CoverBaseKey = 60
 )
 
 const (
