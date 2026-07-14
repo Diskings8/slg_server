@@ -8,6 +8,8 @@ import (
 )
 
 type AoiScreenI interface {
+	MarchDelete(info MarchInfoI)
+	PassingMarchDelete(info MarchInfoI)
 }
 
 type MarchHeroI interface {

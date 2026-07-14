@@ -1,7 +1,6 @@
 package marchdos
 
 import (
-	"server.slg.com/services/internal/cores/cores_declarations"
 	"server.slg.com/services/internal/cores/map_managers"
 	"server.slg.com/services/internal/cores/marchs"
 )
@@ -15,7 +14,6 @@ func NewSingleMarch() *SingleMarch {
 type SingleMarch struct {
 	BaseMarch
 	single          *marchs.MarchInfo
-	MarchType       cores_declarations.MarchType
 	arriveAfterFunc func(*map_managers.MapManager, *marchs.MarchInfo)
 }
 

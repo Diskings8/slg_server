@@ -4,6 +4,10 @@ import (
 	"server.slg.com/common/common_declarations"
 )
 
+const (
+	MaxSaveLen = 1000
+)
+
 var readDb common_declarations.DbcI
 var writeDb common_declarations.DbcI
 

@@ -4,6 +4,7 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"server.slg.com/api/protocol/pb/pb_hero"
 	"server.slg.com/api/protocol/pb/pb_maps_march"
 	"server.slg.com/services/internal/cores/cores_declarations"
 )
@@ -14,6 +15,7 @@ var _ cores_declarations.MarchInfoI = (*MarchInfo)(nil)
 type MarchInfo struct {
 	RwLock          sync.RWMutex                     `gorm:"-"`
 	MarchID         cores_declarations.MarchID       `gorm:"primaryKey;COMMENT:行军ID;"`
+	MarchType       cores_declarations.MarchType     `gorm:"not null;COMMENT:行军类型;"`
 	Team            *Team                            `gorm:"type:json;not null;COMMENT:部队数据;"`
 	FromServerID    uint32                           `gorm:"not null;COMMENT:所属服务器;"`
 	ToServerID      uint32                           `gorm:"not null;COMMENT:目标服务器;"`
@@ -37,6 +39,7 @@ type MarchInfo struct {
 	isVirtual       bool                             `gorm:"not null;COMMENT:是否为虚拟行军;"`
 	isNeedSave      atomic.Bool                      `gorm:"-"`
 	isNeedDelete    atomic.Bool                      `gorm:"-"`
+	isMock          atomic.Bool                      `gorm:"-"`
 	saving          atomic.Bool                      `gorm:"-"`
 	marchDoLocker   sync.Mutex                       `gorm:"-"`
 	AoiBlock        []cores_declarations.AoiScreenI  `gorm:"-"`
@@ -44,13 +47,17 @@ type MarchInfo struct {
 }
 
 func (mi *MarchInfo) GetRelocationVal() uint64 {
-	//TODO implement me
-	panic("implement me")
+	var sum uint64
+	for _, v := range mi.Team.Slots {
+		if v.GetHeroInfo().GetCurStatus() != pb_hero.Status_Injured {
+			sum += uint64(v.GetHeroInfo().GetAttrRelocation().GetCurVal())
+		}
+	}
+	return sum
 }
 
 func (mi *MarchInfo) TableName() string {
-	//TODO implement me
-	panic("implement me")
+	return "MarchInfo"
 }
 func (mi *MarchInfo) AddPassingAOIBlock(i cores_declarations.AoiScreenI) {
 	mi.RwLock.Lock()
@@ -103,6 +110,9 @@ func (mi *MarchInfo) AddPassingAoiBlock(b cores_declarations.AoiScreenI) {
 func (mi *MarchInfo) IsVirtual() bool {
 	return mi.isVirtual
 }
+func (mi *MarchInfo) IsMock() bool {
+	return mi.isMock.Load()
+}
 func (mi *MarchInfo) IsNeedSave() bool {
 	return mi.isNeedSave.Load()
 }
@@ -111,6 +121,10 @@ func (mi *MarchInfo) IsNeedDelete() bool {
 }
 func (mi *MarchInfo) IsSaving() bool {
 	return mi.saving.Load()
+}
+
+func (mi *MarchInfo) IsMarchTypeAssist() bool {
+	return mi.MarchType == cores_declarations.MarchTypeAssist
 }
 
 //--------------------------Get----------------------//

@@ -1,7 +1,6 @@
 package marchdos
 
 import (
-	"server.slg.com/services/internal/cores/cores_declarations"
 	"server.slg.com/services/internal/cores/map_managers"
 	"server.slg.com/services/internal/cores/marchs"
 )
@@ -11,7 +10,6 @@ type MultiMarch struct {
 	multi           []*marchs.MarchInfo
 	markOff         int32
 	marchLen        int
-	MarchType       cores_declarations.MarchType
 	arriveAfterFunc func(*map_managers.MapManager, []*marchs.MarchInfo)
 }
 

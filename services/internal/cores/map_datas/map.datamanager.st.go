@@ -129,7 +129,7 @@ func (mdm *MapDataManager) Save(list ...*MapInfo) {
 	for _, m := range list {
 		mdm.waitSave.Store(m.GetMapID(), m)
 	}
-	asyncsave_entity.SaveEntity(mdm)
+	asyncsave_entity.EntitySaveFunc(mdm)
 }
 
 // save 批量保存

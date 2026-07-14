@@ -2,6 +2,7 @@ package common_declarations
 
 import (
 	"sync"
+	"sync/atomic"
 )
 
 type DbModelI interface {
@@ -17,6 +18,8 @@ type DbcI interface {
 	Where(query any, args ...any) DbcI
 	Delete(query any, args ...any) DbcI
 	Take(query any, args ...any) DbcI
+	Create(any) DbcI
+	CreateInBatches(march any, i int) DbcI
 }
 
 // SaveEntityI 存储数据必须实现的接口
@@ -42,8 +45,8 @@ type DataI interface {
 
 // AsyncSaveEntityI 异步存储数据接口
 type AsyncSaveEntityI interface {
-	SaveDo()        // 保存处理函数
-	Tag() string    // 实体的唯一名，不同实体不可重复
-	IsDelete() bool // 是否已删除
-	Saving() bool   // 是否在保存中
+	Tag() string          // 实体的唯一名，不同实体不可重复
+	IsDelete() bool       // 是否已删除
+	Saving() *atomic.Bool // 是否在保存中
+	SaveDo()              // 保存处理函数
 }

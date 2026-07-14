@@ -33,7 +33,11 @@ const (
 type MarchType uint32
 
 const (
-	MarchType_110101 MarchType = 110101
+	MarchTypeAttack   MarchType = 10001 // 攻击
+	MarchTypeAssist   MarchType = 10002 // 驻守
+	MarchTypeSweep    MarchType = 10003 // 扫荡
+	MarchTypeStrategy MarchType = 10004 // 计略
+	MarchTypeDevelop  MarchType = 10005 // 开发
 )
 
 const (
