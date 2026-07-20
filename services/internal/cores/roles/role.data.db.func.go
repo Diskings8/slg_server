@@ -8,8 +8,10 @@ import (
 )
 
 func (d *Data) Save(isDelete bool) error {
-	//TODO implement me
-	panic("implement me")
+	if isDelete {
+		return nil
+	}
+	return d.DBSave()
 }
 
 // Value gorm使用
