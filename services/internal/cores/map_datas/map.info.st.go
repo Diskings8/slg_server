@@ -107,6 +107,12 @@ func (mi *MapInfo) UnlockMarchDo() {
 
 // -------------------
 
+// Occupy 设置地块占领者
+// 注意：调用方需已持有 mi 的写锁
+func (mi *MapInfo) Occupy(ownerID uint64) {
+	mi.ownerID = ownerID
+}
+
 // Free 地块被释放
 func (mi *MapInfo) Free(now time.Time) {
 	mi.rwLock.Lock()

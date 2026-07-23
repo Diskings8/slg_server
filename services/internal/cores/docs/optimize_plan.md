@@ -49,16 +49,25 @@
 
 ### P0-2: 战斗到达流水线
 
-- **文件：** `marchdos/attack_march/march.func.go`（当前 TODO）
-- **参考：** 参考仓库 `marchdo/city_attack.go` + `city_attack_battle.go` + `city_attack_event.go` + `city_attack_occupy.go` + `city_attack_settle.go`
-- **说明：** 攻击行军到达后需要按顺序执行完整流水线，建议按阶段拆分文件
+- **状态：** 🏗️ 第一阶段完成（基础流水线）
+- **涉及文件：**
+  - `marchdos/attack_march/march.func.go` — 串联各阶段（Prepare → Do → Finish）
+  - `marchdos/attack_march/march.result.st.go` — 战斗结果数据结构
+  - `marchdos/attack_march/march.check.go` — 战前合法性校验
+  - `marchdos/attack_march/march.battle.go` — 战斗结算引擎（拆迁 + 对战）
+  - `marchdos/attack_march/march.settle.go` — 战损结算 + 占用判定 + 溃败处理
+  - `marchdos/attack_march/march.push.go` — 战报推送（复用现有推送通道）
+  - `marchdos/attack_march/march.event.go` — 事件触发（预留空桩）
+  - `map_datas/map.info.st.go` — 新增 `Occupy()` 方法
+- **说明：** 攻击行军到达后按顺序执行完整流水线，按阶段拆分文件
+- **流水线：** `checkTargetLegality → settleBattle → processBattleResult → pushBattleResult`
 - **子任务：**
-  - [ ] 战斗结算
-  - [ ] 战报推送（`PushMarchBattleResult`，区分集结/单人）
-  - [ ] 事件触发
-  - [ ] 占领判定
-  - [ ] 战损结算
-  - [ ] `IsDefeated` 溃败标记 + 行军类型转换
+  - [x] 战斗结算（简化本地版：拆迁值 + 兵力对比）
+  - [ ] 战报推送（`PushMarchBattleResult`，区分集结/单人）— 第二阶段 TODO：需补充 PB 协议
+  - [ ] 事件触发 — 预留空桩
+  - [x] 占领判定（基础版：设置 ownerID）
+  - [x] 战损结算（按比例分配存活数）
+  - [x] `IsDefeated` 溃败标记 + 状态转换（MarchState 设为 Back）
 
 ---
 
