@@ -93,10 +93,19 @@
 
 ### P1-1: 抽取独立 handler 层
 
-- **文件：** 新增 `map_handler/` 或类似目录
-- **参考：** 参考仓库 `handler/`（handler 只做请求校验和响应组装）
-- **说明：** 当前 `MapManager` 承担了 RPC 校验 + 编排双重职责。抽取 handler 层将 RPC 入口与编排逻辑分离。
-- **状态：** [ ] 待开始
+- **状态：** 🏗️ 基础结构已创建
+- **涉及文件：**
+  - `map_handler/handler.st.go` — MarchHandler / MapHandler 定义（函数字段注入模式）
+  - `map_handler/march_validator.func.go` — `ValidateCreateMarch` / `ValidateChangeMarch` 校验逻辑
+  - `map_handler/march_handler.func.go` — `CreateMarch` / `ChangeMarch` / `CallBack` / `CallBackNow` / `MarchInfo` / `MyMarch`
+  - `map_handler/handler.errors.go` — 错误常量
+- **参考：** 参考仓库 `handler/` — `MarchInterface{Manage, Map, March}` 三字段模式 + `march_validator.go`
+- **说明：** 当前 `MapManager` 承担了 RPC 校验 + 编排双重职责。抽取 handler 层将 RPC 入口与编排逻辑分离。已建立基础结构和 march 操作 handler，后续随 RPC 层接入补充。
+- **设计：**
+  - 函数字段注入：`MarchHandler{Manage: func() *MapManager { return mm }}`，便于测试 mock
+  - 校验与编排分离：`ValidateCreateMarch` 处理输入校验，返回 `CreateMarchCtx`
+  - handler 方法调用校验器 → 通过 `MapManager` 执行编排 → 触发持久化+推送
+  - `March` / `Map` 字段可另设直接访问子管理器，避免全部经过 `Manage`
 
 ### P1-2: `marchdos/` 工厂模式重构
 
@@ -246,7 +255,8 @@
 | `marchs/`（行军数据） | P0-3 ✅ | P1-10 | P2-6, P2-7 |
 | `map_aois/`（AOI 视野） | — | P1-3, P1-4 | P2-3, P2-4 |
 | `map_datas/`（地图数据） | — | P1-5, P1-9 | P2-1, P2-5 |
-| `map_managers/`（地图管理） | — | P1-1, P1-8, P1-11 | P2-9, P2-10 |
+| `map_managers/`（地图管理） | — | P1-1 🏗️, P1-8, P1-11 | P2-9, P2-10 |
+| `map_handler/`（handler 层） | — | P1-1 🏗️ | — |
 | 持久化层 | — | P1-6 | — |
 | 新增 validator/ | — | P1-7 | — |
 | 测试 | — | — | P2-11 |
