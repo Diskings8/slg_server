@@ -31,7 +31,7 @@ type MapManager struct {
 |---|---|
 | `GetMapDataManager()` | 地图数据管理器 |
 | `GetMarchManage()` | 行军管理器 |
-| `GetBlock()` | 地图区块 |
+| `GetBlock()` | 地图区块（MapBlocks 系统，25 块 5×5 分区） |
 | `GetConf()` | 地图配置 |
 
 ---
@@ -41,8 +41,8 @@ type MapManager struct {
 ### NewMapManager
 
 构造函数，策略模式注入：
-- `marchDoFunc` — 行军到达回调
-- `marchDoHandleFunc` — 行军处理器工厂
+- `marchDoFunc` — 行军到达回调（推荐使用 `marchdos.MarchTickHandler`）
+- `marchDoHandleFunc` — 行军处理器工厂（推荐使用 `marchdos.NewMarchDo`）
 - 自动创建 `roleConnectManager` 和 `mapBlock`
 
 ### Start
@@ -114,8 +114,8 @@ loopTickAccept
 **upMapAsync 流程**:
 1. 加锁拷贝 `waitUpdateMapID` 并清空
 2. 对每个 mapID 调用 `AOI.AroundConnects` 收集可见玩家
-3. 按角色分组地图 ID（角色 A 可见地图 [1,2,3]，角色 B 可见 [2,4]）
-4. 批量格式化 MapInfo 为 PB
+3. 按角色分组地图 ID
+4. 批量调用 `FormatMapInfo2Pb` 格式化
 5. 逐角色组装 `PushMapInfo` → `PushToRoleID` 发送
 
 ---
@@ -126,8 +126,18 @@ loopTickAccept
 
 | 方法 | 说明 |
 |---|---|
-| `FormatMapInfo2Pb(sliceInfo, resp)` | 地图信息 → PB（当前为空，预留扩展点） |
+| `FormatMapInfo2Pb(sliceInfo, resp)` | 地图信息 → `pb_camera.MapInfo`（MapId, ServerId, LandCover, RoleId, UnionId, City） |
 | `FormatMarchInfo2Pb(info)` | 行军信息 → `pb_maps_march.MarchInfo`（含队伍数据） |
+
+**FormatMapInfo2Pb 字段映射**:
+
+| 源字段 | PB 字段 | 说明 |
+|---|---|---|
+| `mapID` | `MapId` | 地图 ID |
+| `serverID` | `ServerId` | 服务器 ID |
+| `ownerID` | `RoleId` | 归属者 ID |
+| `overlayBuilding` 中的 `NpcCity` | `UnionId` | NPC 城市的占领联盟 ID |
+| 玩家主城 / NPC 城市 | `LandCover` | 3（`HallLandCover`）；其他为 1 |
 
 **MarchInfo PB 字段**: MarchID, FromRoleID, ExecRoleID, SrcFromMapID, FromMapID, ToMapID, State, StartTime, EndTime, UnionID, TeamInfo
 
@@ -175,7 +185,8 @@ var mapPBPool = &sync.Pool{
 
 ## 设计要点
 
-- **策略模式**: `marchDoFunc` / `marchDoHandleFunc` 通过构造函数注入，行军处理与 MapManager 解耦
+- **策略模式**: `marchDoFunc` / `marchDoHandleFunc` 通过构造函数注入，行军处理与 MapManager 解耦；推荐使用 `marchdos.MarchTickHandler` + `marchdos.NewMarchDo`
 - **三级定时调度**: 100ms（精准触发）+ 300ms（地图清理）+ 1s（兜底），通过时间槽 `map[int64]map[...]struct{}` 管理
 - **异步 goroutine 安全**: 所有 `timeMarch` / `timeMap` / `waitUpdateMapID` 操作均有独立锁保护；行军处理采用 `go marchDoFunc` 并发执行
 - **消息推送双通道**: 地图更新（`upMapAsync`）和行军更新（`UpdateMarchPush`）各自独立推送路径
+- **PB 对象池**: `mapPBPool` 复用 `pb_camera.MapInfo`，减少 GC 压力

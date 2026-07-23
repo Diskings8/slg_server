@@ -1,7 +1,7 @@
 # map_datas — 地图格子数据（核心数据层）
 
 > 路径: `services/internal/cores/map_datas/`  
-> 文件: `map.info.st.go` · `map.datamanager.st.go` · `map.datamanager.func.go` · `datamanager.born.func.go`  
+> 文件: `map.info.st.go` · `map.datamanager.st.go` · `map.datamanager.func.go` · `datamanager.born.func.go` · `map.union.func.go`  
 > 子包: `map_buildings/` · `map_events/`
 
 ---
@@ -46,13 +46,21 @@ type MapInfo struct {
 | `GetMapID()` / `GetBaseMapID()` | 格子 ID 和核心格 ID |
 | `GetPointX()` / `GetPointY()` | 坐标 |
 | `GetServerID()` | 归属服务器 |
+| `GetOwnerID()` | 归属角色 ID（读锁） |
 | `GetLevel()` | 等级（读锁） |
 | `GetElementID()` / `GetElementType()` | 元素配置 ID 和类型（读锁） |
+| `GetOverlayBuilding()` | 叠加建筑（读锁） |
+
+| 字段操作方法 | 说明 |
+|---|---|
+| `Occupy(ownerID)` | 设置地块占领者（调用方需持有写锁） |
+| `Free(now)` | 释放地块（重置 ownerID，设置保护时间） |
 
 | 并发控制 | 说明 |
 |---|---|
 | `TryLock()` / `Unlock()` | 尝试加写锁（非阻塞） |
-| `Free()` | 重置（TODO） |
+| `Lock()` / `Unlock()` | 加写锁（阻塞） |
+| `LockMarchDo()` / `UnlockMarchDo()` | 行军执行专用互斥锁 |
 
 ---
 
@@ -132,7 +140,36 @@ func (l LockMapSlice) Data() []*MapInfo // 获取数据
 
 ---
 
-## 3. CheckRoleBornSiteSafeByMapInfos — 出生点安全性校验
+## 3. UnionMemberMapIDs — 联盟成员地图索引
+
+**文件**: `map.union.func.go`
+
+```go
+type UnionMemberMapIDs struct {
+    unionRoleMapID map[uint64]map[uint64]cores_declarations.MapID
+    roleUnionID    map[uint64]uint64
+    roleMap        map[uint64]cores_declarations.MapID
+    locker         sync.RWMutex
+}
+```
+
+维护联盟 ID → 角色 ID → 地图格子的三元映射，提供 O(1) 的角色归属查询。
+
+| 方法 | 说明 |
+|---|---|
+| `Set(unionID, roleID, mapID)` | 设置角色所属联盟和地图位置 |
+| `SetUnionID(roleID, unionID)` | 更新角色联盟归属 |
+| `SetMapID(roleID, mapID)` | 更新角色地图位置 |
+| `Remove(roleID)` | 移除角色（退出/删号） |
+| `GetUnionRoleMapIDs(unionID)` | 获取联盟所有成员的地图位置（副本） |
+| `GetUnionRoleIDs(unionID)` | 获取联盟所有成员 ID |
+| `GetRoleUnionID(roleID)` | 查询角色所属联盟 |
+| `GetRoleMapID(roleID)` | 查询角色所在地图 |
+| `Len()` | 总角色数 |
+
+---
+
+## 4. CheckRoleBornSiteSafeByMapInfos — 出生点安全性校验
 
 **文件**: `datamanager.born.func.go`
 

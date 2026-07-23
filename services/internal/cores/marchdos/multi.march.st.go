@@ -76,7 +76,6 @@ func (m *MultiMarch) Init() {
 	m.AddDoOpt(func(manager *map_managers.MapManager) {})
 	m.AddFinishOpt(func(manager *map_managers.MapManager) {})
 
-	// ---- 默认召回逻辑：遍历 multi，对每个行军执行方向反转 ----
 	m.AddCallBackOpt(func(mgr *map_managers.MapManager) {
 		for _, info := range m.multi {
 			if info == nil {
@@ -86,7 +85,6 @@ func (m *MultiMarch) Init() {
 		}
 	})
 
-	// ---- 默认立即召回逻辑 ----
 	m.AddCallBackNowOpt(func(mgr *map_managers.MapManager) {
 		for _, info := range m.multi {
 			if info == nil {
@@ -96,7 +94,6 @@ func (m *MultiMarch) Init() {
 		}
 	})
 
-	// ---- 默认召回到达逻辑 ----
 	m.AddFinishBackArriveOpt(func(mgr *map_managers.MapManager) {
 		for _, info := range m.multi {
 			if info == nil {
@@ -110,8 +107,6 @@ func (m *MultiMarch) Init() {
 }
 
 // multiCallbackSwapDirection 单条行军召回核心（供 MultiMarch 复用）
-//
-// 注意：调用方需已持有对应 MarchInfo 的写锁，直接访问字段而非通过 getter。
 func multiCallbackSwapDirection(mgr *map_managers.MapManager, info *marchs.MarchInfo) {
 	state := info.MarchState
 	if state == pb_maps_march.MarchState_Back ||
@@ -120,26 +115,20 @@ func multiCallbackSwapDirection(mgr *map_managers.MapManager, info *marchs.March
 		return
 	}
 
-	oldFromMapID := info.FromMapID
 	oldToMapID := info.ToMapID
 
 	now := time.Now().Unix()
 	totalTime := info.EndTimeUx - info.StartTimeUx
 	elapsed := now - info.StartTimeUx
 
-	var returnEndTime int64
-	switch {
-	case elapsed <= 0:
-		returnEndTime = now + totalTime
-	case elapsed >= totalTime:
-		returnEndTime = now + totalTime
-	default:
-		returnEndTime = now + elapsed
+	forwardTime := totalTime
+	if elapsed > 0 && elapsed < totalTime {
+		forwardTime = elapsed
 	}
-	info.EndTimeUx = returnEndTime
+	info.EndTimeUx = now + forwardTime
 
 	info.FromMapID = oldToMapID
-	// 返回目标：优先使用 TransitMapID（实际出发地），回退到 SrcFromMapID（初始主城）
+
 	var returnTarget cores_declarations.MapID
 	if info.TransitMapID >= 0 {
 		returnTarget = info.TransitMapID
@@ -148,14 +137,10 @@ func multiCallbackSwapDirection(mgr *map_managers.MapManager, info *marchs.March
 	}
 	info.ToMapID = returnTarget
 
-	// 更新 MapAttribute（方法内部直接访问字段，避免已持有写锁时 RLock 死锁）
 	mgr.GetMarchManage().MapAttributeMarchCallBack(info)
-
 	info.MarchState = pb_maps_march.MarchState_Back
-	mgr.TickerAddMarch(info.MarchID, returnEndTime)
+	mgr.TickerAddMarch(info.MarchID, info.EndTimeUx)
 
-	// AOI 路径重算：清除旧路径 AOI，重新计算返回路径
-	// 注意：直接访问字段，避免已持有写锁时 RLock 死锁
 	for _, v := range info.AoiBlock {
 		v.MarchDelete(info)
 	}
@@ -168,8 +153,6 @@ func multiCallbackSwapDirection(mgr *map_managers.MapManager, info *marchs.March
 }
 
 // multiCallbackNowInstantReturn 单条行军立即召回核心（供 MultiMarch 复用）
-//
-// 注意：调用方需已持有对应 MarchInfo 的写锁，直接访问字段而非通过 getter。
 func multiCallbackNowInstantReturn(mgr *map_managers.MapManager, info *marchs.MarchInfo) {
 	state := info.MarchState
 	if state == pb_maps_march.MarchState_Back ||
@@ -178,26 +161,19 @@ func multiCallbackNowInstantReturn(mgr *map_managers.MapManager, info *marchs.Ma
 		return
 	}
 
-	oldFromMapID := info.FromMapID
-	oldToMapID := info.ToMapID
-
-	info.FromMapID = oldToMapID
-	// 返回目标：优先使用 TransitMapID，回退到 SrcFromMapID
-	var nowReturnTarget cores_declarations.MapID
+	var returnTarget cores_declarations.MapID
 	if info.TransitMapID >= 0 {
-		nowReturnTarget = info.TransitMapID
+		returnTarget = info.TransitMapID
 	} else {
-		nowReturnTarget = info.SrcFromMapID
+		returnTarget = info.SrcFromMapID
 	}
-	info.ToMapID = nowReturnTarget
+	info.ToMapID = returnTarget
 
-	// 更新 MapAttribute（方法内部直接访问字段，避免已持有写锁时 RLock 死锁）
 	mgr.GetMarchManage().MapAttributeMarchCallBack(info)
 	info.MarchState = pb_maps_march.MarchState_Back
 	info.EndTimeUx = time.Now().Unix()
 	mgr.TickerAddMarch(info.MarchID, info.EndTimeUx)
 
-	// AOI 路径重算：清除旧路径 AOI，重新计算返回路径
 	for _, v := range info.AoiBlock {
 		v.MarchDelete(info)
 	}
@@ -209,21 +185,14 @@ func multiCallbackNowInstantReturn(mgr *map_managers.MapManager, info *marchs.Ma
 	mgr.MarchAOISetupSingle(info)
 }
 
-func (m *MultiMarch) SetArriveAfterFunc(*map_managers.MapManager, []*marchs.MarchInfo) {
-}
+func (m *MultiMarch) SetArriveAfterFunc(*map_managers.MapManager, []*marchs.MarchInfo) {}
 
 // ---- MarchDoFuncHandleI 接口实现 ----
 
-// Do 执行行军到达处理
-//
-// 根据行军状态分流：
-//   - MarchState_Back → 召回到达处理（BackArrive）
-//   - 其他状态 → 正常到达处理（base Do 流程）
 func (m *MultiMarch) Do() error {
 	if len(m.multi) == 0 || m.mgr == nil {
 		return nil
 	}
-	// 检查第一个非空行军的状态来分流
 	for _, info := range m.multi {
 		if info == nil {
 			continue
@@ -236,10 +205,6 @@ func (m *MultiMarch) Do() error {
 	return m.BaseMarch.Do()
 }
 
-// BackArrive 召回到达处理
-//
-// 当 MultiMarch 在 Back 状态下到达原出发地时调用。
-// 遍历所有行军，推送最终状态后逐一删除。
 func (m *MultiMarch) BackArrive() error {
 	if len(m.multi) == 0 || m.mgr == nil {
 		return nil
@@ -251,7 +216,6 @@ func (m *MultiMarch) BackArrive() error {
 
 	m.BaseMarch.BackArrive()
 
-	// 推送并删除每个行军
 	for _, info := range m.multi {
 		if info == nil {
 			continue
@@ -262,9 +226,6 @@ func (m *MultiMarch) BackArrive() error {
 	return nil
 }
 
-// ReTry 召回重试
-//
-// 当 MultiMarch 的 CallBack 因锁竞争等临时原因失败时，进行有限次重试。
 func (m *MultiMarch) ReTry() error {
 	if len(m.multi) == 0 || m.mgr == nil {
 		return nil
@@ -276,7 +237,6 @@ func (m *MultiMarch) ReTry() error {
 		if err := m.CallBack(); err == nil {
 			return nil
 		}
-		// 检查第一个非空行军是否已进入不可召回状态
 		for _, info := range m.multi {
 			if info == nil {
 				continue
@@ -293,14 +253,10 @@ func (m *MultiMarch) ReTry() error {
 	return cores_declarations.ErrLockFailed
 }
 
-// CallBackToSrcPoint 强制召回所有行军到 SrcFromMapID
-//
-// 无视 TransitMapID（各自的实际出发地），直接回到各自的 SrcFromMapID（最初起始点）。
 func (m *MultiMarch) CallBackToSrcPoint() error {
 	if len(m.multi) == 0 || m.mgr == nil {
 		return nil
 	}
-	// 临时覆盖所有行军的 TransitMapID 为 SrcFromMapID
 	origTransits := make([]cores_declarations.MapID, len(m.multi))
 	for i, info := range m.multi {
 		if info != nil {
@@ -318,7 +274,6 @@ func (m *MultiMarch) CallBackToSrcPoint() error {
 	return m.CallBack()
 }
 
-// CallBackNowToSrcPoint 强制立即召回所有行军到 SrcFromMapID
 func (m *MultiMarch) CallBackNowToSrcPoint() error {
 	if len(m.multi) == 0 || m.mgr == nil {
 		return nil
@@ -340,7 +295,6 @@ func (m *MultiMarch) CallBackNowToSrcPoint() error {
 	return m.CallBackNow()
 }
 
-// LockDo 尝试锁定所有行军和地块
 func (m *MultiMarch) LockDo(marchLock, fromMapLock, toMapLock bool) error {
 	if !m.TryLock(marchLock, fromMapLock, toMapLock) {
 		return cores_declarations.ErrLockFailed
@@ -348,12 +302,10 @@ func (m *MultiMarch) LockDo(marchLock, fromMapLock, toMapLock bool) error {
 	return nil
 }
 
-// CallBack 召回所有行军
 func (m *MultiMarch) CallBack() error {
 	if len(m.multi) == 0 || m.mgr == nil {
 		return nil
 	}
-	// 尝试锁定所有行军
 	if !m.TryLock(true, false, false) {
 		return cores_declarations.ErrLockFailed
 	}
@@ -361,7 +313,6 @@ func (m *MultiMarch) CallBack() error {
 
 	m.BaseMarch.CallBack()
 
-	// 分别推送每个行军
 	for _, info := range m.multi {
 		if info != nil {
 			m.mgr.UpdateMarchPush(info)
@@ -370,7 +321,6 @@ func (m *MultiMarch) CallBack() error {
 	return nil
 }
 
-// CallBackNow 立即召回所有行军
 func (m *MultiMarch) CallBackNow() error {
 	if len(m.multi) == 0 || m.mgr == nil {
 		return nil
@@ -390,17 +340,14 @@ func (m *MultiMarch) CallBackNow() error {
 	return nil
 }
 
-// Lock 尝试锁定所有行军和地块
 func (m *MultiMarch) Lock(marchDoLock, fromMapLock, toMapLock bool) bool {
 	return m.TryLock(marchDoLock, fromMapLock, toMapLock)
 }
 
-// Unlock 解锁所有行军和地块
 func (m *MultiMarch) Unlock() {
 	m.unlock()
 }
 
-// Leave 行军离开时的清理
 func (m *MultiMarch) Leave() error {
 	return nil
 }

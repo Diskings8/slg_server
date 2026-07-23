@@ -1,7 +1,7 @@
 # marchs — 行军信息与队伍管理
 
 > 路径: `services/internal/cores/marchs/`  
-> 文件: `march.info.st.go` · `march.infomanage.st.go` · `march.infomanager.func.go` · `march.infomanager.db.func.go` · `map.attribute.st.go` · `map.attribute.func.go` · `march.team.st.go`
+> 文件: `march.info.st.go` · `march.infomanage.st.go` · `march.infomanager.func.go` · `march.infomanager.db.func.go` · `march.assemble.func.go` · `map.attribute.st.go` · `map.attribute.func.go` · `march.team.st.go`
 
 ---
 
@@ -38,6 +38,8 @@ type MarchInfo struct {
     PVEWinCount     uint32                           `gorm:"not null;COMMENT:PVE连胜数量;"`
     VirtualData     uint64                           `gorm:"not null;COMMENT:虚拟行军数据;"`
     isVirtual       bool                             `gorm:"not null;COMMENT:是否为虚拟行军;"`
+    IsStay          bool                             `gorm:"not null;default:false;COMMENT:到达后停留;"`
+    StayEndTimeUx   int64                            `gorm:"not null;default:0;COMMENT:停留结束时间;"`
     isNeedSave      atomic.Bool                      `gorm:"-"`
     isNeedDelete    atomic.Bool                      `gorm:"-"`
     isMock          atomic.Bool                      `gorm:"-"`
@@ -54,8 +56,11 @@ type MarchInfo struct {
 |---|---|
 | `MarchType` | 行军类型，标记行军用途（如 `MarchTypeAssist` 驻守） |
 | `ExecRoleID` | 当前执行者角色 ID（可能不同于 `FromRoleID` 归属者） |
+| `TransitMapID` | 本次行军实际出发地；回调时若 >= 0 则作为返回目的地，否则回退到 `SrcFromMapID` |
 | `FinalMarchSpeed` | 最终计算后的行军速度（区别于基础速度 `BaseMarchSpeed`） |
 | `VirtualData` | 虚拟行军数据（用于虚拟行军场景的附加信息） |
+| `IsStay` / `StayEndTimeUx` | 到达后停留状态和时间 |
+| `FollowMarchID` | 跟随的行军 ID（用于集结行军，成员行军通过此字段指向集结发起者） |
 | `isMock` | 假行军标记，标记 `CreateMockMarch` 创建的条目不写入数据库 |
 
 ### 状态标记
@@ -133,7 +138,7 @@ type MarchInfoManager struct {
 |---|---|
 | `TickerChan` | 行军到期通知通道 → `MapManager.loopTickAccept` |
 | `allMarch` | 全局行军集合 |
-| `allAssembleMarch` | 组合行军集合（跨服/合进行军） |
+| `allAssembleMarch` | 集结行军集合（发起行军 ID → 成员列表） |
 | `mapMarch` | 地图行军属性列表（`MapAttribute[]`，每张地图一个） |
 
 ### 构造与初始化
@@ -150,19 +155,34 @@ type MarchInfoManager struct {
 | `checkAutoMigrate(dbc)` | 自动迁移表结构 |
 | `findMarchList(dbc, list)` | 查询全部行军 |
 | `Save(marchInfo)` | 标记行军为待保存 → 触发 `EntitySaveFunc` |
-| `SaveDo()` | 定期批量保存所有标记为 `isNeedSave` 的行军（`dbconn.MaxSaveLen` 分批写入） |
+| `SaveDo()` | 定期批量保存所有标记为 `isNeedSave` 的行军（分批写入） |
+
+### 集结行军管理
+
+**文件**: `march.assemble.func.go`
+
+| 方法 | 说明 |
+|---|---|
+| `AssembleCreate(baseMarchID, marchInfo)` | 创建/加入集结组 |
+| `AssembleJoin(baseMarchID, marchInfo)` | 加入集结 |
+| `AssembleLeft(marchID)` | 从集结中移除成员（集结为空时自动删除） |
+| `DeleteAssemble(baseMarchID)` | 删除整个集结组 |
+| `AssembleList(baseMarchID)` | 获取集结成员列表 |
+| `AssembleRoleIDs(baseMarchID)` | 获取所有成员角色 ID |
+| `AssembleLen(baseMarchID)` | 获取成员数量 |
+| `RangeAssemble(f)` | 遍历所有集结组 |
 
 ### MapAttribute 管理
 
 | 方法 | 说明 |
 |---|---|
 | `MapAttributeGet(mapID)` | 获取指定地图的行军属性 |
-| `MapAttributeMarchCreate(marchInfo)` | 创建行军时将行军挂载到起止点地图（from + to + srcFrom） |
+| `MapAttributeMarchCreate(marchInfo)` | 创建行军时将行军挂载到起止点地图 |
 | `MapAttributeMarchDelete(marchInfo)` | 从起止点地图移除行军 |
-| `MapAttributeMarchChange(marchInfo, newMapID)` | 修改行军目标位置（旧 from 移除 → from 变 to → to 改新目标） |
+| `MapAttributeMarchChange(marchInfo, newMapID)` | 修改行军目标位置 |
 | `MapAttributeMarchModToMapID(marchInfo, newToMapID)` | 仅修改行军目标地图 ID |
-| `MapAttributeMarchModFormMapID(marchInfo, newMapID, isAllForm)` | 修改行军起始地图（支持是否同步修改 FromMapID） |
-| `MapAttributeMarchCallBack(marchInfo)` | 行军返回处理（from 移除 → toMap 添加，toMap 已由调用方设为 TransitMapID/SrcFromMapID） |
+| `MapAttributeMarchModFormMapID(marchInfo, newMapID, isAllForm)` | 修改行军起始地图 |
+| `MapAttributeMarchCallBack(marchInfo)` | 行军返回处理（from 移除 → toMap 添加） |
 
 ### 行军 CRUD
 
@@ -244,11 +264,12 @@ type Team struct {
 
 ## 设计要点
 
-- **分级并发控制**: `RWMutex` 提供读写分离 + `marchDoLocker` 执行专用锁，避免行军处理影响普通读取
+- **分级并发控制**: `RWMutex` 提供读写分离 + `marchDoLocker` 执行专用锁
+- **集结行军**: `allAssembleMarch` 维护发起行军 → 成员列表的映射，提供创建/加入/离开/删除/查询操作
+- **TransitMapID 召回路由**: 行军召回时优先路由到 `TransitMapID`（实际出发地），回退到 `SrcFromMapID`（初始主城）
 - **GORM JSON 序列化**: `Team` / `Path` / `ActionUse` 以 JSON 列存储
 - **延迟标记 + 批量持久化**: `isNeedSave` / `isNeedDelete` 使用 `atomic.Bool` 标记状态，`SaveDo()` 分批处理
 - **AOI 双向关联**: `AoiBlock` / `PassingAoiBlock` 与 AOI Screen 建立双向引用
-- **MapAttribute 全局索引**: `mapMarch []MapAttribute` 以数组下标对应 MapID 实现 O(1) 访问，行军创建/删除时自动维护多地图双向索引
-- **驻守管理**: `assistSlice` 搭配读写锁，支持驻守到达/返回/遍历/查询，与行军创建联动（`Init` 中自动恢复驻守状态）
+- **MapAttribute 全局索引**: `mapMarch []MapAttribute` 以数组下标对应 MapID 实现 O(1) 访问
 - **虚拟行军**: `isVirtual` 标记区分纯路径通行和战斗交互行军
 - **Mock 行军**: `isMock` 标记 + `CreateMockMarch` 实现测试/预告类行军，不写入数据库
