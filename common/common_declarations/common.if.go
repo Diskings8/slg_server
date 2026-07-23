@@ -20,6 +20,7 @@ type DbcI interface {
 	Take(query any, args ...any) DbcI
 	Create(any) DbcI
 	CreateInBatches(march any, i int) DbcI
+	Transaction(fn func(tx DbcI) error) error
 }
 
 // SaveEntityI 存储数据必须实现的接口

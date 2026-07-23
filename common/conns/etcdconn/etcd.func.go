@@ -6,14 +6,15 @@ import (
 	"time"
 
 	clientv3 "go.etcd.io/etcd/client/v3"
+	"server.slg.com/common/common_declarations"
 	"server.slg.com/common/loggers"
 )
 
-func GetServiceKeyByNodeType(nodeType NodeService) string {
+func GetServiceKeyByNodeType(nodeType common_declarations.NodeService) string {
 	switch nodeType {
-	case NodeGameService:
+	case common_declarations.NodeGameService:
 		return "/node:service:game/"
-	case NodeGatewayService:
+	case common_declarations.NodeGatewayService:
 		return "/node:service:gateway/"
 	default:
 		return "/node:service:undef/"
@@ -21,12 +22,12 @@ func GetServiceKeyByNodeType(nodeType NodeService) string {
 }
 
 // RegisterServiceByNodeType 注册etcd
-func RegisterServiceByNodeType(ctx context.Context, nodeType NodeService, instance string, addr string) {
+func RegisterServiceByNodeType(ctx context.Context, nodeType common_declarations.NodeService, instance string, addr string) {
 	var key = GetServiceKeyByNodeType(nodeType) + instance + "/"
 	registerWithLease(ctx, key, addr)
 }
 
-func GetNodeTypeServerList(ctx context.Context, nodeType NodeService) ([]string, error) {
+func GetNodeTypeServerList(ctx context.Context, nodeType common_declarations.NodeService) ([]string, error) {
 	key := GetServiceKeyByNodeType(nodeType)
 	resp, err := etcdClient.Get(ctx, key, clientv3.WithPrefix())
 	if err != nil {
@@ -39,7 +40,7 @@ func GetNodeTypeServerList(ctx context.Context, nodeType NodeService) ([]string,
 	return addrs, nil
 }
 
-func GetNodeTypeServerAddr(nodeType NodeService) (string, error) {
+func GetNodeTypeServerAddr(nodeType common_declarations.NodeService) (string, error) {
 	key := GetServiceKeyByNodeType(nodeType)
 	resp, err := etcdClient.Get(context.Background(), key, clientv3.WithPrefix())
 	if err != nil {
@@ -49,8 +50,6 @@ func GetNodeTypeServerAddr(nodeType NodeService) (string, error) {
 		return "", fmt.Errorf("no available server for node type %d", nodeType)
 	}
 
-	// etcd key: /node:service:game/{instance}/
-	// etcd value: {addr}
 	return string(resp.Kvs[0].Value), nil
 }
 

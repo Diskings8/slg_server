@@ -37,7 +37,7 @@ func (t *Team) GetMaxCount() uint64 {
 
 func (t *Team) CheckCanFight() bool {
 	for _, v := range t.Slots {
-		if v.GetSlotId() == cores_declarations.TeamSlot_1 {
+		if v.GetSlotId() == cores_declarations.TeamSlot1 {
 			return v.GetHeroInfo().GetCurStatus() != pb_hero.Status_Injured
 		}
 	}

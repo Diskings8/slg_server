@@ -2,18 +2,17 @@ package rpc_handlers
 
 import (
 	"google.golang.org/grpc"
+	"server.slg.com/common/common_declarations"
 	"server.slg.com/common/conns/rpcconn/rpc_conns"
-
-	"server.slg.com/common/conns/etcdconn"
 )
 
 var RpcClient = &ClientHandler{
-	conns: make(map[etcdconn.NodeService]*grpc.ClientConn),
+	conns: make(map[common_declarations.NodeService]*grpc.ClientConn),
 }
 
 // dialNodeLocked 按节点类型获取 gRPC 连接（已建立则复用，未建立则通过 etcd 发现 + 连接池创建）。
 // 调用前须持有 ch.mu。
-func (ch *ClientHandler) dialNodeLocked(nodeType etcdconn.NodeService) (*grpc.ClientConn, error) {
+func (ch *ClientHandler) dialNodeLocked(nodeType common_declarations.NodeService) (*grpc.ClientConn, error) {
 	if conn, ok := ch.conns[nodeType]; ok {
 		return conn, nil
 	}

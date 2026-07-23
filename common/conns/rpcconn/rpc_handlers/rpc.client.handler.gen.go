@@ -11,24 +11,31 @@ import (
 	pb_game "server.slg.com/api/protocol/pb/pb_game"
 	pb_gateway "server.slg.com/api/protocol/pb/pb_gateway"
 	pb_worldmap "server.slg.com/api/protocol/pb/pb_worldmap"
-	etcdconn "server.slg.com/common/conns/etcdconn"
+	"server.slg.com/common/common_declarations"
 )
 
 // ClientHandler aggregates all generated gRPC clients.
 // Each client is lazily initialized on first use via GetXxxClient().
 // nil 表示连接失败，调用方自行判断。
 type ClientHandler struct {
-	mu      sync.Mutex
-	conns   map[etcdconn.NodeService]*grpc.ClientConn
-	closers []io.Closer
-
-	// generated per-client fields
-	gameServiceClient pb_game.GameServiceClient
-	gameHandlerClient pb_game.GameHandlerClient
-	gatewayServiceClient pb_gateway.GatewayServiceClient
-	gatewayHandlerClient pb_gateway.GatewayHandlerClient
+	mu                    sync.Mutex
+	conns                 map[common_declarations.NodeService]*grpc.ClientConn
+	closers               []io.Closer
+	gameServiceClient     pb_game.GameServiceClient
+	gameHandlerClient     pb_game.GameHandlerClient
+	gatewayServiceClient  pb_gateway.GatewayServiceClient
+	gatewayHandlerClient  pb_gateway.GatewayHandlerClient
 	worldMapServiceClient pb_worldmap.WorldMapServiceClient
 	worldMapHandlerClient pb_worldmap.WorldMapHandlerClient
+	dialOptions           []grpc.DialOption
+}
+
+// NewClientHandler creates a ClientHandler with the given dial options.
+func NewClientHandler(dialOptions []grpc.DialOption) *ClientHandler {
+	return &ClientHandler{
+		conns:       make(map[common_declarations.NodeService]*grpc.ClientConn),
+		dialOptions: dialOptions,
+	}
 }
 
 // GetGameServiceClient returns the pb_game.GameServiceClient, lazily connecting on first call.
@@ -38,7 +45,7 @@ func (ch *ClientHandler) GetGameServiceClient() pb_game.GameServiceClient {
 	if ch.gameServiceClient != nil {
 		return ch.gameServiceClient
 	}
-	conn, err := ch.dialNodeLocked(etcdconn.NodeGameService)
+	conn, err := ch.dialNodeLocked(common_declarations.NodeGameService)
 	if err != nil {
 		return nil
 	}
@@ -53,7 +60,7 @@ func (ch *ClientHandler) GetGameHandlerClient() pb_game.GameHandlerClient {
 	if ch.gameHandlerClient != nil {
 		return ch.gameHandlerClient
 	}
-	conn, err := ch.dialNodeLocked(etcdconn.NodeGameService)
+	conn, err := ch.dialNodeLocked(common_declarations.NodeGameService)
 	if err != nil {
 		return nil
 	}
@@ -68,7 +75,7 @@ func (ch *ClientHandler) GetGatewayServiceClient() pb_gateway.GatewayServiceClie
 	if ch.gatewayServiceClient != nil {
 		return ch.gatewayServiceClient
 	}
-	conn, err := ch.dialNodeLocked(etcdconn.NodeGatewayService)
+	conn, err := ch.dialNodeLocked(common_declarations.NodeGatewayService)
 	if err != nil {
 		return nil
 	}
@@ -83,7 +90,7 @@ func (ch *ClientHandler) GetGatewayHandlerClient() pb_gateway.GatewayHandlerClie
 	if ch.gatewayHandlerClient != nil {
 		return ch.gatewayHandlerClient
 	}
-	conn, err := ch.dialNodeLocked(etcdconn.NodeGatewayService)
+	conn, err := ch.dialNodeLocked(common_declarations.NodeGatewayService)
 	if err != nil {
 		return nil
 	}
@@ -98,7 +105,7 @@ func (ch *ClientHandler) GetWorldMapServiceClient() pb_worldmap.WorldMapServiceC
 	if ch.worldMapServiceClient != nil {
 		return ch.worldMapServiceClient
 	}
-	conn, err := ch.dialNodeLocked(etcdconn.NodeWorldMapService)
+	conn, err := ch.dialNodeLocked(common_declarations.NodeWorldMapService)
 	if err != nil {
 		return nil
 	}
@@ -113,7 +120,7 @@ func (ch *ClientHandler) GetWorldMapHandlerClient() pb_worldmap.WorldMapHandlerC
 	if ch.worldMapHandlerClient != nil {
 		return ch.worldMapHandlerClient
 	}
-	conn, err := ch.dialNodeLocked(etcdconn.NodeWorldMapService)
+	conn, err := ch.dialNodeLocked(common_declarations.NodeWorldMapService)
 	if err != nil {
 		return nil
 	}

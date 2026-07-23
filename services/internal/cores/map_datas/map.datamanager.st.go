@@ -121,8 +121,8 @@ func (mdm *MapDataManager) IsDelete() bool {
 	return false
 }
 
-func (mdm *MapDataManager) Saving() bool {
-	return mdm.saving.Load()
+func (mdm *MapDataManager) Saving() *atomic.Bool {
+	return &mdm.saving
 }
 
 func (mdm *MapDataManager) Save(list ...*MapInfo) {
