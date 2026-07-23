@@ -2,7 +2,7 @@ package map_handler
 
 import (
 	"server.slg.com/services/internal/cores/cores_declarations"
-	"server.slg.com/services/internal/cores/marchdos"
+	"server.slg.com/services/internal/cores/marchdos/march_factory"
 	"server.slg.com/services/internal/cores/marchs"
 )
 
@@ -39,7 +39,7 @@ func (h *MarchHandler) CallBack(marchInfo *marchs.MarchInfo) error {
 	if mm == nil {
 		return cores_declarations.ErrManagerNil
 	}
-	handle := marchdos.NewMarchDo(mm, marchInfo)
+	handle := march_factory.NewMarchDo(mm, marchInfo)
 	if handle == nil {
 		return cores_declarations.ErrUnknownMarchType
 	}
@@ -52,7 +52,7 @@ func (h *MarchHandler) CallBackNow(marchInfo *marchs.MarchInfo) error {
 	if mm == nil {
 		return cores_declarations.ErrManagerNil
 	}
-	handle := marchdos.NewMarchDo(mm, marchInfo)
+	handle := march_factory.NewMarchDo(mm, marchInfo)
 	if handle == nil {
 		return cores_declarations.ErrUnknownMarchType
 	}

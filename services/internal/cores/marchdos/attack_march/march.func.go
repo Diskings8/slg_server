@@ -1,4 +1,4 @@
-package attack
+package attack_march
 
 import (
 	"server.slg.com/api/protocol/pb/pb_maps_march"
@@ -7,10 +7,6 @@ import (
 	"server.slg.com/services/internal/cores/marchdos"
 	"server.slg.com/services/internal/cores/marchs"
 )
-
-func init() {
-	marchdos.RegisterMarchFactory(cores_declarations.MarchTypeAttack, New)
-}
 
 // New 创建攻击行军执行器
 //

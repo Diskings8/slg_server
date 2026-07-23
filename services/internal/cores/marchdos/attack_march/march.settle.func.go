@@ -1,4 +1,4 @@
-package attack
+package attack_march
 
 import (
 	"server.slg.com/api/protocol/pb/pb_maps_march"

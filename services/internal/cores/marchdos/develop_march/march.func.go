@@ -1,4 +1,4 @@
-package strategy_march
+package develop_march
 
 import (
 	"server.slg.com/services/internal/cores/cores_declarations"
@@ -7,11 +7,11 @@ import (
 	"server.slg.com/services/internal/cores/marchs"
 )
 
-// New 创建计略行军执行器
+// New 创建开发行军执行器
 //
-// 计略行军（10004）的生命周期：
-//  1. 到达目标 → 执行计略效果（侦查、扰乱等）
-//  2. 结算     → TODO: 应用计略效果
+// 开发行军（10005）：
+//  1. 到达目标 → 对地块执行开发操作
+//  2. 结算     → TODO: 改变地块状态
 //  3. 返回     → 行军返回
 func New(mm *map_managers.MapManager, marchInfo *marchs.MarchInfo) cores_declarations.MarchDoFuncHandleI {
 	m := marchdos.NewSingleMarch(mm)
@@ -22,20 +22,22 @@ func New(mm *map_managers.MapManager, marchInfo *marchs.MarchInfo) cores_declara
 	}
 
 	m.AddPrepareOpt(func(mgr *map_managers.MapManager) {
-		// TODO: 检查计略目标合法性
+		// TODO: 检查地块是否可开发
 	})
 
 	m.AddDoOpt(func(mgr *map_managers.MapManager) {
 		if m.MarchInfo() == nil {
 			return
 		}
-		// TODO: 执行计略效果
+		// TODO: 执行开发，更新地块状态
 	})
 
 	m.AddFinishOpt(func(mgr *map_managers.MapManager) {
-		// TODO: 推送计略结果
+		info := m.MarchInfo()
+		if info != nil {
+			mgr.UpdateMapPush(info.GetToMapID())
+		}
 	})
 
 	return m
 }
-

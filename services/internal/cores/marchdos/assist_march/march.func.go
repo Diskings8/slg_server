@@ -1,4 +1,4 @@
-package assist
+package assist_march
 
 import (
 	"server.slg.com/services/internal/cores/cores_declarations"
@@ -6,10 +6,6 @@ import (
 	"server.slg.com/services/internal/cores/marchdos"
 	"server.slg.com/services/internal/cores/marchs"
 )
-
-func init() {
-	marchdos.RegisterMarchFactory(cores_declarations.MarchTypeAssist, New)
-}
 
 // New 创建驻守行军执行器
 //

@@ -1,4 +1,4 @@
-package attack
+package attack_march
 
 import (
 	"server.slg.com/services/internal/cores/map_managers"

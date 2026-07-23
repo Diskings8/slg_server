@@ -109,10 +109,18 @@
 
 ### P1-2: `marchdos/` 工厂模式重构
 
-- **文件：** `marchdos/march.factory.go`
-- **参考：** 参考仓库 `marchdo/interface.go:50-120` 显式 `NewMarchDo` 工厂函数
-- **说明：** 当前使用 `init()` 自注册模式，可扩展性好但链路追踪难。改为显式工厂函数，提升可读性和可测试性。
-- **状态：** [ ] 待开始
+- **状态：** ✅ 已完成
+- **涉及文件：**
+  - `marchdos/march_factory/march.factory.func.go` — 显式 switch 工厂 + MarchTickHandler
+  - `marchdos/march.factory.go` — 删除（注册式工厂）
+  - `marchdos/march.tick.func.go` — 删除（逻辑并入 factory 包）
+  - 各子包 `*_march/march.func.go` — 移除 `init()` 注册、导出 `NewDevelop`
+- **参考：** 参考仓库 `marchdo/interface.go:50-120` / `marchdo/assemble.go`
+- **说明：** `init()` 自注册 → 显式 `switch` 工厂。所有映射关系在 `march_factory/march.factory.func.go` 中可见
+- **设计：**
+  - `marchdos/march_factory.NewMarchDo(mm, info)` — switch 覆盖 5 种类型，未知类型返回 nil
+  - `marchdos/march_factory.MarchTickHandler(mm, marchID)` — tick 分发默认实现（到期检查 + marchLocker + 状态分流）
+  - 子包导入别名：`attack "marchdos/attack_march"` → `attack.New()`
 
 ### P1-3: AOI 行军分离 — `crossMarch` / `passingMarch`
 
