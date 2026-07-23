@@ -12,6 +12,10 @@ func (i MapID) Int32() int32 {
 	return int32(i)
 }
 
+func (i MapID) IsInvalid() bool {
+	return i == InvalidMapID
+}
+
 const (
 	InvalidMapID = -1
 )

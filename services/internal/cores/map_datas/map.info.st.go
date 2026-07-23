@@ -47,6 +47,18 @@ func (mi *MapInfo) GetServerID() uint32 {
 	return mi.serverID
 }
 
+func (mi *MapInfo) GetOwnerID() uint64 {
+	mi.rwLock.RLock()
+	defer mi.rwLock.RUnlock()
+	return mi.ownerID
+}
+
+func (mi *MapInfo) GetOverlayBuilding() *map_buildings.OverlayBuilding {
+	mi.rwLock.RLock()
+	defer mi.rwLock.RUnlock()
+	return mi.overlayBuilding
+}
+
 func (mi *MapInfo) GetLevel() cores_declarations.MapLevel {
 	mi.rwLock.RLock()
 	defer mi.rwLock.RUnlock()
