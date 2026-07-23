@@ -18,10 +18,8 @@ func init() {
 //  2. 采集     → TODO: 发放资源收益
 //  3. 返回     → 行军自动返回
 func New(mm *map_managers.MapManager, marchInfo *marchs.MarchInfo) cores_declarations.MarchDoFuncHandleI {
-	m := marchdos.NewSingleMarch()
+	m := marchdos.NewSingleMarch(mm)
 	m.SetMarchInfo(marchInfo)
-	m.SetMarchManage(mm.GetMarchManage())
-	m.SetManager(mm)
 
 	if toInfo, ok := mm.GetMapDataManager().GetMapInfo(marchInfo.GetToMapID()); ok {
 		m.SetToMapInfo(toInfo)

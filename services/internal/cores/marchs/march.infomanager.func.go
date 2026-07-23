@@ -108,8 +108,10 @@ func (mm *MarchInfoManager) MapAttributeMarchChange(marchInfo *MarchInfo, newMap
 	if marchInfo.GetSrcFromMapID() != marchInfo.FromMapID {
 		marchInfo.SrcFromMapID = marchInfo.FromMapID
 	}
-	marchInfo.FromMapID = marchInfo.ToMapID                   // 开始转为当前的结束目标地址
-	marchInfo.ToMapID = newMapID                              // 目标地址改为新的坐标
+	marchInfo.FromMapID = marchInfo.ToMapID // 开始转为当前的结束目标地址
+	marchInfo.ToMapID = newMapID            // 目标地址改为新的坐标
+	// 更新实际出发地（召回目标），FromMapID 此时已是旧的 ToMapID（停留点）
+	marchInfo.TransitMapID = marchInfo.FromMapID
 	mm.MapAttributeGet(marchInfo.ToMapID).marchAdd(marchInfo) // 重新绑定新的目标地址
 }
 
@@ -141,9 +143,13 @@ func (mm *MarchInfoManager) MapAttributeMarchModFormMapID(marchInfo *MarchInfo, 
 }
 
 // MapAttributeMarchCallBack 行军返回处理
+//
+// 从返回出发地（FromMapID）移除行军，添加到返回目标（ToMapID）。
+// 注意：调用方需保证 marchInfo 数据在调用期间稳定（已加锁或仅单线程访问）。
+// 内部直接访问字段而非通过 Getter（避免已持有写锁时 RLock 死锁）。
 func (mm *MarchInfoManager) MapAttributeMarchCallBack(marchInfo *MarchInfo) {
-	mm.MapAttributeGet(marchInfo.GetFromMapID()).marchDel(marchInfo.GetMarchID())
-	mm.MapAttributeGet(marchInfo.GetSrcFromMapID()).marchAdd(marchInfo)
+	mm.MapAttributeGet(marchInfo.FromMapID).marchDel(marchInfo.MarchID)
+	mm.MapAttributeGet(marchInfo.ToMapID).marchAdd(marchInfo)
 }
 
 // ---------------------------March 相关---------------------------//
@@ -155,6 +161,8 @@ func preCheckCreateMarch(marchInfo *MarchInfo) {
 	if marchInfo.EndTimeUx == 0 {
 		marchInfo.EndTimeUx = time.Now().Add(time.Second * 60).Unix()
 	}
+	// 记录本次行军的实际出发地（用于召回时确定返回目标）
+	marchInfo.TransitMapID = marchInfo.FromMapID
 }
 
 // CreateMarch 创建行军

@@ -22,6 +22,7 @@ type MarchInfo struct {
     FromRoleID      uint64                           `gorm:"not null;COMMENT:归属者角色ID;"`
     ExecRoleID      uint64                           `gorm:"not null;COMMENT:执行者角色ID;"`
     SrcFromMapID    cores_declarations.MapID         `gorm:"not null;COMMENT:最开始的起始地图ID;"`
+    TransitMapID    cores_declarations.MapID         `gorm:"default:-1;COMMENT:本次行军实际出发地；-1 时回退到 SrcFromMapID;"`
     FromMapID       cores_declarations.MapID         `gorm:"not null;COMMENT:当前行军起始地图ID;"`
     ToMapID         cores_declarations.MapID         `gorm:"not null;COMMENT:当前行军目标地图ID;"`
     MarchState      pb_maps_march.MarchState         `gorm:"not null;COMMENT:行军状态;"`
@@ -79,7 +80,7 @@ type MarchInfo struct {
 |---|---|
 | `GetMarchID()` | 行军 ID |
 | `GetUnionID()` | 联盟 ID |
-| `GetFromMapID()` / `GetToMapID()` / `GetSrcFromMapID()` | 起止点地图 ID |
+| `GetFromMapID()` / `GetToMapID()` / `GetSrcFromMapID()` / `GetTransitMapID()` | 起止点地图 ID |
 | `GetMapIDs()` | 三地图 ID 批量获取 |
 | `GetMarchState()` | 行军状态 |
 | `GetFromRoleID()` / `GetExecRoleID()` | 归属者/执行者 |
@@ -161,7 +162,7 @@ type MarchInfoManager struct {
 | `MapAttributeMarchChange(marchInfo, newMapID)` | 修改行军目标位置（旧 from 移除 → from 变 to → to 改新目标） |
 | `MapAttributeMarchModToMapID(marchInfo, newToMapID)` | 仅修改行军目标地图 ID |
 | `MapAttributeMarchModFormMapID(marchInfo, newMapID, isAllForm)` | 修改行军起始地图（支持是否同步修改 FromMapID） |
-| `MapAttributeMarchCallBack(marchInfo)` | 行军返回处理（from 移除 → srcFrom 添加） |
+| `MapAttributeMarchCallBack(marchInfo)` | 行军返回处理（from 移除 → toMap 添加，toMap 已由调用方设为 TransitMapID/SrcFromMapID） |
 
 ### 行军 CRUD
 

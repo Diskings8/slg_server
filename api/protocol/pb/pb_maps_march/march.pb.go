@@ -27,9 +27,10 @@ const (
 	MarchState_Error   MarchState = 0 // 异常状态
 	MarchState_Idle    MarchState = 1 // 等待中
 	MarchState_Move    MarchState = 2 // 行军中
-	MarchState_Station MarchState = 3 // 驻守中
+	MarchState_Station MarchState = 3 // 驻守中（援助驻军）
 	MarchState_Battle  MarchState = 4 // 战斗中
 	MarchState_Back    MarchState = 5 // 返回中
+	MarchState_Stay    MarchState = 6 // 停留中（占领地块后驻留）
 )
 
 // Enum value maps for MarchState.
@@ -41,6 +42,7 @@ var (
 		3: "Station",
 		4: "Battle",
 		5: "Back",
+		6: "Stay",
 	}
 	MarchState_value = map[string]int32{
 		"Error":   0,
@@ -49,6 +51,7 @@ var (
 		"Station": 3,
 		"Battle":  4,
 		"Back":    5,
+		"Stay":    6,
 	}
 )
 

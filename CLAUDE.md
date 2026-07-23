@@ -32,6 +32,14 @@
 
 ---
 
+## 项目规范
+
+| 规范 | 文档 |
+|---|---|
+| 文件 & 目录命名规范 | [docs/naming-convention.md](docs/naming-convention.md) |
+
+---
+
 ## 文档地图
 
 所有模块文档集中在源码同级的 `docs/` 子目录中，以 `MODULE_OVERVIEW.md` 为入口索引。

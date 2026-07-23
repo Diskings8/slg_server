@@ -8,9 +8,10 @@ enum MarchState {
   Error       = 0 ; // 异常状态
   Idle        = 1 ; // 等待中
   Move        = 2 ; // 行军中
-  Station     = 3 ; // 驻守中
+  Station     = 3 ; // 驻守中（援助驻军）
   Battle      = 4 ; // 战斗中
   Back        = 5 ; // 返回中
+  Stay        = 6 ; // 停留中（占领地块后驻留）
 }
 
 message MarchInfo {

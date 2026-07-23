@@ -22,6 +22,7 @@ type MarchInfo struct {
 	FromRoleID      uint64                           `gorm:"not null;COMMENT:归属者角色ID;"` // 当前归属者角色ID
 	ExecRoleID      uint64                           `gorm:"not null;COMMENT:执行者角色ID;"` // 当前执行者角色ID
 	SrcFromMapID    cores_declarations.MapID         `gorm:"not null;COMMENT:最开始的起始地图ID;"`
+	TransitMapID    cores_declarations.MapID         `gorm:"default:-1;COMMENT:本次行军实际出发地（用于召回）；-1 时回退到 SrcFromMapID;"`
 	FromMapID       cores_declarations.MapID         `gorm:"not null;COMMENT:当前行军起始地图ID;"`
 	ToMapID         cores_declarations.MapID         `gorm:"not null;COMMENT:当前行军目标地图ID;"`
 	MarchState      pb_maps_march.MarchState         `gorm:"not null;COMMENT:行军状态;"`
@@ -37,6 +38,8 @@ type MarchInfo struct {
 	PVEWinCount     uint32                           `gorm:"not null;COMMENT:PVE连胜数量;"`
 	VirtualData     uint64                           `gorm:"not null;COMMENT:虚拟行军数据;"`
 	isVirtual       bool                             `gorm:"not null;COMMENT:是否为虚拟行军;"`
+	IsStay          bool                             `gorm:"not null;default:false;COMMENT:到达后停留;"`
+	StayEndTimeUx   int64                            `gorm:"not null;default:0;COMMENT:停留结束时间;"`
 	isNeedSave      atomic.Bool                      `gorm:"-"`
 	isNeedDelete    atomic.Bool                      `gorm:"-"`
 	isMock          atomic.Bool                      `gorm:"-"`
@@ -171,6 +174,12 @@ func (mi *MarchInfo) GetSrcFromMapID() cores_declarations.MapID {
 	mi.RwLock.RLock()
 	defer mi.RwLock.RUnlock()
 	return mi.SrcFromMapID
+}
+
+func (mi *MarchInfo) GetTransitMapID() cores_declarations.MapID {
+	mi.RwLock.RLock()
+	defer mi.RwLock.RUnlock()
+	return mi.TransitMapID
 }
 
 func (mi *MarchInfo) GetMarchState() pb_maps_march.MarchState {

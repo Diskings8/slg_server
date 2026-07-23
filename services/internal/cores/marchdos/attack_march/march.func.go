@@ -18,10 +18,8 @@ func init() {
 //  2. 执行战斗     → TODO: 接入战斗服务
 //  3. 处理结果     → 清理地块、推送更新
 func New(mm *map_managers.MapManager, marchInfo *marchs.MarchInfo) cores_declarations.MarchDoFuncHandleI {
-	m := marchdos.NewSingleMarch()
+	m := marchdos.NewSingleMarch(mm)
 	m.SetMarchInfo(marchInfo)
-	m.SetMarchManage(mm.GetMarchManage())
-	m.SetManager(mm)
 
 	if fromInfo, ok := mm.GetMapDataManager().GetMapInfo(marchInfo.GetFromMapID()); ok {
 		m.SetFromMapInfo(fromInfo)
