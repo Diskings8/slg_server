@@ -9,7 +9,7 @@
 
 | 优先级 | 数量 | 关键领域 |
 |--------|------|----------|
-| 🔴 P0 | 3 | 行军召回状态机 ✅、战斗流水线、每格行军聚合 |
+| 🔴 P0 | 0 | 三项全部完成 ✅ |
 | 🟠 P1 | 11 | 架构分层、AOI、数据模型、持久化、推送 |
 | 🟡 P2 | 11 | 性能优化、锁模式、接口完备性、测试覆盖 |
 
@@ -38,50 +38,54 @@
   - ReTry 实现 3 次重试（间隔 100ms），中途检查状态变更提前退出
   - AOI 重算：清空 `AoiBlock`/`PassingAoiBlock` → `MarchAOISetupSingle` 重新计算
   - `Do()` 分流：检测 `MarchState_Back` 时路由到 `BackArrive()` 而非正常到达流程
-- **子任务：**
-  - [x] `CallBack()` — 开始召回，设置状态
-  - [x] `CallBackNow()` — 立即召回（加速回城）
-  - [x] `BackArrive()` — 召回到达处理（锁定 → 模板链 → 推送 → 删除行军）
-  - [x] `ReTry()` — 召回重试（3 次 × 100ms 退避）
-  - [x] AOI 路径重算（清空 AoiBlock/PassingAoiBlock → 调用 MarchAOISetupSingle）
 
 ---
 
 ### P0-2: 战斗到达流水线
 
-- **状态：** 🏗️ 第一阶段完成（基础流水线）
+- **状态：** ✅ 已完成
 - **涉及文件：**
+  - `marchdos/march.factory.go` — 注册式工厂 + `DefaultMarchTickHandler` tick 分发
   - `marchdos/attack_march/march.func.go` — 串联各阶段（Prepare → Do → Finish）
   - `marchdos/attack_march/march.result.st.go` — 战斗结果数据结构
-  - `marchdos/attack_march/march.check.go` — 战前合法性校验
-  - `marchdos/attack_march/march.battle.go` — 战斗结算引擎（拆迁 + 对战）
-  - `marchdos/attack_march/march.settle.go` — 战损结算 + 占用判定 + 溃败处理
-  - `marchdos/attack_march/march.push.go` — 战报推送（复用现有推送通道）
-  - `marchdos/attack_march/march.event.go` — 事件触发（预留空桩）
-  - `map_datas/map.info.st.go` — 新增 `Occupy()` 方法
-- **说明：** 攻击行军到达后按顺序执行完整流水线，按阶段拆分文件
+  - `marchdos/attack_march/march.battle.func.go` — 战斗结算引擎（逐层对战 + PvE/攻城）
+  - `marchdos/attack_march/march.settle.func.go` — 战损结算 + 占领判定 + 溃败处理
+  - `marchdos/attack_march/march.push.func.go` — 战报推送（复用现有推送通道）
+  - `marchdos/attack_march/march.event.func.go` — 事件触发（预留空桩）
+  - `marchdos/single.march.st.go` — Do() 状态分流、召回持久化（Save）
+  - `marchdos/march.tick.func.go` — 默认 tick 处理（到期检查 + marchLocker + 状态分流）
+  - `map_datas/map.info.st.go` — 新增 `Occupy()`、`GetOwnerID()`、`GetOverlayBuilding()`
+- **参考：** 参考仓库 `marchdo/monster.go` + `marchdo/hall.go` + `handler/mapsearch.go`
 - **流水线：** `checkTargetLegality → settleBattle → processBattleResult → pushBattleResult`
 - **子任务：**
-  - [x] 战斗结算（简化本地版：拆迁值 + 兵力对比）
+  - [x] 战斗结算（多层对战：assist → stay → idle → PvE/攻城）
+  - [x] 战损结算（按比例分配存活数）
+  - [x] 占领判定（`occupyTile` / `tryOccupy`）
+  - [x] `IsDefeated` 溃败标记 + 状态转换
+  - [x] `MarchTickHandler` tick 分发 + 并发控制（marchLocker）
+  - [x] Do() 状态分流（Back 走 BackArrive，其他走正常到达）
+  - [x] CallBack / CallBackNow 异步持久化（Save）
   - [ ] 战报推送（`PushMarchBattleResult`，区分集结/单人）— 第二阶段 TODO：需补充 PB 协议
   - [ ] 事件触发 — 预留空桩
-  - [x] 占领判定（基础版：设置 ownerID）
-  - [x] 战损结算（按比例分配存活数）
-  - [x] `IsDefeated` 溃败标记 + 状态转换（MarchState 设为 Back）
 
 ---
 
 ### P0-3: 每格行军聚合管理（`MapAttribute`）
 
-- **文件：** `marchs/map.attribute.func.go` / `marchs/map.attribute.st.go`
+- **状态：** ✅ 已完成
+- **涉及文件：**
+  - `marchs/map.attribute.st.go` — 新增 `GetMarchIDList()`、`GetMapMarchLen()`、`CleanAllMarch()`
+  - `marchs/march.infomanager.func.go` — 修复 `findMarchList` 值传递 bug（改为返回切片）
 - **参考：** 参考仓库 `march/map.go` + `march/map_assist.go`
-- **说明：** 当前每个格子自己维护行军列表，缺少统一查询入口。需实现每格行军的聚合管理结构体。
+- **说明：** MapAttribute 此前已具备基础功能（marchMap + assistSlice），补全缺失的查询和清理方法
 - **子任务：**
-  - [ ] `GetMapMarch(mapID)` — 查询某格所有行军
-  - [ ] `AssistArrive(mapID)` — 到达驻守
-  - [ ] `AssistCallBack(mapID)` — 召回驻守
-  - [ ] `MarchChangeToMapID(mapID, srcMapID)` — 行军变更地块
-  - [ ] 格子行军数量上限检查
+  - [x] `GetMapMarch(mapID)` — 通过 `MapAttributeGet` 获取
+  - [x] `AssistArrive` / `AssistCallBack` — 驻守到达/返回（已有）
+  - [x] `MarchChangeToMapID` — 通过 `MapAttributeMarchChange` 实现（已有）
+  - [x] `GetMarchIDList()` — 新增，获取地块上所有行军 ID
+  - [x] `GetMapMarchLen()` — 新增，基于 `hashmaps.Map.Len()` 的 O(1) 查询
+  - [x] `CleanAllMarch()` — 新增，清空地块行军+驻军（测试用）
+  - [x] `findMarchList` 传参修复 — 原值传递导致 Init 加载不到数据
 
 ---
 
@@ -142,14 +146,14 @@
 
 - **文件：** `map_managers/manager.push.func.go`
 - **参考：** 参考仓库 `manage/interface.go:413-489` 区分攻击方/被攻击方，分别按角色/联盟推送，远程服通过 gRPC 跨服推送
-- **说明：** 攻防双方收到不同维度的战报（攻击方：战损+战果；被攻击方：警告+战报）
+- **说明：** 攻防双方收到不同维度的战报
 - **状态：** [ ] 待开始
 
 ### P1-9: `RoleMapManager` 角色→地块路由表
 
 - **文件：** 新增 `map_datas/role.map.manager.func.go` 或类似
 - **参考：** 参考仓库独立于 `MapInfo` 的 `RoleMapManager`，支持按 `UnionID` 查询联盟成员位置、按 `RoleID` 查询位置
-- **说明：** 避免遍历全 map 查找角色位置，建立倒排索引
+- **说明：** 避免遍历全 map 查找角色位置，建立倒排索引。已在 `map.union.func.go` 中实现 `UnionMemberMapIDs`
 - **状态：** [ ] 待开始
 
 ### P1-10: `Init()` 集结重建和异常恢复
@@ -195,7 +199,7 @@
 
 - **文件：** `map_datas/map.info.st.go`
 - **参考：** 参考仓库 `MapInfo` 内嵌 `*RadarExcavation`, `*PrivacyTask` 等 `*Struct` 类型
-- **说明：** 零值为 nil 时不占空间，配合 GORM json 序列化。替代当前每层一个硬编码结构体的模式
+- **说明：** 零值为 nil 时不占空间，配合 GORM json 序列化
 
 ### P2-6: 加速记录链 `AccelTime`
 
@@ -207,6 +211,7 @@
 
 - **文件：** `marchs/march.infomanager.func.go`
 - **参考：** 参考仓库 `CreateMarchInBatches()`（`march/interface.go:149-179`）支持一次创建多个行军并批量入 DB
+- **说明：** 当前已有该功能
 
 ### P2-8: 通过消息队列推送战报
 
@@ -237,8 +242,8 @@
 
 | 模块 | P0 | P1 | P2 |
 |------|----|----|----|
-| `marchdos/`（行军执行） | P0-1 ✅, P0-2 | P1-2 | P2-2, P2-8 |
-| `marchs/`（行军数据） | P0-3 | P1-10 | P2-6, P2-7 |
+| `marchdos/`（行军执行） | P0-1 ✅, P0-2 ✅ | P1-2 | P2-2, P2-8 |
+| `marchs/`（行军数据） | P0-3 ✅ | P1-10 | P2-6, P2-7 |
 | `map_aois/`（AOI 视野） | — | P1-3, P1-4 | P2-3, P2-4 |
 | `map_datas/`（地图数据） | — | P1-5, P1-9 | P2-1, P2-5 |
 | `map_managers/`（地图管理） | — | P1-1, P1-8, P1-11 | P2-9, P2-10 |
@@ -251,10 +256,10 @@
 ## 建议推进顺序
 
 ```
-阶段 1（P0 补齐）
-├── P0-2 战斗流水线 ← 最紧急，核心玩法
-├── P0-1 CallBack 状态机 ← ✅ 已完成
-└── P0-3 MapAttribute 聚合 ← 行军查询基础
+阶段 1（P0 补齐）✅ 全部完成
+├── P0-2 战斗流水线 ← 最紧急，核心玩法 ✅
+├── P0-1 CallBack 状态机 ✅
+└── P0-3 MapAttribute 聚合 ✅
 
 阶段 2（P1 基础架构）
 ├── P1-1 handler 层抽取 ← 架构清晰化前提

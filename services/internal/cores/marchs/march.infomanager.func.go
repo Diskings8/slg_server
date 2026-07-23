@@ -29,8 +29,8 @@ func (mm *MarchInfoManager) Init(dbc common_declarations.DbcI) ([]*MarchInfo, er
 	if err := mm.checkAutoMigrate(dbc); err != nil {
 		return nil, err
 	}
-	var marchList []*MarchInfo
-	if err := mm.findMarchList(dbc, marchList); err != nil {
+	marchList, err := mm.findMarchList(dbc)
+	if err != nil {
 		return nil, err
 	}
 
@@ -57,9 +57,10 @@ func (mm *MarchInfoManager) checkAutoMigrate(dbc common_declarations.DbcI) error
 	return dbc.Table(mm.GetTableName()).AutoMigrate(&MarchInfo{})
 }
 
-func (mm *MarchInfoManager) findMarchList(dbc common_declarations.DbcI, marchList []*MarchInfo) error {
-	return dbc.Table(mm.GetTableName()).Find(&marchList).Error()
-
+func (mm *MarchInfoManager) findMarchList(dbc common_declarations.DbcI) ([]*MarchInfo, error) {
+	var marchList []*MarchInfo
+	err := dbc.Table(mm.GetTableName()).Find(&marchList).Error()
+	return marchList, err
 }
 
 //----------------MapAttribute 相关----------------------------//

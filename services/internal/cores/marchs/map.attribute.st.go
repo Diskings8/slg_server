@@ -44,9 +44,43 @@ func (ma *MapAttribute) GetAllMapMarchLen() (l int) {
 	if ma == nil {
 		return
 	}
-	ma.RangeMapMarch(func(cores_declarations.MarchID, *MarchInfo) bool {
+	ma.marchMap.Range(func(cores_declarations.MarchID, *MarchInfo) bool {
 		l++
 		return true
 	})
 	return
+}
+
+// GetMapMarchLen 获取地块上行军总数
+func (ma *MapAttribute) GetMapMarchLen() int {
+	if ma == nil {
+		return 0
+	}
+	return ma.marchMap.Len()
+}
+
+// GetMarchIDList 获取地块上所有行军 ID 列表
+func (ma *MapAttribute) GetMarchIDList() []cores_declarations.MarchID {
+	if ma == nil {
+		return nil
+	}
+	out := make([]cores_declarations.MarchID, 0, ma.GetMapMarchLen())
+	ma.marchMap.Range(func(id cores_declarations.MarchID, _ *MarchInfo) bool {
+		out = append(out, id)
+		return true
+	})
+	return out
+}
+
+// CleanAllMarch 清除地块上所有行军（测试用）
+func (ma *MapAttribute) CleanAllMarch() {
+	if ma == nil {
+		return
+	}
+	for _, id := range ma.marchMap.Keys() {
+		ma.marchMap.Delete(id)
+	}
+	ma.assistLocker.Lock()
+	ma.assistSlice = ma.assistSlice[:0]
+	ma.assistLocker.Unlock()
 }

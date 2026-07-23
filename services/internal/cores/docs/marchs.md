@@ -172,18 +172,6 @@ type MarchInfoManager struct {
 | `AssembleLen(baseMarchID)` | 获取成员数量 |
 | `RangeAssemble(f)` | 遍历所有集结组 |
 
-### MapAttribute 管理
-
-| 方法 | 说明 |
-|---|---|
-| `MapAttributeGet(mapID)` | 获取指定地图的行军属性 |
-| `MapAttributeMarchCreate(marchInfo)` | 创建行军时将行军挂载到起止点地图 |
-| `MapAttributeMarchDelete(marchInfo)` | 从起止点地图移除行军 |
-| `MapAttributeMarchChange(marchInfo, newMapID)` | 修改行军目标位置 |
-| `MapAttributeMarchModToMapID(marchInfo, newToMapID)` | 仅修改行军目标地图 ID |
-| `MapAttributeMarchModFormMapID(marchInfo, newMapID, isAllForm)` | 修改行军起始地图 |
-| `MapAttributeMarchCallBack(marchInfo)` | 行军返回处理（from 移除 → toMap 添加） |
-
 ### 行军 CRUD
 
 | 方法 | 说明 |
@@ -227,7 +215,22 @@ type MapAttribute struct {
 | `marchDel(marchID)` | 从集合删除行军 |
 | `GetMapMarch(container)` | 获取所有行军到容器中 |
 | `RangeMapMarch(f)` | 遍历行军 |
-| `GetAllMapMarchLen()` | 行军总数 |
+| `GetAllMapMarchLen()` | 行军总数（通过 Range 遍历计数） |
+| `GetMapMarchLen()` | 行军总数（基于 `hashmaps.Map.Len()`，O(n) 但更简洁） |
+| `GetMarchIDList()` | 获取所有行军 ID 列表 |
+| `CleanAllMarch()` | 清空所有行军和驻军（测试用） |
+
+### MarchInfoManager 聚合方法
+
+| 方法 | 说明 |
+|---|---|
+| `MapAttributeGet(mapID)` | O(1) 获取指定地图的行军属性 |
+| `MapAttributeMarchCreate(marchInfo)` | 将行军挂载到起止点地图（from + to + srcFrom） |
+| `MapAttributeMarchDelete(marchInfo)` | 从起止点地图移除行军 |
+| `MapAttributeMarchChange(marchInfo, newMapID)` | 修改行军目标位置（from→to, to→new） |
+| `MapAttributeMarchModToMapID(marchInfo, newToMapID)` | 仅修改行军目标地图 ID |
+| `MapAttributeMarchModFormMapID(marchInfo, newMapID, isAllForm)` | 修改行军起始地图 |
+| `MapAttributeMarchCallBack(marchInfo)` | 行军返回处理（from 移除 → toMap 添加） |
 
 ### 驻守管理
 
