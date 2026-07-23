@@ -28,7 +28,7 @@ type TeamSlotInfo struct {
 	unknownFields protoimpl.UnknownFields
 
 	SlotId        int32             `protobuf:"varint,1,opt,name=slot_id,json=slotId,proto3" json:"slot_id,omitempty"`                        // 位置:
-	HeroInfo      *pb_hero.HeroInfo `protobuf:"util_bytes,2,opt,name=hero_info,json=heroInfo,proto3" json:"hero_info,omitempty"`                   // 英雄信息
+	HeroInfo      *pb_hero.HeroInfo `protobuf:"bytes,2,opt,name=hero_info,json=heroInfo,proto3" json:"hero_info,omitempty"`                   // 英雄信息
 	MaxSoldierNum uint32            `protobuf:"varint,3,opt,name=max_soldier_num,json=maxSoldierNum,proto3" json:"max_soldier_num,omitempty"` // 士兵数量
 	CurAliveNum   uint32            `protobuf:"varint,4,opt,name=cur_alive_num,json=curAliveNum,proto3" json:"cur_alive_num,omitempty"`       // 当前可用数量
 	CurInjuredNum uint32            `protobuf:"varint,5,opt,name=cur_injured_num,json=curInjuredNum,proto3" json:"cur_injured_num,omitempty"` // 当前伤兵数量
@@ -105,7 +105,7 @@ type TeamInfo struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	SlotInfo []*TeamSlotInfo `protobuf:"util_bytes,1,rep,name=slot_info,json=slotInfo,proto3" json:"slot_info,omitempty"` //
+	SlotInfo []*TeamSlotInfo `protobuf:"bytes,1,rep,name=slot_info,json=slotInfo,proto3" json:"slot_info,omitempty"`
 }
 
 func (x *TeamInfo) Reset() {
@@ -145,6 +145,192 @@ func (x *TeamInfo) GetSlotInfo() []*TeamSlotInfo {
 	return nil
 }
 
+// BattleSide 单方战斗结算
+type BattleSide struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	IsDefeated     bool      `protobuf:"varint,1,opt,name=is_defeated,json=isDefeated,proto3" json:"is_defeated,omitempty"`             // 是否溃败
+	KilledSoldiers uint64    `protobuf:"varint,2,opt,name=killed_soldiers,json=killedSoldiers,proto3" json:"killed_soldiers,omitempty"` // 击杀士兵
+	TeamInfo       *TeamInfo `protobuf:"bytes,3,opt,name=team_info,json=teamInfo,proto3" json:"team_info,omitempty"`                    // 战后队伍状态
+}
+
+func (x *BattleSide) Reset() {
+	*x = BattleSide{}
+	mi := &file_battle_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BattleSide) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BattleSide) ProtoMessage() {}
+
+func (x *BattleSide) ProtoReflect() protoreflect.Message {
+	mi := &file_battle_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BattleSide.ProtoReflect.Descriptor instead.
+func (*BattleSide) Descriptor() ([]byte, []int) {
+	return file_battle_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *BattleSide) GetIsDefeated() bool {
+	if x != nil {
+		return x.IsDefeated
+	}
+	return false
+}
+
+func (x *BattleSide) GetKilledSoldiers() uint64 {
+	if x != nil {
+		return x.KilledSoldiers
+	}
+	return 0
+}
+
+func (x *BattleSide) GetTeamInfo() *TeamInfo {
+	if x != nil {
+		return x.TeamInfo
+	}
+	return nil
+}
+
+// OneBattleResult 一场战斗结果
+type OneBattleResult struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Attacker   *BattleSide `protobuf:"bytes,1,opt,name=attacker,proto3" json:"attacker,omitempty"`                        // 攻击方
+	Defender   *BattleSide `protobuf:"bytes,2,opt,name=defender,proto3" json:"defender,omitempty"`                        // 防御方
+	IsOccupied bool        `protobuf:"varint,3,opt,name=is_occupied,json=isOccupied,proto3" json:"is_occupied,omitempty"` // 是否占领
+}
+
+func (x *OneBattleResult) Reset() {
+	*x = OneBattleResult{}
+	mi := &file_battle_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OneBattleResult) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OneBattleResult) ProtoMessage() {}
+
+func (x *OneBattleResult) ProtoReflect() protoreflect.Message {
+	mi := &file_battle_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OneBattleResult.ProtoReflect.Descriptor instead.
+func (*OneBattleResult) Descriptor() ([]byte, []int) {
+	return file_battle_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *OneBattleResult) GetAttacker() *BattleSide {
+	if x != nil {
+		return x.Attacker
+	}
+	return nil
+}
+
+func (x *OneBattleResult) GetDefender() *BattleSide {
+	if x != nil {
+		return x.Defender
+	}
+	return nil
+}
+
+func (x *OneBattleResult) GetIsOccupied() bool {
+	if x != nil {
+		return x.IsOccupied
+	}
+	return false
+}
+
+// BattleResult 战斗结果
+type BattleResults struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Results     []*OneBattleResult `protobuf:"bytes,1,rep,name=results,proto3" json:"results,omitempty"`
+	ResultCount int32              `protobuf:"varint,2,opt,name=result_count,json=resultCount,proto3" json:"result_count,omitempty"`
+	WinCountInc uint32             `protobuf:"varint,3,opt,name=win_count_inc,json=winCountInc,proto3" json:"win_count_inc,omitempty"` // 胜场增加数
+}
+
+func (x *BattleResults) Reset() {
+	*x = BattleResults{}
+	mi := &file_battle_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BattleResults) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BattleResults) ProtoMessage() {}
+
+func (x *BattleResults) ProtoReflect() protoreflect.Message {
+	mi := &file_battle_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BattleResults.ProtoReflect.Descriptor instead.
+func (*BattleResults) Descriptor() ([]byte, []int) {
+	return file_battle_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *BattleResults) GetResults() []*OneBattleResult {
+	if x != nil {
+		return x.Results
+	}
+	return nil
+}
+
+func (x *BattleResults) GetResultCount() int32 {
+	if x != nil {
+		return x.ResultCount
+	}
+	return 0
+}
+
+func (x *BattleResults) GetWinCountInc() uint32 {
+	if x != nil {
+		return x.WinCountInc
+	}
+	return 0
+}
+
 var File_battle_proto protoreflect.FileDescriptor
 
 var file_battle_proto_rawDesc = []byte{
@@ -166,10 +352,37 @@ var file_battle_proto_rawDesc = []byte{
 	0x08, 0x54, 0x65, 0x61, 0x6d, 0x49, 0x6e, 0x66, 0x6f, 0x12, 0x31, 0x0a, 0x09, 0x73, 0x6c, 0x6f,
 	0x74, 0x5f, 0x69, 0x6e, 0x66, 0x6f, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x14, 0x2e, 0x62,
 	0x61, 0x74, 0x74, 0x6c, 0x65, 0x2e, 0x54, 0x65, 0x61, 0x6d, 0x53, 0x6c, 0x6f, 0x74, 0x49, 0x6e,
-	0x66, 0x6f, 0x52, 0x08, 0x73, 0x6c, 0x6f, 0x74, 0x49, 0x6e, 0x66, 0x6f, 0x42, 0x2a, 0x5a, 0x28,
-	0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x2e, 0x73, 0x6c, 0x67, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x61,
-	0x70, 0x69, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x6f, 0x6c, 0x2f, 0x70, 0x62, 0x2f, 0x70,
-	0x62, 0x5f, 0x62, 0x61, 0x74, 0x74, 0x6c, 0x65, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x66, 0x6f, 0x52, 0x08, 0x73, 0x6c, 0x6f, 0x74, 0x49, 0x6e, 0x66, 0x6f, 0x22, 0x85, 0x01, 0x0a,
+	0x0a, 0x42, 0x61, 0x74, 0x74, 0x6c, 0x65, 0x53, 0x69, 0x64, 0x65, 0x12, 0x1f, 0x0a, 0x0b, 0x69,
+	0x73, 0x5f, 0x64, 0x65, 0x66, 0x65, 0x61, 0x74, 0x65, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08,
+	0x52, 0x0a, 0x69, 0x73, 0x44, 0x65, 0x66, 0x65, 0x61, 0x74, 0x65, 0x64, 0x12, 0x27, 0x0a, 0x0f,
+	0x6b, 0x69, 0x6c, 0x6c, 0x65, 0x64, 0x5f, 0x73, 0x6f, 0x6c, 0x64, 0x69, 0x65, 0x72, 0x73, 0x18,
+	0x02, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0e, 0x6b, 0x69, 0x6c, 0x6c, 0x65, 0x64, 0x53, 0x6f, 0x6c,
+	0x64, 0x69, 0x65, 0x72, 0x73, 0x12, 0x2d, 0x0a, 0x09, 0x74, 0x65, 0x61, 0x6d, 0x5f, 0x69, 0x6e,
+	0x66, 0x6f, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x10, 0x2e, 0x62, 0x61, 0x74, 0x74, 0x6c,
+	0x65, 0x2e, 0x54, 0x65, 0x61, 0x6d, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x08, 0x74, 0x65, 0x61, 0x6d,
+	0x49, 0x6e, 0x66, 0x6f, 0x22, 0x92, 0x01, 0x0a, 0x0f, 0x4f, 0x6e, 0x65, 0x42, 0x61, 0x74, 0x74,
+	0x6c, 0x65, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x12, 0x2e, 0x0a, 0x08, 0x61, 0x74, 0x74, 0x61,
+	0x63, 0x6b, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x12, 0x2e, 0x62, 0x61, 0x74,
+	0x74, 0x6c, 0x65, 0x2e, 0x42, 0x61, 0x74, 0x74, 0x6c, 0x65, 0x53, 0x69, 0x64, 0x65, 0x52, 0x08,
+	0x61, 0x74, 0x74, 0x61, 0x63, 0x6b, 0x65, 0x72, 0x12, 0x2e, 0x0a, 0x08, 0x64, 0x65, 0x66, 0x65,
+	0x6e, 0x64, 0x65, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x12, 0x2e, 0x62, 0x61, 0x74,
+	0x74, 0x6c, 0x65, 0x2e, 0x42, 0x61, 0x74, 0x74, 0x6c, 0x65, 0x53, 0x69, 0x64, 0x65, 0x52, 0x08,
+	0x64, 0x65, 0x66, 0x65, 0x6e, 0x64, 0x65, 0x72, 0x12, 0x1f, 0x0a, 0x0b, 0x69, 0x73, 0x5f, 0x6f,
+	0x63, 0x63, 0x75, 0x70, 0x69, 0x65, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x08, 0x52, 0x0a, 0x69,
+	0x73, 0x4f, 0x63, 0x63, 0x75, 0x70, 0x69, 0x65, 0x64, 0x22, 0x89, 0x01, 0x0a, 0x0d, 0x42, 0x61,
+	0x74, 0x74, 0x6c, 0x65, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x12, 0x31, 0x0a, 0x07, 0x72,
+	0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x17, 0x2e, 0x62,
+	0x61, 0x74, 0x74, 0x6c, 0x65, 0x2e, 0x4f, 0x6e, 0x65, 0x42, 0x61, 0x74, 0x74, 0x6c, 0x65, 0x52,
+	0x65, 0x73, 0x75, 0x6c, 0x74, 0x52, 0x07, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x73, 0x12, 0x21,
+	0x0a, 0x0c, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x5f, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x05, 0x52, 0x0b, 0x72, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x43, 0x6f, 0x75, 0x6e,
+	0x74, 0x12, 0x22, 0x0a, 0x0d, 0x77, 0x69, 0x6e, 0x5f, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x5f, 0x69,
+	0x6e, 0x63, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x0b, 0x77, 0x69, 0x6e, 0x43, 0x6f, 0x75,
+	0x6e, 0x74, 0x49, 0x6e, 0x63, 0x42, 0x2a, 0x5a, 0x28, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x2e,
+	0x73, 0x6c, 0x67, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x63, 0x6f, 0x6c, 0x2f, 0x70, 0x62, 0x2f, 0x70, 0x62, 0x5f, 0x62, 0x61, 0x74, 0x74, 0x6c,
+	0x65, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -184,20 +397,27 @@ func file_battle_proto_rawDescGZIP() []byte {
 	return file_battle_proto_rawDescData
 }
 
-var file_battle_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_battle_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_battle_proto_goTypes = []any{
 	(*TeamSlotInfo)(nil),     // 0: battle.TeamSlotInfo
 	(*TeamInfo)(nil),         // 1: battle.TeamInfo
-	(*pb_hero.HeroInfo)(nil), // 2: hero.HeroInfo
+	(*BattleSide)(nil),       // 2: battle.BattleSide
+	(*OneBattleResult)(nil),  // 3: battle.OneBattleResult
+	(*BattleResults)(nil),    // 4: battle.BattleResults
+	(*pb_hero.HeroInfo)(nil), // 5: hero.HeroInfo
 }
 var file_battle_proto_depIdxs = []int32{
-	2, // 0: battle.TeamSlotInfo.hero_info:type_name -> hero.HeroInfo
+	5, // 0: battle.TeamSlotInfo.hero_info:type_name -> hero.HeroInfo
 	0, // 1: battle.TeamInfo.slot_info:type_name -> battle.TeamSlotInfo
-	2, // [2:2] is the sub-list for method output_type
-	2, // [2:2] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	1, // 2: battle.BattleSide.team_info:type_name -> battle.TeamInfo
+	2, // 3: battle.OneBattleResult.attacker:type_name -> battle.BattleSide
+	2, // 4: battle.OneBattleResult.defender:type_name -> battle.BattleSide
+	3, // 5: battle.BattleResults.results:type_name -> battle.OneBattleResult
+	6, // [6:6] is the sub-list for method output_type
+	6, // [6:6] is the sub-list for method input_type
+	6, // [6:6] is the sub-list for extension type_name
+	6, // [6:6] is the sub-list for extension extendee
+	0, // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_battle_proto_init() }
@@ -211,7 +431,7 @@ func file_battle_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_battle_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

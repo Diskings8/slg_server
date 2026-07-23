@@ -2,89 +2,78 @@ package attack
 
 import (
 	"server.slg.com/api/protocol/pb/pb_maps_march"
-	"server.slg.com/services/internal/cores/cores_declarations"
 	"server.slg.com/services/internal/cores/map_managers"
 	"server.slg.com/services/internal/cores/marchs"
 )
 
-// processBattleResult 处理战斗结果：战损 + 溃败标记 + 占领判定
-//
-// 在 Do 阶段调用，位于 settleBattle 之后。
+// processBattleResult 处理战斗结果
 func processBattleResult(mgr *map_managers.MapManager, attacker *marchs.MarchInfo, result *BattleResult) {
 	if result == nil {
 		return
 	}
 
-	// 1. 应用战损到队伍数据
-	applyBattleLosses(result)
-
-	// 2. 更新攻击方行军状态
+	// 1. 更新攻击方行军状态
 	updateAttackerState(attacker, result)
 
-	// 3. 处理防御方驻军
-	processDefenders(mgr, result)
+	// 2. 处理防御方行军
+	processDefeatedMarches(mgr, result)
 
-	// 4. 占领判定
+	// 3. 占领判定（最后一层决定）
 	tryOccupy(mgr, attacker, result)
 
-	// 5. 更新连胜计数
+	// 4. 更新连胜计数
 	updateWinStreak(attacker, result)
 }
 
 // updateAttackerState 更新攻击方行军状态
 func updateAttackerState(attacker *marchs.MarchInfo, result *BattleResult) {
-	if result.Attacker == nil {
+	if result == nil || len(result.Layers) == 0 {
 		return
 	}
 
-	if result.Attacker.IsDefeated {
-		// 溃败标记：设置行军状态为 Back，队伍带残兵返回
+	// 取最后一层的结果判定是否溃败
+	lastLayer := result.Layers[len(result.Layers)-1]
+	if lastLayer.Attacker != nil && lastLayer.Attacker.IsDefeated {
 		attacker.MarchState = pb_maps_march.MarchState_Back
-
-		// PVP 溃败：清零 PVP 连胜
 		attacker.PVPWinCount = 0
 	} else {
-		// 胜利且占领 → 转为停留状态
-		if result.IsOccupied {
-			attacker.MarchState = pb_maps_march.MarchState_Stay
-		} else {
-			// 胜利但未占领（如仅破墙），仍可继续
-			attacker.MarchState = pb_maps_march.MarchState_Stay
-		}
+		attacker.MarchState = pb_maps_march.MarchState_Stay
 	}
 }
 
-// processDefenders 处理防御方驻军
-func processDefenders(mgr *map_managers.MapManager, result *BattleResult) {
-	if result.DefenderMarchUpdates == nil {
-		return
-	}
-
-	for _, defender := range result.DefenderMarchUpdates {
-		if defender == nil {
-			continue
-		}
-
-		// 驻军被击败：召回
-		defender.MarchState = pb_maps_march.MarchState_Back
-
-		// 从目标地块的驻军列表中移除
-		toMapID := defender.GetToMapID()
-		if toMapID >= 0 {
-			attr := mgr.GetMarchManage().MapAttributeGet(toMapID)
-			if attr != nil {
-				attr.AssistCallBack(defender.GetMarchID())
+// processDefeatedMarches 处理被击败的防御方行军
+func processDefeatedMarches(mgr *map_managers.MapManager, result *BattleResult) {
+	for _, layer := range result.Layers {
+		for _, defender := range layer.DefeatedMarches {
+			if defender == nil {
+				continue
 			}
-		}
+			defender.MarchState = pb_maps_march.MarchState_Back
 
-		// 推送驻军更新
-		mgr.UpdateMarchPush(defender)
+			toMapID := defender.GetToMapID()
+			if toMapID >= 0 {
+				attr := mgr.GetMarchManage().MapAttributeGet(toMapID)
+				if attr != nil {
+					attr.AssistCallBack(defender.GetMarchID())
+				}
+			}
+			mgr.UpdateMarchPush(defender)
+		}
 	}
 }
 
 // tryOccupy 尝试占领目标地块
 func tryOccupy(mgr *map_managers.MapManager, attacker *marchs.MarchInfo, result *BattleResult) {
-	if result == nil || !result.IsOccupied || result.Attacker == nil || result.Attacker.IsDefeated {
+	if result == nil || len(result.Layers) == 0 {
+		return
+	}
+
+	// 最后一层决定占领
+	lastLayer := result.Layers[len(result.Layers)-1]
+	if !lastLayer.IsOccupied {
+		return
+	}
+	if lastLayer.Attacker != nil && lastLayer.Attacker.IsDefeated {
 		return
 	}
 
@@ -94,40 +83,37 @@ func tryOccupy(mgr *map_managers.MapManager, attacker *marchs.MarchInfo, result 
 		return
 	}
 
-	// 锁定目标地块进行修改
 	if !toMapInfo.TryLock() {
 		return
 	}
 	defer toMapInfo.UnLock()
 
-	// 如果是已有主的地块，先释放
 	currentOwner := toMapInfo.GetOwnerID()
 	if currentOwner > 0 && currentOwner != attacker.GetFromRoleID() {
-		// 从原所有者的 MapAttribute 中移除
 		mgr.GetMarchManage().MapAttributeMarchDelete(attacker)
-		// 更新行军 ToMapID 为当前地块（不变）
-		// 重新绑定到新的所有者
 		mgr.GetMarchManage().MapAttributeMarchCreate(attacker)
 	}
 
-	// ---- 3. 设置新占领者 ----
-	// toMapInfo 已加写锁，直接调用 Occupy 设置
 	toMapInfo.Occupy(attacker.GetFromRoleID())
 }
 
 // updateWinStreak 更新连胜计数
 func updateWinStreak(attacker *marchs.MarchInfo, result *BattleResult) {
-	if result.Attacker == nil {
+	if result == nil || result.WinCountInc == 0 {
 		return
 	}
 
-	if result.Attacker.WinCountInc > 0 {
-		// PVP 胜利（有驻军防守）
-		if result.DefenderMarchUpdates != nil && len(result.DefenderMarchUpdates) > 0 {
-			attacker.PVPWinCount++
-		} else {
-			// PVE 胜利（无驻军，仅建筑/空地）
-			attacker.PVEWinCount++
+	hasDefender := false
+	for _, layer := range result.Layers {
+		if len(layer.DefeatedMarches) > 0 {
+			hasDefender = true
+			break
 		}
+	}
+
+	if hasDefender {
+		attacker.PVPWinCount++
+	} else {
+		attacker.PVEWinCount++
 	}
 }

@@ -16,5 +16,26 @@ message TeamSlotInfo {
 
 // TeamInfo 布阵队伍时信息
 message TeamInfo {
-    repeated TeamSlotInfo slot_info = 1;//
+    repeated TeamSlotInfo slot_info = 1;
+}
+
+// BattleSide 单方战斗结算
+message BattleSide {
+  bool is_defeated                                  = 1;   // 是否溃败
+  uint64 killed_soldiers                            = 2;   // 击杀士兵
+  TeamInfo team_info                                = 3;   // 战后队伍状态
+}
+
+// OneBattleResult 一场战斗结果
+message OneBattleResult {
+  BattleSide attacker                               = 1;   // 攻击方
+  BattleSide defender                               = 2;   // 防御方
+  bool is_occupied                                  = 3;   // 是否占领
+}
+
+// BattleResult 战斗结果
+message BattleResults {
+  repeated OneBattleResult results                  = 1;
+  int32 result_count                                = 2;
+  uint32 win_count_inc                              = 3;   // 胜场增加数
 }

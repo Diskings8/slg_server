@@ -1,7 +1,11 @@
 package attack
 
 import (
+	"server.slg.com/api/protocol/pb/pb_battle"
 	"server.slg.com/api/protocol/pb/pb_hero"
+	"server.slg.com/api/protocol/pb/pb_maps_march"
+	"server.slg.com/services/internal/cores/cores_declarations"
+	"server.slg.com/services/internal/cores/map_datas"
 	"server.slg.com/services/internal/cores/map_managers"
 	"server.slg.com/services/internal/cores/marchs"
 )
@@ -9,88 +13,94 @@ import (
 // settleBattle 执行战斗结算
 //
 // 流程：
-//  1. 拆迁阶段：攻击方的拆迁值对目标建筑造成伤害（BuildingI.BeAttack）
-//  2. 对战阶段：攻击方队伍 vs 防御方驻军
-//  3. 计算战损和胜负
-func settleBattle(mgr *map_managers.MapManager, attacker *marchs.MarchInfo, toMapID int32) *BattleResult {
+//  1. PvP：逐层战斗，每层产出 OneBattleResult
+//     驻守(assist) → 停留(stay) → Idle
+//  2. PvE/攻城：
+//     有建筑 → 攻城（拆迁 vs 建筑耐久）
+//     无建筑 → PvE（拆迁 vs 地块耐久）
+func settleBattle(mgr *map_managers.MapManager, attacker *marchs.MarchInfo, toMapID cores_declarations.MapID) *BattleResult {
 	result := &BattleResult{
-		Attacker: &BattleSide{
-			MarchInfo: attacker,
-		},
-		Defender: &BattleSide{},
+		Layers:            make([]*LayerResult, 0, 3),
+		FinalAttackerInfo: attacker,
 	}
 
-	// ---- 1. 拆迁阶段：对建筑造成伤害 ----
-	buildingDamaged := applySiegeDamage(mgr, attacker, toMapID, result)
-
-	// ---- 2. 构建防御方 ----
-	defenders := buildDefenders(mgr, toMapID)
-	result.Defender.MarchInfo = nil // 防御方可能由多个驻军组成
-
-	if len(defenders) > 0 {
-		// ---- 3. 对战阶段 ----
-		resolveCombat(attacker, defenders, result)
-	} else if !buildingDamaged {
-		// 无建筑、无驻军：空地，直接占领
-		result.IsOccupied = true
+	// ---- 1. PvP 阶段：逐层战斗 ----
+	if !resolveDefendersLayer(mgr, attacker, toMapID, result) {
+		return result
 	}
 
+	// ---- 2. 建筑/地块 阶段 ----
+	toMapInfo, ok := mgr.GetMapDataManager().GetMapInfo(toMapID)
+	if !ok || toMapInfo == nil {
+		return result
+	}
+
+	if overlayBuilding := toMapInfo.GetOverlayBuilding(); overlayBuilding != nil {
+		if building := overlayBuilding.GetBuilding(); building != nil {
+			// 有建筑 → 攻城
+			_, isBroken := building.BeAttack(attacker)
+			layer := &LayerResult{
+				Attacker:   buildSideFromTeam(attacker),
+				Defender:   &pb_battle.BattleSide{},
+				IsOccupied: isBroken,
+			}
+			result.Layers = append(result.Layers, layer)
+			return result
+		}
+	}
+
+	// 无建筑 → PvE
+	resolvePvE(mgr, attacker, toMapInfo, result)
 	return result
 }
 
-// applySiegeDamage 应用拆迁伤害
-// 返回是否造成了建筑伤害
-func applySiegeDamage(mgr *map_managers.MapManager, attacker *marchs.MarchInfo, toMapID int32, result *BattleResult) bool {
-	toMapInfo, ok := mgr.GetMapDataManager().GetMapInfo(toMapID)
-	if !ok || toMapInfo == nil {
-		return false
+// resolvePvE 无建筑时的 PvE 战斗
+func resolvePvE(_ *map_managers.MapManager, _ *marchs.MarchInfo, _ *map_datas.MapInfo, result *BattleResult) {
+	layer := &LayerResult{
+		Attacker:   buildSideFromTeam(result.FinalAttackerInfo),
+		Defender:   &pb_battle.BattleSide{},
+		IsOccupied: true,
 	}
-
-	overlayBuilding := toMapInfo.GetOverlayBuilding()
-	if overlayBuilding == nil {
-		return false
-	}
-
-	building := overlayBuilding.GetBuilding()
-	if building == nil {
-		return false
-	}
-
-	// 通过 BuildingI.BeAttack 接口造成拆迁伤害
-	right, isBroken := building.BeAttack(attacker)
-	result.WallDamage = right
-	result.IsWallBroken = isBroken
-	return right > 0
+	result.Layers = append(result.Layers, layer)
 }
 
-// buildDefenders 构建防御方队伍列表
+// resolveDefendersLayer 逐层攻克防守方
 //
-// 防御方来源：
-//  1. 目标地块上的驻军（MapAttribute.Assist）
-func buildDefenders(mgr *map_managers.MapManager, toMapID int32) []*marchs.MarchInfo {
-	toAttribute := mgr.GetMarchManage().MapAttributeGet(toMapID)
-	if toAttribute == nil {
-		return nil
+// 顺序：assist(驻守) → stay(停留) → idle
+// 每层产出 LayerResult 追加到 result.Layers
+func resolveDefendersLayer(mgr *map_managers.MapManager, attacker *marchs.MarchInfo, toMapID cores_declarations.MapID, result *BattleResult) bool {
+	assistDefenders := buildAssistDefenders(mgr, toMapID)
+	if len(assistDefenders) > 0 {
+		if !fightLayer(attacker, assistDefenders, result) {
+			return false
+		}
 	}
 
-	defenders := toAttribute.Assist(make([]*marchs.MarchInfo, 0, 8))
-	return defenders
+	stayIdleDefenders := buildStayIdleDefenders(mgr, toMapID, attacker.GetFromRoleID())
+	if len(stayIdleDefenders) > 0 {
+		if !fightLayer(attacker, stayIdleDefenders, result) {
+			return false
+		}
+	}
+
+	return true
 }
 
-// resolveCombat 执行攻防对战
+// fightLayer 攻击方与某一层防守方交战
 //
-// 简化模型：比较双方总兵力，按比例结算战损。
-func resolveCombat(attacker *marchs.MarchInfo, defenders []*marchs.MarchInfo, result *BattleResult) {
+// 产出 LayerResult 追加到 result.Layers。
+// 返回 false 表示攻击方溃败。
+func fightLayer(attacker *marchs.MarchInfo, defenders []*marchs.MarchInfo, result *BattleResult) bool {
 	attTeam := attacker.GetTeam()
 	if attTeam == nil {
-		result.Attacker.IsDefeated = true
-		return
+		return false
 	}
 
-	// 攻击方总战力 = 存活士兵数
 	attPower := attTeam.GetAliveSoliderCount()
+	if attPower == 0 {
+		return false
+	}
 
-	// 防御方总战力 = 各驻军存活士兵之和
 	var defPower uint64
 	for _, d := range defenders {
 		if d == nil {
@@ -103,106 +113,128 @@ func resolveCombat(attacker *marchs.MarchInfo, defenders []*marchs.MarchInfo, re
 		defPower += team.GetAliveSoliderCount()
 	}
 
-	if attPower == 0 && defPower == 0 {
-		// 双方都无兵，攻击方胜（空城）
-		result.IsOccupied = true
-		return
-	}
-
-	if attPower == 0 {
-		// 攻击方无兵，直接溃败
-		result.Attacker.IsDefeated = true
-		return
-	}
-
 	if defPower == 0 {
-		// 防御方无驻军，攻击方直接获胜
-		result.Attacker.AliveSoldiers = attPower
-		result.Attacker.WinCountInc = 1
-		result.IsOccupied = true
-		return
+		return true
 	}
 
-	// 简化战斗：比较兵力
+	layer := &LayerResult{
+		DefeatedMarches: defenders,
+	}
+
+	aliveBefore := attTeam.GetAliveSoliderCount()
+
 	if attPower >= defPower {
 		// 攻击方胜
-		// 攻击方战损 = 防御方战力 / 攻击方战力 比例
-		attLoss := uint64(float64(attPower) * (float64(defPower) / float64(attPower+defPower)))
-		if attLoss > attPower {
-			attLoss = attPower
+		loss := uint64(float64(attPower) * (float64(defPower) / float64(attPower+defPower)))
+		if loss > attPower {
+			loss = attPower
 		}
-		result.Attacker.AliveSoldiers = attPower - attLoss
-		result.Attacker.KilledSoldiers = defPower
-		result.Attacker.WinCountInc = 1
-		result.IsOccupied = true
-		result.IsWallBroken = true // 攻破城墙
+		remain := attPower - loss
 
-		// 防御方全灭
-		for _, d := range defenders {
-			result.DefenderMarchUpdates = append(result.DefenderMarchUpdates, d)
+		layer.Attacker = &pb_battle.BattleSide{
+			KilledSoldiers: defPower,
+			TeamInfo:       cloneTeamInfo(attTeam),
 		}
-	} else {
-		// 防御方胜
-		// 攻击方几乎全灭，只保留少量残兵
-		survivors := attPower * 10 / 100 // 保留10%残兵
-		if survivors < 1 && attPower > 0 {
-			survivors = 1
+		layer.Defender = &pb_battle.BattleSide{
+			IsDefeated:     true,
+			KilledSoldiers: 0,
 		}
-		result.Attacker.AliveSoldiers = survivors
-		result.Attacker.IsDefeated = true
-		result.Attacker.KilledSoldiers = defPower / 2 // 击杀一半守军
 
-		// 防御方受伤但未全灭
+		applyLossesToTeam(attTeam, attPower, remain, aliveBefore)
+		result.Layers = append(result.Layers, layer)
+		return true
+	}
+
+	// 攻击方败
+	survivors := attPower * 10 / 100
+	if survivors < 1 {
+		survivors = 1
+	}
+
+	layer.Attacker = &pb_battle.BattleSide{
+		IsDefeated:     true,
+		KilledSoldiers: defPower / 2,
+		TeamInfo:       cloneTeamInfo(attTeam),
+	}
+	layer.Defender = &pb_battle.BattleSide{
+		KilledSoldiers: 0,
+	}
+
+	applyLossesToTeam(attTeam, attPower, survivors, aliveBefore)
+	result.Layers = append(result.Layers, layer)
+	result.WinCountInc = 0
+	return false
+}
+
+// buildSideFromTeam 从队伍快照构建 BattleSide
+func buildSideFromTeam(info *marchs.MarchInfo) *pb_battle.BattleSide {
+	team := info.GetTeam()
+	if team == nil {
+		return &pb_battle.BattleSide{}
+	}
+	return &pb_battle.BattleSide{
+		TeamInfo: team.Format2Pb(),
 	}
 }
 
-// applyBattleLosses 应用战损到队伍数据
-//
-// 根据战斗结果更新攻击方和防御方的队伍存活数。
-func applyBattleLosses(result *BattleResult) {
-	// 攻击方
-	if result.Attacker != nil && result.Attacker.MarchInfo != nil {
-		attTeam := result.Attacker.MarchInfo.Team
-		if attTeam != nil {
-			totalAlive := attTeam.GetAliveSoliderCount()
-			if totalAlive > 0 && result.Attacker.AliveSoldiers < totalAlive {
-				ratio := float64(result.Attacker.AliveSoldiers) / float64(totalAlive)
-				for _, slot := range attTeam.Slots {
-					if slot == nil {
-						continue
-					}
-					if slot.GetHeroInfo().GetCurStatus() == pb_hero.Status_Injured {
-						continue
-					}
-					alive := uint32(float64(slot.GetCurAliveNum()) * ratio)
-					if alive < 1 && slot.GetCurAliveNum() > 0 {
-						alive = 1
-					}
-					slot.CurAliveNum = alive
-				}
-			}
+// cloneTeamInfo 克隆当前队伍信息为 PB 快照
+func cloneTeamInfo(team *marchs.Team) *pb_battle.TeamInfo {
+	if team == nil {
+		return nil
+	}
+	return team.Format2Pb()
+}
+
+// applyLossesToTeam 按比例减少队伍各 slot 存活数
+func applyLossesToTeam(team *marchs.Team, beforePower, afterPower, totalAliveBefore uint64) {
+	if team == nil || beforePower == 0 {
+		return
+	}
+	ratio := float64(afterPower) / float64(beforePower)
+	for _, slot := range team.Slots {
+		if slot == nil {
+			continue
 		}
+		if slot.GetHeroInfo().GetCurStatus() == pb_hero.Status_Injured {
+			continue
+		}
+		alive := uint32(float64(slot.GetCurAliveNum()) * ratio)
+		if alive < 1 && slot.GetCurAliveNum() > 0 {
+			alive = 1
+		}
+		slot.CurAliveNum = alive
+	}
+}
+
+// buildAssistDefenders 构建驻军防守方列表（MarchState_Station）
+func buildAssistDefenders(mgr *map_managers.MapManager, toMapID cores_declarations.MapID) []*marchs.MarchInfo {
+	attr := mgr.GetMarchManage().MapAttributeGet(toMapID)
+	if attr == nil {
+		return nil
+	}
+	return attr.Assist(make([]*marchs.MarchInfo, 0, 8))
+}
+
+// buildStayIdleDefenders 构建停留/等待防守方列表
+func buildStayIdleDefenders(mgr *map_managers.MapManager, toMapID cores_declarations.MapID, attackerRoleID uint64) []*marchs.MarchInfo {
+	attr := mgr.GetMarchManage().MapAttributeGet(toMapID)
+	if attr == nil {
+		return nil
 	}
 
-	// 防御方驻军
-	for _, defender := range result.DefenderMarchUpdates {
-		if defender == nil {
-			continue
+	var defenders []*marchs.MarchInfo
+	attr.RangeMapMarch(func(_ cores_declarations.MarchID, info *marchs.MarchInfo) bool {
+		if info == nil {
+			return true
 		}
-		defTeam := defender.Team
-		if defTeam == nil {
-			continue
+		if info.GetFromRoleID() == attackerRoleID {
+			return true
 		}
-		totalDef := defTeam.GetAliveSoliderCount()
-		if totalDef == 0 {
-			continue
+		state := info.GetMarchState()
+		if state == pb_maps_march.MarchState_Stay || state == pb_maps_march.MarchState_Idle {
+			defenders = append(defenders, info)
 		}
-		// 防御方驻军全灭
-		for _, slot := range defTeam.Slots {
-			if slot == nil {
-				continue
-			}
-			slot.CurAliveNum = 0
-		}
-	}
+		return true
+	})
+	return defenders
 }

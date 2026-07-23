@@ -53,7 +53,7 @@ func New(mm *map_managers.MapManager, marchInfo *marchs.MarchInfo) cores_declara
 		}
 
 		// 执行战斗结算
-		battleResult = settleBattle(mgr, info, info.GetToMapID().Int32())
+		battleResult = settleBattle(mgr, info, info.GetToMapID())
 
 		// 处理战斗结果（战损、溃败、占领）
 		processBattleResult(mgr, info, battleResult)
