@@ -17,7 +17,11 @@ type ScreenData struct {
 }
 
 func (sd *ScreenData) MapDataAdd(mapID cores_declarations.MapID) {
-	sd.GetScreenByMapID(mapID)
+	sd.GetScreenByMapID(mapID).MapDataAdd(mapID)
+}
+
+func (sd *ScreenData) MapDataDel(mapID cores_declarations.MapID) {
+	sd.GetScreenByMapID(mapID).MapDataDel(mapID)
 }
 
 //---------------------------Get-------------------------------------//

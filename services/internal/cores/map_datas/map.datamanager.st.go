@@ -20,6 +20,11 @@ const (
 var _ common_declarations.AsyncSaveEntityI = new(MapDataManager)
 
 // MapDataManager 地图数据管理器，负责地图格子的初始化、保存和 AOI 管理
+//
+// 存储策略：
+//   - bigMapData（稠密）：值类型 []MapInfo flat slice，O(1) 索引，适合大地图
+//   - smallMapData（稀疏）：map[MapID]*MapInfo，仅存有值格子，适合事件/战场小地图
+//   - isSparse 为 true 时使用 smallMapData，否则使用 bigMapData
 type MapDataManager struct {
 	Id        uint64
 	waitSave  hashmaps.Map[cores_declarations.MapID, *MapInfo]
@@ -27,26 +32,38 @@ type MapDataManager struct {
 	tableName string
 	saving    atomic.Bool
 
-	AOI *map_aois.ScreenData
-	// 出生块
+	AOI     *map_aois.ScreenData
 	BornAts cores_declarations.BornBlockI
 
-	mapData []MapInfo
+	isSparse     bool                                    // true → smallMapData，false → bigMapData
+	bigMapData   []MapInfo                               // 稠密：值类型 slice，O(1) 索引
+	smallMapData map[cores_declarations.MapID]*MapInfo   // 稀疏：仅存有值格子
 }
 
-func (mdm *MapDataManager) GetConfig() cores_declarations.MapConfigI {
-	return mdm.config
-}
+// Init 初始化，isSparse 控制使用哪种存储策略
+func (mdm *MapDataManager) Init(mapD []MapInfo, isSparse ...bool) {
+	if len(isSparse) > 0 && isSparse[0] {
+		mdm.isSparse = true
+		mdm.smallMapData = make(map[cores_declarations.MapID]*MapInfo, len(mapD))
+		for i := range mapD {
+			v := &mapD[i]
+			if v.GetMapID() != cores_declarations.InvalidMapID {
+				mdm.smallMapData[v.GetMapID()] = v
+				if v.GetBaseMapID() == v.GetMapID() {
+					mdm.AOI.MapDataAdd(v.GetMapID())
+				}
+			}
+		}
+		return
+	}
 
-func (mdm *MapDataManager) Init(mapD []MapInfo) {
-	mdm.mapData = mapD
+	mdm.isSparse = false
+	mdm.bigMapData = mapD
 	for mapID := int32(0); mapID < mdm.config.MapCount(); mapID++ {
-		v := &mdm.mapData[mapID]
+		v := &mdm.bigMapData[mapID]
 		if v.GetMapID() == cores_declarations.InvalidMapID {
 			continue
 		}
-		// 特殊地块需要处理
-
 		if v.GetBaseMapID() == v.GetMapID() {
 			mdm.AOI.MapDataAdd(cores_declarations.MapID(mapID))
 		}
@@ -57,11 +74,22 @@ func (mdm *MapDataManager) Tag() string {
 	return "MapDataManager"
 }
 
+func (mdm *MapDataManager) GetConfig() cores_declarations.MapConfigI {
+	return mdm.config
+}
+
+// GetMapInfo 获取地图格子数据，根据存储策略路由
 func (mdm *MapDataManager) GetMapInfo(mapID cores_declarations.MapID) (*MapInfo, bool) {
-	if mapID < 0 || mapID >= cores_declarations.MapID(len(mdm.mapData)) {
+	if mdm.isSparse {
+		d, ok := mdm.smallMapData[mapID]
+		return d, ok
+	}
+
+	id := int32(mapID)
+	if id < 0 || id >= int32(len(mdm.bigMapData)) {
 		return nil, false
 	}
-	d := &mdm.mapData[mapID]
+	d := &mdm.bigMapData[id]
 	if d.mapID == cores_declarations.InvalidMapID {
 		return nil, false
 	}
@@ -69,7 +97,17 @@ func (mdm *MapDataManager) GetMapInfo(mapID cores_declarations.MapID) (*MapInfo,
 }
 
 func (mdm *MapDataManager) GetMapInfoSlice(mapIDs []cores_declarations.MapID) []*MapInfo {
-	result := make([]*MapInfo, 0, len(mdm.mapData))
+	if mdm.isSparse {
+		result := make([]*MapInfo, 0, len(mapIDs))
+		for _, mapID := range mapIDs {
+			if d, ok := mdm.GetMapInfo(mapID); ok {
+				result = append(result, d)
+			}
+		}
+		return result
+	}
+
+	result := make([]*MapInfo, 0, len(mdm.bigMapData))
 	for _, mapID := range mapIDs {
 		if d, ok := mdm.GetMapInfo(mapID); ok {
 			result = append(result, d)
@@ -79,8 +117,20 @@ func (mdm *MapDataManager) GetMapInfoSlice(mapIDs []cores_declarations.MapID) []
 }
 
 func (mdm *MapDataManager) Range(f func(m *MapInfo) bool) {
-	for index := range mdm.mapData {
-		tmp := &mdm.mapData[index]
+	if mdm.isSparse {
+		for _, v := range mdm.smallMapData {
+			if v.GetMapID() == cores_declarations.InvalidMapID {
+				continue
+			}
+			if !f(v) {
+				return
+			}
+		}
+		return
+	}
+
+	for index := range mdm.bigMapData {
+		tmp := &mdm.bigMapData[index]
 		if tmp.GetMapID() == cores_declarations.InvalidMapID {
 			continue
 		}
@@ -132,7 +182,6 @@ func (mdm *MapDataManager) Save(list ...*MapInfo) {
 	asyncsave_entity.EntitySaveFunc(mdm)
 }
 
-// save 批量保存
 func (mdm *MapDataManager) save(db common_declarations.DbcI, waitSlice [maxSaveLen]*MapInfo, num int) {
 	tmp := waitSlice[:num]
 	err := db.Table(mdm.tableName).Save(tmp).Error()
@@ -144,7 +193,7 @@ func (mdm *MapDataManager) save(db common_declarations.DbcI, waitSlice [maxSaveL
 		if err == nil {
 			mdm.waitSave.Delete(v.GetMapID())
 		}
-		v.UnLock() // 外层上锁
+		v.UnLock()
 	}
 }
 
@@ -169,12 +218,16 @@ func (mdm *MapDataManager) SaveDo() {
 	}
 }
 
+// IsSparse 返回当前是否使用稀疏存储
+func (mdm *MapDataManager) IsSparse() bool {
+	return mdm.isSparse
+}
+
 type LockMapSlice struct {
 	data []*MapInfo
 	mdm  *MapDataManager
 }
 
-// Unlock 解锁
 func (l LockMapSlice) Unlock() {
 	if l.mdm == nil {
 		return
@@ -182,7 +235,6 @@ func (l LockMapSlice) Unlock() {
 	l.mdm.UnLock(l.data)
 }
 
-// Data 数据
 func (l LockMapSlice) Data() []*MapInfo {
 	if l.mdm == nil {
 		return nil

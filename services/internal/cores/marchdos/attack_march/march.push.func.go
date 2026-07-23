@@ -7,26 +7,23 @@ import (
 
 // pushBattleResult 推送战斗结果
 //
-// 通过现有推送通道通知攻守双方：
-//   - UpdateMarchPush：推送更新后的攻击方行军状态
-//   - UpdateMapPush：推送目标地块变化
+// 通知攻守双方：
+//   - 攻击方：行军状态更新 + 战斗结果
+//   - 防守方：地块被攻击的预警 / 地块变更
 func pushBattleResult(mgr *map_managers.MapManager, attacker *marchs.MarchInfo, result *BattleResult) {
 	if attacker == nil {
 		return
 	}
 
-	fromMapID := attacker.GetFromMapID()
-	toMapID := attacker.GetToMapID()
-
-	// 1. 推送更新后的攻击方行军
-	mgr.UpdateMarchPush(attacker)
-
-	// 2. 推送目标地块变化
-	if toMapID >= 0 {
-		mgr.UpdateMapPush(toMapID)
+	// 默认防守方胜。只要有一层攻击方未溃败，判定攻击方胜。
+	attackerWin := false
+	for _, layer := range result.Layers {
+		if layer.Attacker != nil && !layer.Attacker.GetIsDefeated() {
+			attackerWin = true
+			break
+		}
 	}
 
-	if fromMapID >= 0 {
-		mgr.UpdateMapPush(fromMapID)
-	}
+	// 使用 PushBattleResult 统一推送（区分攻守双方）
+	mgr.PushBattleResult(attacker, attackerWin)
 }

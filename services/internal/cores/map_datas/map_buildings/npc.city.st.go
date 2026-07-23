@@ -12,3 +12,4 @@ type NpcCity struct {
 	CityGarrison   []cores_declarations.MarchInfoI // 城市驻军
 	FirstOccRecord *pb_city.CityFirstOccRecord     // 首占记录
 }
+

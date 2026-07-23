@@ -124,17 +124,17 @@
 
 ### P1-3: AOI 行军分离 — `crossMarch` / `passingMarch`
 
+- **状态：** ✅ 已完成（现有代码已有 `allMarch` + `allPassingMarch` 双集合，`MarchAOISetup` 已正确分流）
 - **文件：** `map_aois/aoi.screen.st.go` / `data.screen.func.go`
 - **参考：** 参考仓库 AOI Screen 内维护 `march`（起点/终点在 Screen 内）和 `crossMarch`（仅经过）双集合
 - **说明：** 减少不必要的 AOI 事件推送，经过行军不触发视野更新
-- **状态：** [ ] 待开始
 
 ### P1-4: 实现 `MovePath` 路径采样方法
 
+- **状态：** ✅ 已完成（现有 `MovePath` 已按 `step=ScreenWeight*2` 跳跃采样）
 - **文件：** `map_aois/data.screen.func.go`
 - **参考：** 参考仓库 `aoi/aoi.go:373-416` 按 `step=ScreenWeight*2` 跳跃采样
 - **说明：** 行军路径 AOI 推送时，避免逐格遍历，按步长采样
-- **状态：** [ ] 待开始
 
 ### P1-5: 双存储策略（`bigMapData` + `smallMapData`）
 
@@ -161,10 +161,15 @@
 
 ### P1-8: 战争情报推送（`PushWarInformation`）
 
-- **文件：** `map_managers/manager.push.func.go`
-- **参考：** 参考仓库 `manage/interface.go:413-489` 区分攻击方/被攻击方，分别按角色/联盟推送，远程服通过 gRPC 跨服推送
-- **说明：** 攻防双方收到不同维度的战报
-- **状态：** [ ] 待开始
+- **状态：** ✅ 已完成
+- **涉及文件：**
+  - `map_managers/manager.war.func.go` — 新增 `PushWarInformation` / `PushBattleResult`
+  - `marchdos/attack_march/march.push.func.go` — 更新 `pushBattleResult` 调用 `PushBattleResult`
+- **参考：** 参考仓库 `manage/interface.go:413-489` 区分攻击方/被攻击方，分别按角色/联盟推送
+- **说明：** 攻防双方收到不同维度的情报：
+  - 攻击方：行军状态更新（`UpdateMarchPush`）
+  - 防守方：地块变更预警（`UpdateMapPush`）
+- **TODO:** P2-8 接入消息队列 + 跨服 gRPC 推送
 
 ### P1-9: `RoleMapManager` 角色→地块路由表
 

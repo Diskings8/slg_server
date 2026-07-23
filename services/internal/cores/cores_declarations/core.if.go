@@ -87,10 +87,17 @@ type NpcBuildingConfI interface {
 	BaseBuildingConfI
 }
 
+// AOIRegistrar AOI 地块注册接口，用于建筑建造/放弃时更新 AOI 记录
+type AOIRegistrar interface {
+	MapDataAdd(mapID MapID)
+	MapDataDel(mapID MapID)
+}
+
 type BuildingI interface {
 	GetBuildingType() pb_city.BuildingType
 	AfterFree(freeTime time.Time)
 	BeforeBeAttack(info MarchInfoI) bool
 	BeAttack(info MarchInfoI) (right uint64, isBroken bool)
 	LevelUp()
+	VisionRange() int32 // 战争视野范围（格），0 表示仅自身地块
 }
