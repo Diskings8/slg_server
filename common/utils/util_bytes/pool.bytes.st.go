@@ -1,8 +1,12 @@
 package util_bytes
 
-import "bytes"
+import (
+	"bytes"
+	"sync"
+)
 
 type BufferPool struct {
+	shards map[int]*sync.Pool
 }
 
 func (p *BufferPool) Buffer(n int) *bytes.Buffer {
@@ -10,5 +14,9 @@ func (p *BufferPool) Buffer(n int) *bytes.Buffer {
 }
 
 func (p *BufferPool) Release(b *bytes.Buffer) {
-	return
+	if b != nil {
+		if pool, ok := p.shards[b.Cap()]; ok {
+			pool.Put(b)
+		}
+	}
 }

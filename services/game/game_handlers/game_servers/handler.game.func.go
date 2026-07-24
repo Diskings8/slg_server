@@ -1,4 +1,4 @@
-package game_handlers
+package game_servers
 
 import (
 	"context"

@@ -5,7 +5,7 @@ option go_package = "server.slg.com/api/protocol/pb/pb_game";
 import "common.proto";
 
 service GameService {
-    rpc Stream(stream common.NodePacket) returns (stream common.NodePacket) {}
+    rpc Stream(stream GameServiceNodePacketReq) returns (stream GameServiceNodePacketRsp) {}
 }
 
 service GameHandler {
@@ -15,4 +15,12 @@ service GameHandler {
 }
 
 
+message GameServiceNodePacketReq {
+    uint64 roleId            = 1;
+    common.NodePacket packet = 2;
+}
+
+message GameServiceNodePacketRsp {
+    common.NodePacket packet = 1;
+}
 

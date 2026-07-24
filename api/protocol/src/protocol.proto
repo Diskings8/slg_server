@@ -14,8 +14,3 @@ enum MsgID {
   PushMapInfo                           = 11000001;  // 地图信息推送
   PushMarchInfo                         = 11000002;  // 行军信息推送
 }
-
-
-enum ErrorCode {
-  NoneErr          = 0;
-}
