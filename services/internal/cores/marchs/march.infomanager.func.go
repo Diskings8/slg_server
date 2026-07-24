@@ -35,7 +35,6 @@ func (mm *MarchInfoManager) Init(dbc common_declarations.DbcI) ([]*MarchInfo, er
 	}
 
 	mm.allMarchLock.Lock()
-	defer mm.allMarchLock.Unlock()
 	for _, marchInfo := range marchList {
 		// 行军挂载到地图
 		mm.MapAttributeMarchCreate(marchInfo)
@@ -50,6 +49,11 @@ func (mm *MarchInfoManager) Init(dbc common_declarations.DbcI) ([]*MarchInfo, er
 		mm.allMarch[marchInfo.MarchID] = marchInfo
 		mm.TickerChan <- marchInfo
 	}
+	mm.allMarchLock.Unlock()
+
+	// ---- 集结重建：根据 FollowMarchID 重建 allAssembleMarch ----
+	mm.rebuildAssembleMarch()
+
 	return marchList, nil
 }
 

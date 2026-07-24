@@ -44,11 +44,20 @@ func (mm *MapManager) upMapAsync() {
 		mapIDInfo[cores_declarations.MapID(mapInfo.MapId)] = mapInfo
 	}
 
-	// 整理需要推送给前端的东西
+	// 整理需要推送给前端的东西（已按角色收集，但 mapID 可能有重复，需去重）
 	for roleID, mapIDsTmp := range roleMapIDs {
+		// 去重：同一角色的 AOI 九宫格边界重叠可能导致同一 mapID 被加入多次
+		seen := make(map[cores_declarations.MapID]struct{}, len(mapIDsTmp))
+		deduped := make([]cores_declarations.MapID, 0, len(mapIDsTmp))
+		for _, mapID := range mapIDsTmp {
+			if _, ok := seen[mapID]; !ok {
+				seen[mapID] = struct{}{}
+				deduped = append(deduped, mapID)
+			}
+		}
 
 		rolePush := &pb_camera.PushMapInfo{}
-		for _, mapID := range mapIDsTmp {
+		for _, mapID := range deduped {
 			mapInfoTmp, ok := mapIDInfo[mapID]
 			if !ok {
 				continue

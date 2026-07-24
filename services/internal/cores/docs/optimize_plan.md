@@ -180,17 +180,18 @@
 
 ### P1-10: `Init()` 集结重建和异常恢复
 
-- **文件：** `marchs/march.assemble.func.go` / `march.infomanager.func.go`
-- **参考：** 参考仓库 `march/interface.go:18-99` 的 `Init()` 从 DB 加载后重建 `assembleMarchMap`，处理主行军缺失的异常
-- **说明：** 服务器重启时重建集结关系，处理孤儿集结行军
-- **状态：** [ ] 待开始
+- **状态：** ✅ 已完成
+- **涉及文件：**
+  - `marchs/march.assemble.func.go` — 新增 `rebuildAssembleMarch()` 方法
+  - `marchs/march.infomanager.func.go` — `Init()` 末尾调用 `rebuildAssembleMarch()`
+- **说明：** 服务器重启 `Init()` 从 DB 加载完所有行军后，根据 `FollowMarchID` 重建 `allAssembleMarch`。主行军缺失的孤儿成员打印 warning 并跳过。
 
 ### P1-11: AOI 推送去重
 
-- **文件：** `map_managers/manager.push.func.go`
-- **参考：** 参考仓库 `upMapSync()` 先按 mapID 收集需推送的角色，再统一推送，避免 AOI 重叠区域的重复推送
-- **说明：** AOI 九宫格边界重叠区域可能重复推送同一条消息给同一角色
-- **状态：** [ ] 待开始
+- **状态：** ✅ 已完成
+- **涉及文件：** `map_managers/manager.push.func.go`
+- **改动：** `upMapAsync()` 中对每个角色去重 mapID 列表（`seen` map），避免 AOI 九宫格边界重叠导致的同一 mapID 重复推送给同一角色
+- **说明：** `upMarchSync()` 中已使用 `map[uint64]struct{}` 天然去重，无需额外处理
 
 ---
 

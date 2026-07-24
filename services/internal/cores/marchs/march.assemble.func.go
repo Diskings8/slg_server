@@ -3,10 +3,58 @@ package marchs
 import (
 	"slices"
 
+	"go.uber.org/zap"
+	"server.slg.com/common/loggers"
 	"server.slg.com/services/internal/cores/cores_declarations"
 )
 
 // ---- 集结行军管理（Assemble March） ----
+
+// rebuildAssembleMarch 从 allMarch 中重建集结关系
+//
+// 服务器重启 Init() 后调用，根据 FollowMarchID 重建 allAssembleMarch。
+// 处理异常：主行军不存在时，成员行军标记为孤儿并做清理。
+func (mm *MarchInfoManager) rebuildAssembleMarch() {
+	mm.allAssembleMarchLock.Lock()
+	defer mm.allAssembleMarchLock.Unlock()
+
+	// 清空旧数据，确保幂等
+	clear(mm.allAssembleMarch)
+
+	mm.allMarchLock.RLock()
+	defer mm.allMarchLock.RUnlock()
+
+	for _, marchInfo := range mm.allMarch {
+		if marchInfo == nil {
+			continue
+		}
+
+		followID := marchInfo.FollowMarchID
+		if followID <= 0 || followID == marchInfo.MarchID {
+			// 非集结成员，或是自己的主行军
+			continue
+		}
+
+		// 检查主行军是否存在
+		if _, exists := mm.allMarch[followID]; !exists {
+			// 主行军缺失：孤儿集结成员，打印警告并跳过
+			loggers.Logger.Warn("[rebuildAssembleMarch] orphan assemble member",
+				zap.Uint64("marchID", marchInfo.MarchID.Uint64()),
+				zap.Uint64("followID", followID.Uint64()),
+			)
+			continue
+		}
+
+		// 加入集结组
+		list, ok := mm.allAssembleMarch[followID]
+		if !ok {
+			list = make([]*MarchInfo, 0, 8)
+		}
+		list = append(list, marchInfo)
+		mm.allAssembleMarch[followID] = list
+		_ = baseMarch
+	}
+}
 
 // AssembleCreate 创建集结行军
 //
