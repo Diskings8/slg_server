@@ -1,0 +1,11 @@
+syntax = "proto3";
+package gateway;
+option go_package = "server.slg.com/api/protocol/pb/pb_gateway";
+
+
+enum DeviceType {
+  DeviceTypeNone    = 0;  // 无设备类型，占位用
+  DeviceTypeAndroid = 1;  // Android 设备
+  DeviceTypeIOS     = 2;  // IOS 设备
+  DeviceTypePC      = 3;  // PC 设备
+}

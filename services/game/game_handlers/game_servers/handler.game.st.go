@@ -1,4 +1,4 @@
-package game_handlers
+package game_servers
 
 import (
 	"google.golang.org/grpc"
@@ -6,13 +6,15 @@ import (
 )
 
 type HandlerServer struct {
-	pb_game.UnimplementedHandlerServer
+	pb_game.UnimplementedGameHandlerServer
 }
 
+// ServiceName 服务名称
 func (m *HandlerServer) ServiceName() string {
 	return "Game_HandlerServer"
 }
 
+// Register 注册到 gRPC 服务器
 func (m *HandlerServer) Register(srv *grpc.Server) {
-	pb_game.RegisterHandlerServer(srv, m)
+	pb_game.RegisterGameHandlerServer(srv, m)
 }

@@ -1,66 +1,43 @@
 package servers
 
 import (
-	"context"
 	"fmt"
-	"net"
 
 	"google.golang.org/grpc"
-	"server.slg.com/common/conns/rpcconn/rpc_conns"
 	"server.slg.com/common/loggers"
 	gsi "server.slg.com/common/servers/grpc_server_interfaces"
 )
 
-// RpcServer gRPC 服务器，管理 gRPC 服务注册、监听和优雅关闭
-type RpcServer struct {
-	server   *grpc.Server
-	config   Config
+// GrpcBuilder gRPC Server 构造器，只负责构建和注册服务，不管理生命周期
+// 启动（Serve）和关闭（GracefulStop）由 Lifecycle 统一管理
+type GrpcBuilder struct {
+	opts     []grpc.ServerOption
 	services []gsi.GRPCServiceI
-	ctx      context.Context
 }
 
-func BuildRpcServer(ctx context.Context, cfg Config) *RpcServer {
-	opts := []grpc.ServerOption{
-		grpc.ConnectionTimeout(cfg.Timeout),
-		grpc.MaxRecvMsgSize(cfg.MaxRecvMsgSize),
-		grpc.MaxSendMsgSize(cfg.MaxSendMsgSize),
-	}
-	s := grpc.NewServer(opts...)
-	return &RpcServer{
-		server:   s,
-		ctx:      ctx,
-		config:   cfg,
-		services: make([]gsi.GRPCServiceI, 0),
-	}
+// NewGrpcBuilder 创建 gRPC 构造器
+func NewGrpcBuilder() *GrpcBuilder {
+	return &GrpcBuilder{}
 }
 
-func (s *RpcServer) RegisterServices(services ...gsi.GRPCServiceI) {
-	s.services = append(s.services, services...)
-	for _, svc := range services {
-		svc.Register(s.server) // 调用服务自身注册逻辑
+// WithOptions 添加 gRPC ServerOption
+func (b *GrpcBuilder) WithOptions(opts ...grpc.ServerOption) *GrpcBuilder {
+	b.opts = append(b.opts, opts...)
+	return b
+}
+
+// WithService 注册 gRPC 服务（需实现 GRPCServiceI 接口）
+func (b *GrpcBuilder) WithService(svc gsi.GRPCServiceI) *GrpcBuilder {
+	b.services = append(b.services, svc)
+	return b
+}
+
+// Build 构建 *grpc.Server，注册所有服务后返回
+func (b *GrpcBuilder) Build() *grpc.Server {
+	srv := grpc.NewServer(b.opts...)
+	for _, svc := range b.services {
+		svc.Register(srv)
 		loggers.Logger.Info(fmt.Sprintf("注册 gRPC 服务: %s", svc.ServiceName()))
 	}
-}
-
-func (s *RpcServer) Run() error {
-	lis, err := net.Listen("tcp", s.config.Addr)
-	if err != nil {
-		return err
-	}
-
-	loggers.Logger.Info(fmt.Sprintf("gRPC 服务启动成功: %s", s.config.Addr))
-
-	// 优雅关闭监听
-	go func() {
-		_ = s.server.Serve(lis)
-	}()
-
-	go func() {
-		select {
-		case <-s.ctx.Done():
-			rpc_conns.CloseAll()
-			s.server.GracefulStop()
-		}
-	}()
-	return nil
+	return srv
 }

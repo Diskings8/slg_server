@@ -1,94 +1,92 @@
 package servers
 
 import (
-	"context"
 	"fmt"
 	"net"
 	"sync"
 
-	"server.slg.com/common/conns/netconn"
-	"server.slg.com/common/conns/netconn/tcp_conn"
 	"server.slg.com/common/loggers"
-	"server.slg.com/services/gateway/session_gateways"
 )
 
-// TcpServer TCP 服务器，管理 TCP 监听、连接接受和客户端会话生命周期
+// ConnHandler TCP 连接处理函数，由使用者注入具体业务逻辑
+type ConnHandler func(conn net.Conn)
+
+// TcpBuilder TCP Server 构造器，只负责构建，不管理生命周期
+type TcpBuilder struct {
+	config  Config
+	handler ConnHandler
+}
+
+// NewTcpBuilder 创建 TCP 构造器
+func NewTcpBuilder(cfg Config) *TcpBuilder {
+	return &TcpBuilder{config: cfg}
+}
+
+// WithHandler 注入连接处理函数
+func (b *TcpBuilder) WithHandler(h ConnHandler) *TcpBuilder {
+	b.handler = h
+	return b
+}
+
+// Build 构建 TcpServer
+func (b *TcpBuilder) Build() *TcpServer {
+	return &TcpServer{
+		config:  b.config,
+		handler: b.handler,
+		connMap: make(map[net.Conn]struct{}),
+	}
+}
+
+// TcpServer TCP 服务器（纯运行时）
+// 不管理生命周期，由 Lifecycle 统一协调启动和关闭
 type TcpServer struct {
 	config  Config
-	ctx     context.Context
+	handler ConnHandler
 	lock    sync.Mutex
-	connMap map[netconn.NetConnI]*session_gateways.Session
+	connMap map[net.Conn]struct{}
 }
 
-func BuildTcpServer(ctx context.Context, cfg Config) *TcpServer {
-	return &TcpServer{
-		ctx:     ctx,
-		config:  cfg,
-		connMap: make(map[netconn.NetConnI]*session_gateways.Session),
-	}
-}
-func (s *TcpServer) Run() error {
-	lis, err := net.Listen("tcp", s.config.Addr)
-	if err != nil {
-		return err
-	}
-
-	loggers.Logger.Info(fmt.Sprintf("tcp 服务启动成功: %s", s.config.Addr))
-
-	go func() {
-		defer func() {
-			if e := recover(); e != nil {
-				loggers.Logger.Error(fmt.Sprintf("%+v", e))
-			}
+// Serve 接受连接循环，阻塞直到 listener 关闭
+func (s *TcpServer) Serve(lis net.Listener) {
+	loggers.Logger.Info(fmt.Sprintf("TCP 服务开始监听: %s", s.config.Addr))
+	for {
+		conn, err := lis.Accept()
+		if err != nil {
+			return
+		}
+		s.addConn(conn)
+		go func() {
+			s.handler(conn)
+			s.removeConn(conn)
 		}()
-		for {
-			conn, err := lis.Accept()
-			if err != nil {
-				return
-			}
-			go s.handleNewConn(conn)
-		}
-	}()
-
-	go func() {
-		select {
-		case <-s.ctx.Done():
-			s.gracefulStop()
-		}
-	}()
-	return nil
-}
-
-func (s *TcpServer) gracefulStop() {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-	for _, session := range s.connMap {
-		session.Close()
 	}
 }
 
-func (s *TcpServer) addConnData(nc netconn.NetConnI, session *session_gateways.Session) {
+// CloseAll 强制关闭所有活跃连接
+func (s *TcpServer) CloseAll() {
 	s.lock.Lock()
 	defer s.lock.Unlock()
-	s.connMap[nc] = session
-}
-func (s *TcpServer) removeConnData(session *session_gateways.Session) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-	delete(s.connMap, session.GetConn())
+	for conn := range s.connMap {
+		conn.Close()
+	}
+	s.connMap = make(map[net.Conn]struct{})
 }
 
+// Len 返回当前活跃连接数
 func (s *TcpServer) Len() int {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	return len(s.connMap)
 }
 
-func (s *TcpServer) handleNewConn(conn net.Conn) {
-	netc := tcp_conn.NewNetConn(conn)
-	session := session_gateways.NewSession(netc)
-	s.addConnData(netc, session)
-	session.RunToReceiveFromConn()
-	// 断开
-	s.removeConnData(session)
+func (s *TcpServer) addConn(conn net.Conn) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	s.connMap[conn] = struct{}{}
+}
+
+func (s *TcpServer) removeConn(conn net.Conn) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	delete(s.connMap, conn)
 }

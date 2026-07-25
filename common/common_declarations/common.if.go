@@ -51,3 +51,11 @@ type AsyncSaveEntityI interface {
 	Saving() *atomic.Bool // 是否在保存中
 	SaveDo()              // 保存处理函数
 }
+
+// DBModuleI ..
+type DBModuleI interface {
+	DBCreate(tx DbcI) error
+	DBDelete(tx DbcI) error
+	DBSave(tx DbcI) error
+	DBGet(tx DbcI) error
+}

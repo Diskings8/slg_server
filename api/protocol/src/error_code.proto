@@ -1,0 +1,9 @@
+syntax = "proto3";
+package error_code;
+option go_package = "server.slg.com/api/protocol/pb/pb_error_code";
+
+enum ErrorCode {
+    NoneErr          = 0;
+    ParamError       = 1;
+}
+
