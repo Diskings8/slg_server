@@ -3,6 +3,7 @@ package marchs
 import (
 	"sync/atomic"
 
+	"go.uber.org/zap"
 	"server.slg.com/common/conns/dbconn"
 	"server.slg.com/common/loggers"
 	"server.slg.com/common/utils/asyncsave_entity"
@@ -48,6 +49,9 @@ func (mm *MarchInfoManager) SaveDo() {
 	if len(waitSlice) > 0 {
 		mm.save(waitSlice)
 	}
+
+	// 处理异步删除队列
+	mm.processDeleteQueue()
 }
 
 func (mm *MarchInfoManager) save(waitSlice []*MarchInfo) {
@@ -60,6 +64,31 @@ func (mm *MarchInfoManager) save(waitSlice []*MarchInfo) {
 			v.isNeedSave.Store(true)
 		}
 		v.Unlock()
+	}
+}
+
+// processDeleteQueue 处理异步删除队列
+//
+// 从 deleteQueue 中取出所有待删除行军 ID，批量执行 db.Delete。
+func (mm *MarchInfoManager) processDeleteQueue() {
+	mm.deleteQueueLock.Lock()
+	toDelete := mm.deleteQueue
+	mm.deleteQueue = nil
+	mm.deleteQueueLock.Unlock()
+
+	if len(toDelete) == 0 {
+		return
+	}
+
+	for _, marchID := range toDelete {
+		err := dbconn.GetWriteDbConn().Table(mm.tableName).
+			Delete(&MarchInfo{MarchID: marchID}).Error()
+		if err != nil {
+			loggers.Logger.Error("processDeleteQueue delete march failed",
+				zap.Uint64("marchID", marchID.Uint64()),
+				zap.Error(err),
+			)
+		}
 	}
 }
 

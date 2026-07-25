@@ -147,10 +147,16 @@
 
 ### P1-6: 批量异步持久化
 
-- **文件：** `marchs/march.infomanager.db.func.go` / `map_datas/map.datamanager.func.go`
-- **参考：** 参考仓库 `asyncsave2` — `Save()` 仅设 `isNeedSave` 标记，定时批量写入 DB，内部去重合并
-- **说明：** 避免每次操作直接写 DB，改为标记 → 批量刷盘模式
-- **状态：** [ ] 待开始
+- **状态：** ✅ 已完成
+- **涉及文件：**
+  - `marchs/march.infomanage.st.go` — 新增 `deleteQueue` + `deleteQueueLock`
+  - `marchs/march.infomanager.func.go` — `CreateMarch` / `CreateMarchInBatches` / `DeleteMarch` 去掉同步 DB 写
+  - `marchs/march.infomanager.db.func.go` — `SaveDo()` 末尾新增 `processDeleteQueue()` 处理异步删除
+- **改动说明：**
+  - `CreateMarch` / `CreateMarchInBatches`：去掉 `db.Create`，入内存后调用 `Save()` 标记异步写入
+  - `DeleteMarch`：去掉 `db.Delete`，内存清理（AOI + allMarch + MapAttribute）同步执行，DB 删除推入 `deleteQueue`
+  - `SaveDo()`：处理异步删除队列，逐条 `db.Delete`
+  - `processDeleteQueue()`：取出 `deleteQueue` 中所有待删 ID 批量执行
 
 ### P1-7: 抽取独立 validator 层
 

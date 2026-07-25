@@ -6,7 +6,6 @@ import (
 
 	"server.slg.com/api/protocol/pb/pb_maps_march"
 	"server.slg.com/common/common_declarations"
-	"server.slg.com/common/conns/dbconn"
 	"server.slg.com/common/loggers"
 	"server.slg.com/services/internal/cores/cores_declarations"
 )
@@ -171,6 +170,8 @@ func preCheckCreateMarch(marchInfo *MarchInfo) {
 }
 
 // CreateMarch 创建行军
+//
+// 入内存后标记异步写入，由 cron 定时批量刷盘。
 func (mm *MarchInfoManager) CreateMarch(marchInfo *MarchInfo) error {
 	if marchInfo == nil || marchInfo.GetMarchID() > 0 {
 		return errors.New("参数错误")
@@ -178,21 +179,20 @@ func (mm *MarchInfoManager) CreateMarch(marchInfo *MarchInfo) error {
 
 	preCheckCreateMarch(marchInfo)
 
-	err := dbconn.GetWriteDbConn().Table(mm.tableName).Create(marchInfo).Error()
-	if err != nil {
-		return err
-	}
-
 	mm.addMarchInfo(marchInfo)
 
 	mm.MapAttributeMarchCreate(marchInfo)
 
+	// 异步持久化：标记 dirty，推入 changeChan 等待 cron 批量 db.Save
+	mm.Save(marchInfo)
 	return nil
 }
 
-// CreateMarchInBatches 创建行军列表
+// CreateMarchInBatches 批量创建行军
+//
+// 入内存后标记异步写入，由 cron 定时批量刷盘。
 func (mm *MarchInfoManager) CreateMarchInBatches(marchInfoList ...*MarchInfo) ([]*MarchInfo, error) {
-	createMarch := make([]*MarchInfo, 0, len(marchInfoList))
+	created := make([]*MarchInfo, 0, len(marchInfoList))
 	for _, marchInfo := range marchInfoList {
 		if marchInfo == nil || marchInfo.GetMarchID() > 0 {
 			loggers.Logger.Error("CreateMarchInBatches march is empty")
@@ -200,23 +200,18 @@ func (mm *MarchInfoManager) CreateMarchInBatches(marchInfoList ...*MarchInfo) ([
 		}
 		preCheckCreateMarch(marchInfo)
 
-		createMarch = append(createMarch, marchInfo)
+		mm.addMarchInfo(marchInfo)
+		mm.MapAttributeMarchCreate(marchInfo)
+
+		mm.Save(marchInfo)
+		created = append(created, marchInfo)
 	}
 
-	if len(createMarch) <= 0 {
+	if len(created) <= 0 {
 		return nil, errors.New("CreateMarchInBatches createMarch is empty")
 	}
 
-	err := dbconn.GetWriteDbConn().Table(mm.tableName).CreateInBatches(createMarch, 20).Error()
-	if err != nil {
-		return nil, err
-	}
-
-	for _, marchInfo := range createMarch {
-		mm.addMarchInfo(marchInfo)
-		mm.MapAttributeMarchCreate(marchInfo)
-	}
-	return createMarch, nil
+	return created, nil
 }
 
 // CreateMockMarch 创建假行军注意不会入库
@@ -237,20 +232,24 @@ func (mm *MarchInfoManager) CreateMockMarch(marchInfo *MarchInfo) error {
 }
 
 // DeleteMarch 删除行军
+//
+// 内存清理（AOI + allMarch + MapAttribute）立即执行，
+// DB 删除推入 deleteQueue，由 cron 定时批量刷盘。
 func (mm *MarchInfoManager) DeleteMarch(marchInfo *MarchInfo) error {
 	if marchInfo == nil || marchInfo.MarchID < 1 {
 		return errors.New("参数错误")
 	}
 
-	// 非测试行军
-	if !marchInfo.IsMock() {
-		err := dbconn.GetWriteDbConn().Table(mm.tableName).Delete(marchInfo).Error()
-		if err != nil {
-			return err
-		}
-	}
 	marchInfo.isNeedDelete.Store(true)
 
+	// 非测试行军，加入异步删除队列
+	if !marchInfo.IsMock() {
+		mm.deleteQueueLock.Lock()
+		mm.deleteQueue = append(mm.deleteQueue, marchInfo.MarchID)
+		mm.deleteQueueLock.Unlock()
+	}
+
+	// 内存清理（同步）
 	mm.allMarchLock.Lock()
 	for _, v := range marchInfo.AoiBlock {
 		v.MarchDelete(marchInfo)

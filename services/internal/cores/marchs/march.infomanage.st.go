@@ -22,6 +22,8 @@ type MarchInfoManager struct {
 	mapMarch             []MapAttribute
 	tableName            string
 	saving               atomic.Bool
+	deleteQueue          []cores_declarations.MarchID // 异步删除队列
+	deleteQueueLock      sync.Mutex
 }
 
 func (mm *MarchInfoManager) GetConfig() cores_declarations.MapConfigI { return mm.mapConfig }
