@@ -81,6 +81,10 @@ func (ms *mysql) Dsn() string {
 	return fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?%s", ms.User, ms.Pass, ms.Addr, ms.Port, ms.DbNamePrefix, ms.Params)
 }
 
+type gameConf struct {
+	Addr string `yaml:"addr"`
+}
+
 // Config 全局环境配置聚合，包含 MySQL、Redis、Etcd、Snowflake、Gateway 和各服务节点的配置
 type Config struct {
 	MysqlCommon  mysql     `yaml:"mysql_common"`
@@ -91,6 +95,7 @@ type Config struct {
 	GateWay      gateway   `yaml:"gateway"`
 	GameServer   server    `yaml:"game_server"`
 	BattleServer server    `yaml:"battle_server"`
+	GameConf     gameConf  `yaml:"game_conf"`
 
 	NodeType string
 }

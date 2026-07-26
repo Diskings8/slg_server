@@ -3,7 +3,7 @@ package snowflakes
 import (
 	"github.com/bwmarrin/snowflake"
 	"go.uber.org/zap"
-	"server.slg.com/common/configs"
+	common_configs "server.slg.com/common/configs"
 	"server.slg.com/common/loggers"
 )
 
@@ -12,7 +12,7 @@ var node *snowflake.Node
 func Init() {
 	// 节点ID 1~1023，专服可以配置
 	// 从 YAML 读取配置
-	cfg := configs.GEnvConf.Snowflake
+	cfg := common_configs.GetEnvConf().Snowflake
 
 	// 设置雪花算法参数
 	snowflake.NodeBits = 10

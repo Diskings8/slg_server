@@ -25,7 +25,6 @@ func (p *Poller[M]) Save() {
 	if common_globals.IsTest() {
 		return
 	}
-	// todo async save
 	p.manager.asyncSave.Save(p)
 }
 

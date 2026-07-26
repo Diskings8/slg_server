@@ -52,8 +52,7 @@ func (mm *MarchInfoManager) rebuildAssembleMarch() {
 		}
 		list = append(list, marchInfo)
 		mm.allAssembleMarch[followID] = list
-		_ = baseMarch
-	}
+		}
 }
 
 // AssembleCreate 创建集结行军

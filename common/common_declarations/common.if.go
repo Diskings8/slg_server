@@ -54,8 +54,8 @@ type AsyncSaveEntityI interface {
 
 // DBModuleI ..
 type DBModuleI interface {
-	DBCreate(tx DbcI) error
-	DBDelete(tx DbcI) error
-	DBSave(tx DbcI) error
-	DBGet(tx DbcI) error
+	DBCreate(writeDB DbcI) error
+	DBDelete(writeDB DbcI) error
+	DBSave(writeDB DbcI) error
+	DBGet(readDB DbcI) error
 }
