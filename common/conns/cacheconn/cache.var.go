@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
-	"server.slg.com/common/configs"
+	common_configs "server.slg.com/common/configs"
 	"server.slg.com/common/utils/util_bytes"
 )
 
@@ -26,7 +26,7 @@ func Sep() byte {
 
 func Get() CacheI {
 	if cacheManager == nil {
-		switch configs.GEnvConf.Redis.GetNodeType() {
+		switch common_configs.GetEnvConf().Redis.GetNodeType() {
 		case "single":
 			cacheManager = NewCacheSingleManager("")
 		default:
@@ -37,7 +37,7 @@ func Get() CacheI {
 }
 
 func Key(keys ...string) string {
-	conf := configs.GEnvConf
+	conf := common_configs.GetEnvConf()
 	buffer := util_bytes.Get().Buffer(128)
 	buffer.WriteString(conf.Redis.GetPrefix())
 	buffer.WriteByte(Sep())

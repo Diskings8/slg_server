@@ -8,10 +8,11 @@ import (
 var GameStreamHandler = &GameStream{}
 
 type GameStream struct {
+	pb_game.UnimplementedGameServiceServer
 }
 
-// GameConnect GameConnect
-func (r *GameStream) GameConnect(stream pb_game.GameService_StreamServer) error {
+// Stream GameService 流式连接入口
+func (gs *GameStream) Stream(stream pb_game.GameService_StreamServer) error {
 	req, err := stream.Recv()
 	if err != nil {
 		return err
@@ -19,9 +20,9 @@ func (r *GameStream) GameConnect(stream pb_game.GameService_StreamServer) error 
 	if req.GetRoleId() < 1 {
 		return rpc_results.ErrorParam("参数错误")
 	}
-	return r.gateConnectDo(req.GetRoleId(), stream)
+	return gs.gateConnectDo(req.GetRoleId(), stream)
 }
 
-func (r *GameStream) gateConnectDo(id uint64, stream pb_game.GameService_StreamServer) error {
-
+func (gs *GameStream) gateConnectDo(id uint64, stream pb_game.GameService_StreamServer) error {
+	return nil
 }

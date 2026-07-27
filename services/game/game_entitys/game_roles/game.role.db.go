@@ -6,14 +6,12 @@ import (
 
 	"go.uber.org/zap"
 	"server.slg.com/common/common_declarations"
-	"server.slg.com/common/conns/dbconn"
 	"server.slg.com/common/loggers"
 )
 
 var _ common_declarations.DBModuleI = new(Role)
 
-func (r *Role) DBCreate(tx common_declarations.DbcI) error {
-	writeDB := dbconn.GetWriteDbConn()
+func (r *Role) DBCreate(writeDB common_declarations.DbcI) error {
 	if writeDB == nil {
 		return fmt.Errorf("writeDB is nil, uuid: %d", r.ID)
 	}
@@ -38,8 +36,7 @@ func (r *Role) DBCreate(tx common_declarations.DbcI) error {
 	})
 }
 
-func (r *Role) DBDelete(tx common_declarations.DbcI) error {
-	writeDB := dbconn.GetWriteDbConn()
+func (r *Role) DBDelete(writeDB common_declarations.DbcI) error {
 	if writeDB == nil {
 		return fmt.Errorf("writeDB is nil, uuid: %d", r.ID)
 	}
@@ -64,8 +61,7 @@ func (r *Role) DBDelete(tx common_declarations.DbcI) error {
 	})
 }
 
-func (r *Role) DBSave(tx common_declarations.DbcI) error {
-	writeDB := dbconn.GetWriteDbConn()
+func (r *Role) DBSave(writeDB common_declarations.DbcI) error {
 	if writeDB == nil {
 		return fmt.Errorf("writeDB is nil, uuid: %d", r.ID)
 	}
@@ -90,8 +86,7 @@ func (r *Role) DBSave(tx common_declarations.DbcI) error {
 	})
 }
 
-func (r *Role) DBGet(tx common_declarations.DbcI) error {
-	readDB := dbconn.GetReadDbConn()
+func (r *Role) DBGet(readDB common_declarations.DbcI) error {
 	if readDB == nil {
 		return fmt.Errorf("readDB is nil, uuid: %d", r.ID)
 	}

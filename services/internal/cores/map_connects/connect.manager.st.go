@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 	"server.slg.com/api/protocol/pb/pb_common"
+	"server.slg.com/api/protocol/pb/pb_error_code"
 	"server.slg.com/api/protocol/pb/pb_protocol"
 	"server.slg.com/common/conns/rpcconn/rpc_declarations"
 	"server.slg.com/common/conns/rpcconn/rpc_streams"
@@ -138,7 +139,7 @@ func (rcm *RoleConnectManager) PushToScreen(messageID pb_protocol.MsgID, msgNoti
 		Message: &pb_common.MessagePacket{
 			Body:    byteData,
 			DevMsg:  "",
-			ErrCode: pb_protocol.ErrorCode_NoneErr,
+			ErrCode: pb_error_code.ErrorCode_NoneErr,
 		},
 	}
 	for _, mapID := range mapIDList {
@@ -165,7 +166,7 @@ func (rcm *RoleConnectManager) pushMsgDataToRole(protocolID pb_protocol.MsgID, b
 			// Sn:       sn,
 			Message: &pb_common.MessagePacket{
 				Body:    byteData,
-				ErrCode: pb_protocol.ErrorCode_NoneErr,
+				ErrCode: pb_error_code.ErrorCode_NoneErr,
 			},
 		})
 		if err != nil {
