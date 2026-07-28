@@ -10,8 +10,10 @@ import (
 	"server.slg.com/common/globals/common_globals"
 	"server.slg.com/common/pollers"
 	"server.slg.com/common/utils/util_bytes"
+	"server.slg.com/services/game/game_entitys/game_roles/cultivate_costs"
 	"server.slg.com/services/game/game_entitys/game_roles/hero_skillcollections"
 	"server.slg.com/services/game/game_entitys/game_roles/hero_skills"
+	"server.slg.com/services/game/game_entitys/game_roles/role_heroes"
 )
 
 var (
@@ -116,6 +118,8 @@ func Init(writeDB common_declarations.DbcI) {
 	//
 	hero_skills.Init(writeDB)
 	hero_skillcollections.Init(writeDB)
+	cultivate_costs.Init(writeDB)
+	role_heroes.Init(writeDB)
 
 	// 初始化轮询管理器
 	initPoller()

@@ -40,4 +40,8 @@ func (r *Role) Reset() {
 	r.GateID = 0
 	r.IP = ""
 	r.DeviceType = 0
+	r.Heroes = nil
+	r.Skills = nil
+	r.SkillCollections = nil
+	r.CultivateCosts = nil
 }
