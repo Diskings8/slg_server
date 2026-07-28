@@ -4,10 +4,38 @@ import (
 	"context"
 	"time"
 
+	"github.com/patrickmn/go-cache"
+	"server.slg.com/common/common_declarations"
 	"server.slg.com/common/conns/dbconn"
 	"server.slg.com/common/globals/common_globals"
 	"server.slg.com/common/pollers"
+	"server.slg.com/common/utils/util_bytes"
+	"server.slg.com/services/game/game_entitys/game_roles/hero_skillcollections"
+	"server.slg.com/services/game/game_entitys/game_roles/hero_skills"
 )
+
+var (
+	// pollerManager 角色数据轮询管理器
+	pollerManager *pollers.PollerManager[*Role]
+
+	rolePool = util_bytes.NewPool(func() *Role {
+		return &Role{}
+	})
+
+	// jsonCache 保存角色 []byte 数据，用于前后对比是否有变化
+	// 如果有变化则存入 redis，如果没有变化则忽略，不存入 redis
+	jsonCache = cache.New(time.Minute*10, time.Minute*5)
+)
+
+// Get 从对象池获取角色
+func Get() *Role {
+	return rolePool.Get()
+}
+
+// Release 释放到对象池中
+func Release(r *Role) {
+	rolePool.Put(r)
+}
 
 // GetPollerMgr 获取角色数据轮询管理器
 func GetPollerMgr() *pollers.PollerManager[*Role] {
@@ -17,6 +45,14 @@ func GetPollerMgr() *pollers.PollerManager[*Role] {
 // GetPoller 获取角色数据轮询器
 func GetPoller(id uint64) (*pollers.Poller[*Role], error) {
 	return pollerManager.Get(id)
+}
+
+// Close 关闭轮询管理器
+func Close() error {
+	if pollerManager != nil {
+		return pollerManager.Close()
+	}
+	return nil
 }
 
 // initPoller 初始化轮询管理器
@@ -73,4 +109,14 @@ func loader(id uint64) (*Role, error) {
 
 	r.Init()
 	return r, nil
+}
+
+// Init 初始化 game_roles 模块
+func Init(writeDB common_declarations.DbcI) {
+	//
+	hero_skills.Init(writeDB)
+	hero_skillcollections.Init(writeDB)
+
+	// 初始化轮询管理器
+	initPoller()
 }
