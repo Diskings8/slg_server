@@ -1,0 +1,21 @@
+syntax = "proto3";
+package item;
+option go_package = "server.slg.com/api/protocol/pb/pb_item";
+
+// ItemChangeLog 道具产销日志
+message ItemChangeLog {
+    string opt_id       = 1;
+    int32 config_id     = 2;  // 道具配置ID
+    int32 item_type     = 3;  // 道具大类
+    int32 item_sub_type = 4;  // 道具子类
+    int64 delta         = 5;  // 变动数量（正=获取，负=消耗）
+    int64 balance       = 6;  // 变更后剩余
+    string reason       = 7;  // 变动原因（Reason* 常量值）
+    uint64 role_id      = 8;  // 角色ID
+    int64 timestamp     = 9;  // 发生时间(unix秒)
+}
+
+message ItemUse {
+    int32 conf_id = 1;  // 配置id
+    int64 count   = 2;  // 数量
+}

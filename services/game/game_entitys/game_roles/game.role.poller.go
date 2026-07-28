@@ -14,6 +14,7 @@ import (
 	"server.slg.com/services/game/game_entitys/game_roles/hero_skillcollections"
 	"server.slg.com/services/game/game_entitys/game_roles/hero_skills"
 	"server.slg.com/services/game/game_entitys/game_roles/role_heroes"
+	"server.slg.com/services/game/game_entitys/game_roles/role_items"
 )
 
 var (
@@ -120,6 +121,7 @@ func Init(writeDB common_declarations.DbcI) {
 	hero_skillcollections.Init(writeDB)
 	cultivate_costs.Init(writeDB)
 	role_heroes.Init(writeDB)
+	role_items.Init(writeDB)
 
 	// 初始化轮询管理器
 	initPoller()
