@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"server.slg.com/common/configs"
+	configs "server.slg.com/common/configs"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gen"
@@ -20,7 +20,7 @@ func GenDB() {
 	configPath := fmt.Sprintf("../../api/yaml_conf/slg.%s.yaml", genEnv)
 	configs.LoadEnvConf(configPath)
 
-	dsn := configs.GEnvConf.MysqlGame.Dsn()
+	dsn := configs.GetEnvConf().MysqlGame.Dsn()
 	if dsn == "" {
 		fmt.Fprintf(os.Stderr, "❌ mysql_game DSN 为空，请检查 %s\n", configPath)
 		os.Exit(1)
@@ -40,7 +40,7 @@ func GenDB() {
 				"    3. 数据库 %s 存在\n\n"+
 				"  你也可以修改 game_generates/gorm.go 顶部的 genEnv 变量\n"+
 				"  来切换配置文件 (dev/prod/test)\n",
-			err, configPath, configs.GEnvConf.MysqlGame.DbNamePrefix)
+			err, configPath, configs.GetEnvConf().MysqlGame.DbNamePrefix)
 		os.Exit(1)
 	}
 

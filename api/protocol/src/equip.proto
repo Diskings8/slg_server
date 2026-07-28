@@ -1,0 +1,18 @@
+syntax = "proto3";
+package equip;
+option go_package = "server.slg.com/api/protocol/pb/pb_equip";
+
+// Weapon 宝物
+message Weapon {
+    int32 config_id = 1;  // 配置id
+    int32 slot_id   = 2;  // 槽位
+    int32 level     = 3;  // 技能等级
+}
+
+// Troop 兵种
+message Troop {
+    int32 config_id             = 1;   // 配置id
+    bool is_activate            = 2;   // 是否已经激活
+    int32 ex_ability_config_id1 = 11;  // 额外能力1
+    int32 ex_ability_config_id2 = 12;  // 额外能力2
+}

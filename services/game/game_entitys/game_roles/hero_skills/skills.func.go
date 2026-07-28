@@ -2,6 +2,7 @@ package hero_skills
 
 import (
 	"go.uber.org/zap"
+	"server.slg.com/api/protocol/pb/pb_skill"
 	"server.slg.com/api/protocol/pb_confs"
 	"server.slg.com/common/loggers"
 	"server.slg.com/common/utils/util_jsons"
@@ -36,9 +37,13 @@ func (hss *HeroSkills) Copy(src *HeroSkills) {
 	hss.Init()
 }
 
-func (hss *HeroSkills) Format2Pb() any {
-	// todo
-	return nil
+func (hss *HeroSkills) Format2Pb() []*pb_skill.Skill {
+	list := make([]*pb_skill.Skill, 0, len(hss.List))
+	for _, v := range hss.List {
+		item := NewHeroSkill(v)
+		list = append(list, item.Format2Pb())
+	}
+	return list
 }
 
 //-------------------------------
@@ -51,7 +56,14 @@ func NewHeroSkill(one *game_models.HeroSkill) *HeroSkill {
 	return h
 }
 
-func (hs *HeroSkill) Format2Pb() any {
-	// todo
-	return nil
+func (hs *HeroSkill) Format2Pb() *pb_skill.Skill {
+	if hs.HeroSkill == nil {
+		return nil
+	}
+	return &pb_skill.Skill{
+		ConfigId:       hs.SkillConfID,
+		Level:          hs.Level,
+		Research_Level: hs.ResearchLevel,
+		IsUnlock:       hs.IsUnlocked,
+	}
 }

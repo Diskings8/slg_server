@@ -1,5 +1,7 @@
 package hero_skillcollections
 
+import "server.slg.com/api/protocol/pb/pb_common"
+
 //------------------------------- getters -------------------------------
 
 func (e *HeroSkillCollection) GetID() uint64             { return e.HeroSkillCollection.ID }
@@ -8,7 +10,7 @@ func (e *HeroSkillCollection) GetUpdatedAt() int64       { return e.HeroSkillCol
 func (e *HeroSkillCollection) GetRoleID() uint64         { return e.HeroSkillCollection.RoleID }
 func (e *HeroSkillCollection) GetSkillConfID() int32     { return e.HeroSkillCollection.SkillConfID }
 func (e *HeroSkillCollection) GetIsUnlocked() bool       { return e.HeroSkillCollection.IsUnlocked }
-func (e *HeroSkillCollection) GetCollectionLevel() []int32 { return e.HeroSkillCollection.CollectionLevel }
+func (e *HeroSkillCollection) GetCollectionLevel() []*pb_common.Int32KV { return e.HeroSkillCollection.CollectionLevel }
 
 //------------------------------- setters -------------------------------
 
@@ -18,4 +20,4 @@ func (e *HeroSkillCollection) SetUpdatedAt(v int64)        { e.HeroSkillCollecti
 func (e *HeroSkillCollection) SetRoleID(v uint64)          { e.HeroSkillCollection.RoleID = v }
 func (e *HeroSkillCollection) SetSkillConfID(v int32)      { e.HeroSkillCollection.SkillConfID = v }
 func (e *HeroSkillCollection) SetIsUnlocked(v bool)        { e.HeroSkillCollection.IsUnlocked = v }
-func (e *HeroSkillCollection) SetCollectionLevel(v []int32) { e.HeroSkillCollection.CollectionLevel = v }
+func (e *HeroSkillCollection) SetCollectionLevel(v []*pb_common.Int32KV) { e.HeroSkillCollection.CollectionLevel = v }

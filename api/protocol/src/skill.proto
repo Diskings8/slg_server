@@ -1,0 +1,17 @@
+syntax = "proto3";
+package skill;
+option go_package = "server.slg.com/api/protocol/pb/pb_skill";
+import "common.proto";
+// Skill 技能
+message Skill {
+    int32 config_id      = 1;  // 配置id
+    int32 slot_id        = 2;  // 技能槽位
+    int32 level          = 3;  // 技能等级
+    int32 research_Level = 4;  // 研究等级
+    bool is_unlock       = 5;  // 是否已经解锁
+}
+message SkillCollection {
+    int32 config_id                          = 1;  // 配置id
+    repeated common.Int32KV collection_level = 2;  // 收集进度
+    bool is_unlock                           = 3;  // 是否已解锁
+}

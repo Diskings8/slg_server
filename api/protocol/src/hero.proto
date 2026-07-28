@@ -2,42 +2,11 @@ syntax = "proto3";
 package hero;
 option go_package = "server.slg.com/api/protocol/pb/pb_hero";
 
-// Cultivate 养成属性
-message Cultivate {
-    fixed32 cur_val          = 1;  // 基础属性
-    fixed32 add_val_camp     = 2;  // 加点属性
-    fixed32 add_val_treasure = 3;  // 宝物属性
-    fixed32 add_val_features = 4;  // 特性属性
-    fixed32 add_val_city     = 5;  // 城市属性
-}
+import "cultivate.proto";
+import "skill.proto";
+import "equip.proto";
 
-// Skill 技能
-message Skill {
-    int32 config_id      = 1;  // 配置id
-    int32 slot_id        = 2;  // 技能槽位
-    int32 level          = 3;  // 技能等级
-    int32 research_Level = 4;  // 研究等级
-    bool is_unlock       = 5;  // 是否已经解锁
-}
-
-//TroopType 兵种
-message TroopType {
-    int32 config_id             = 1;   // 配置id
-    bool is_activate            = 2;   // 是否已经激活
-    int32 ex_ability_config_id1 = 11;  // 额外能力1
-    int32 ex_ability_config_id2 = 12;  // 额外能力2
-}
-message Weapon {
-    int32 config_id = 1;  // 配置id
-    int32 slot_id   = 2;  // 槽位
-    int32 level     = 3;  // 技能等级
-}
-//CultivateCost 养成消耗
-message CultivateCost {
-    repeated int32 skill_use = 1;  // 技能消耗
-    repeated int32 troop_use = 2;  // 兵种消耗
-}
-
+// 英雄状态
 enum Status {
     Normal  = 0;
     Injured = 1;
@@ -45,19 +14,19 @@ enum Status {
 
 // HeroInfo 英雄信息
 message HeroInfo {
-    int32 config_id                   = 1;   // 配置id
-    int32 star_stage                  = 2;   // 星级
-    uint32 attr_point                 = 3;   // 属性点
-    Status cur_status                 = 4;   // 当前状态
-    uint32 cur_level                  = 5;   // 当前等级
-    uint32 cur_exp                    = 6;   // 当前经验
-    Cultivate attr_attack             = 11;  // 攻击属性
-    Cultivate attr_defense            = 12;  // 防御属性
-    Cultivate attr_intelligence       = 13;  // 智力属性
-    Cultivate attr_movement           = 14;  // 移动属性
-    Cultivate attr_relocation         = 15;  // 拆迁属性
-    uint32 wage_war_city_id           = 21;  // 征战城市id
-    repeated Skill skills             = 22;  // 技能信息
-    int32 cur_troop_type_id           = 31;  // 当前兵种类型id
-    repeated TroopType opt_troop_type = 32;  // 所有兵种信息
+    int32 config_id                       = 1;   // 配置id
+    int32 star_stage                      = 2;   // 星级
+    uint32 attr_point                     = 3;   // 属性点
+    Status cur_status                     = 4;   // 当前状态
+    uint32 cur_level                      = 5;   // 当前等级
+    uint32 cur_exp                        = 6;   // 当前经验
+    cultivate.Cultivate attr_attack       = 11;  // 攻击属性
+    cultivate.Cultivate attr_defense      = 12;  // 防御属性
+    cultivate.Cultivate attr_intelligence = 13;  // 智力属性
+    cultivate.Cultivate attr_movement     = 14;  // 移动属性
+    cultivate.Cultivate attr_relocation   = 15;  // 拆迁属性
+    uint32 wage_war_city_id               = 21;  // 征战城市id
+    repeated skill.Skill skills           = 22;  // 技能信息
+    int32 cur_troop_type_id               = 31;  // 当前兵种类型id
+    repeated equip.Troop troops           = 32;  // 所有兵种信息
 }

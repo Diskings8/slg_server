@@ -6,37 +6,42 @@ import "error_code.proto";
 import "protocol.proto";
 
 message MessagePacket {
-  bytes body = 1;
-  string dev_msg = 2;
-  error_code.ErrorCode err_code = 3;
+    bytes body                    = 1;
+    string dev_msg                = 2;
+    error_code.ErrorCode err_code = 3;
 }
 
 message NodePacket {
-  protocol.MsgID msgId = 1;
-  MessagePacket message = 2;
+    protocol.MsgID msgId  = 1;
+    MessagePacket message = 2;
 }
 
-message CreateRoleReq{
-  uint64 userId = 1;
-  string roleName = 2;
+message Int32KV {
+    int32 Key = 1;
+    int32 Val = 2;
 }
 
-message CreateRoleRsp{
-  uint64 roleId = 1;
+message CreateRoleReq {
+    uint64 userId   = 1;
+    string roleName = 2;
 }
 
-message LoginOnceReq{
-  uint64 roleId = 1;
+message CreateRoleRsp {
+    uint64 roleId = 1;
 }
 
-message LoginOnceRsp{
-  bool result = 1;
+message LoginOnceReq {
+    uint64 roleId = 1;
 }
 
-message NotifyInfoReq{
-  string info = 1;
+message LoginOnceRsp {
+    bool result = 1;
 }
 
-message NotifyInfoRsp{
-  bool result = 1;
+message NotifyInfoReq {
+    string info = 1;
+}
+
+message NotifyInfoRsp {
+    bool result = 1;
 }

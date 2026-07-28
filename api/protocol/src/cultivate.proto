@@ -1,0 +1,29 @@
+syntax = "proto3";
+package cultivate;
+option go_package = "server.slg.com/api/protocol/pb/pb_cultivate";
+
+import "common.proto";
+
+// 养成类型
+enum CultivateType {
+    CultivateNone   = 0;
+    CultivateSkill  = 1;
+    CultivateTroop  = 2;
+    CultivateAwaken = 3;
+}
+
+// Cultivate 养成属性
+message Cultivate {
+    fixed32 cur_val          = 1;  // 基础属性
+    fixed32 add_val_camp     = 2;  // 加点属性
+    fixed32 add_val_treasure = 3;  // 宝物属性
+    fixed32 add_val_features = 4;  // 特性属性
+    fixed32 add_val_city     = 5;  // 城市属性
+    fixed32 add_val_title    = 6;  // 称号属性
+}
+
+// CultivateCost 养成消耗
+message CultivateCost {
+    repeated common.Int32KV skill_use = 1;  // 技能消耗
+    repeated common.Int32KV troop_use = 2;  // 兵种消耗
+}
