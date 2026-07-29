@@ -12,8 +12,9 @@ message MessagePacket {
 }
 
 message NodePacket {
-    protocol.MsgID msgId  = 1;
-    MessagePacket message = 2;
+    uint64 role_id        = 1;
+    protocol.MsgID msgId  = 2;
+    MessagePacket message = 3;
 }
 
 message Int32KV {

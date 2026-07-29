@@ -3,14 +3,20 @@ package protocol;
 option go_package = "server.slg.com/api/protocol/pb/pb_protocol";
 
 enum MsgID {
-  None            = 0;
-  Base_Heat       = 1;
+    None      = 0;
+    Base_Heat = 1;
 
-  Common_Auth     = 11;
+    Common_Auth = 11;
 
-  // ---------------- 推送下推的信息-----------------//
-  PushServerMainTain                    = 10000001;  // 服务器维护
-  PushClientVersion                     = 10000002;  // 前端版本更新通知
-  PushMapInfo                           = 11000001;  // 地图信息推送
-  PushMarchInfo                         = 11000002;  // 行军信息推送
+    // ---------------- Game 业务协议 (1000001~) ----------------//
+    GameHeroList         = 1000001;  // 获取英雄列表
+    GameHeroUpgradeLevel = 1000002;  // 英雄升级
+    GameHeroCultivate    = 1000003;  // 英雄培养(5维属性)
+    GameHeroSkillUpgrade = 1000004;  // 英雄技能升级
+
+    // ---------------- 推送下推的信息-----------------//
+    PushServerMainTain = 10000001;  // 服务器维护
+    PushClientVersion  = 10000002;  // 前端版本更新通知
+    PushMapInfo        = 11000001;  // 地图信息推送
+    PushMarchInfo      = 11000002;  // 行军信息推送
 }
