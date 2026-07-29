@@ -118,15 +118,18 @@ var GameService_ServiceDesc = grpc.ServiceDesc{
 const (
 	GameHandler_CreateRole_FullMethodName = "/pb_game.GameHandler/CreateRole"
 	GameHandler_LoginOnce_FullMethodName  = "/pb_game.GameHandler/LoginOnce"
+	GameHandler_Do_FullMethodName         = "/pb_game.GameHandler/Do"
 )
 
 // GameHandlerClient is the client API for GameHandler service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type GameHandlerClient interface {
-	// 登录服创建玩家
+	// login server create role
 	CreateRole(ctx context.Context, in *pb_common.CreateRoleReq, opts ...grpc.CallOption) (*pb_common.CreateRoleRsp, error)
 	LoginOnce(ctx context.Context, in *pb_common.LoginOnceReq, opts ...grpc.CallOption) (*pb_common.LoginOnceRsp, error)
+	// Do: unified protocol entry, route by NodePacket.msgId
+	Do(ctx context.Context, in *pb_common.NodePacket, opts ...grpc.CallOption) (*pb_common.NodePacket, error)
 }
 
 type gameHandlerClient struct {
@@ -157,13 +160,25 @@ func (c *gameHandlerClient) LoginOnce(ctx context.Context, in *pb_common.LoginOn
 	return out, nil
 }
 
+func (c *gameHandlerClient) Do(ctx context.Context, in *pb_common.NodePacket, opts ...grpc.CallOption) (*pb_common.NodePacket, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(pb_common.NodePacket)
+	err := c.cc.Invoke(ctx, GameHandler_Do_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // GameHandlerServer is the server API for GameHandler service.
 // All implementations must embed UnimplementedGameHandlerServer
 // for forward compatibility.
 type GameHandlerServer interface {
-	// 登录服创建玩家
+	// login server create role
 	CreateRole(context.Context, *pb_common.CreateRoleReq) (*pb_common.CreateRoleRsp, error)
 	LoginOnce(context.Context, *pb_common.LoginOnceReq) (*pb_common.LoginOnceRsp, error)
+	// Do: unified protocol entry, route by NodePacket.msgId
+	Do(context.Context, *pb_common.NodePacket) (*pb_common.NodePacket, error)
 	mustEmbedUnimplementedGameHandlerServer()
 }
 
@@ -179,6 +194,9 @@ func (UnimplementedGameHandlerServer) CreateRole(context.Context, *pb_common.Cre
 }
 func (UnimplementedGameHandlerServer) LoginOnce(context.Context, *pb_common.LoginOnceReq) (*pb_common.LoginOnceRsp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method LoginOnce not implemented")
+}
+func (UnimplementedGameHandlerServer) Do(context.Context, *pb_common.NodePacket) (*pb_common.NodePacket, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Do not implemented")
 }
 func (UnimplementedGameHandlerServer) mustEmbedUnimplementedGameHandlerServer() {}
 func (UnimplementedGameHandlerServer) testEmbeddedByValue()                     {}
@@ -237,6 +255,24 @@ func _GameHandler_LoginOnce_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _GameHandler_Do_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(pb_common.NodePacket)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GameHandlerServer).Do(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GameHandler_Do_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GameHandlerServer).Do(ctx, req.(*pb_common.NodePacket))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // GameHandler_ServiceDesc is the grpc.ServiceDesc for GameHandler service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -251,6 +287,10 @@ var GameHandler_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "LoginOnce",
 			Handler:    _GameHandler_LoginOnce_Handler,
+		},
+		{
+			MethodName: "Do",
+			Handler:    _GameHandler_Do_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

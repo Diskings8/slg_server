@@ -5,15 +5,18 @@ option go_package = "server.slg.com/api/protocol/pb/pb_game";
 import "common.proto";
 
 service GameService {
-    rpc Stream(stream GameServiceNodePacketReq) returns (stream GameServiceNodePacketRsp) {}
+    rpc Stream(stream GameServiceNodePacketReq) returns (stream GameServiceNodePacketRsp) {
+    }
 }
 
 service GameHandler {
-    // 登录服创建玩家
+    // login server create role
     rpc CreateRole(common.CreateRoleReq) returns (common.CreateRoleRsp);
     rpc LoginOnce(common.LoginOnceReq) returns (common.LoginOnceRsp);
-}
 
+    // Do: unified protocol entry, route by NodePacket.msgId
+    rpc Do(common.NodePacket) returns (common.NodePacket);
+}
 
 message GameServiceNodePacketReq {
     uint64 roleId            = 1;
@@ -23,4 +26,3 @@ message GameServiceNodePacketReq {
 message GameServiceNodePacketRsp {
     common.NodePacket packet = 1;
 }
-

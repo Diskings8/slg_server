@@ -228,6 +228,302 @@ func (x *HeroInfo) GetTroops() []*pb_equip.Troop {
 	return nil
 }
 
+// HeroList 获取英雄列表
+type HeroListReq struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *HeroListReq) Reset() {
+	*x = HeroListReq{}
+	mi := &file_hero_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HeroListReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HeroListReq) ProtoMessage() {}
+
+func (x *HeroListReq) ProtoReflect() protoreflect.Message {
+	mi := &file_hero_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HeroListReq.ProtoReflect.Descriptor instead.
+func (*HeroListReq) Descriptor() ([]byte, []int) {
+	return file_hero_proto_rawDescGZIP(), []int{1}
+}
+
+type HeroListResp struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Heroes []*HeroInfo `protobuf:"bytes,1,rep,name=heroes,proto3" json:"heroes,omitempty"`
+}
+
+func (x *HeroListResp) Reset() {
+	*x = HeroListResp{}
+	mi := &file_hero_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HeroListResp) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HeroListResp) ProtoMessage() {}
+
+func (x *HeroListResp) ProtoReflect() protoreflect.Message {
+	mi := &file_hero_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HeroListResp.ProtoReflect.Descriptor instead.
+func (*HeroListResp) Descriptor() ([]byte, []int) {
+	return file_hero_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *HeroListResp) GetHeroes() []*HeroInfo {
+	if x != nil {
+		return x.Heroes
+	}
+	return nil
+}
+
+// HeroUpgradeLevelReq 英雄升级
+type HeroUpgradeLevelReq struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	HeroId int32 `protobuf:"varint,1,opt,name=hero_id,json=heroId,proto3" json:"hero_id,omitempty"`
+}
+
+func (x *HeroUpgradeLevelReq) Reset() {
+	*x = HeroUpgradeLevelReq{}
+	mi := &file_hero_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HeroUpgradeLevelReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HeroUpgradeLevelReq) ProtoMessage() {}
+
+func (x *HeroUpgradeLevelReq) ProtoReflect() protoreflect.Message {
+	mi := &file_hero_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HeroUpgradeLevelReq.ProtoReflect.Descriptor instead.
+func (*HeroUpgradeLevelReq) Descriptor() ([]byte, []int) {
+	return file_hero_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *HeroUpgradeLevelReq) GetHeroId() int32 {
+	if x != nil {
+		return x.HeroId
+	}
+	return 0
+}
+
+type HeroUpgradeLevelResp struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	HeroId int32  `protobuf:"varint,1,opt,name=hero_id,json=heroId,proto3" json:"hero_id,omitempty"`
+	Level  uint32 `protobuf:"varint,2,opt,name=level,proto3" json:"level,omitempty"`
+}
+
+func (x *HeroUpgradeLevelResp) Reset() {
+	*x = HeroUpgradeLevelResp{}
+	mi := &file_hero_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HeroUpgradeLevelResp) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HeroUpgradeLevelResp) ProtoMessage() {}
+
+func (x *HeroUpgradeLevelResp) ProtoReflect() protoreflect.Message {
+	mi := &file_hero_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HeroUpgradeLevelResp.ProtoReflect.Descriptor instead.
+func (*HeroUpgradeLevelResp) Descriptor() ([]byte, []int) {
+	return file_hero_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *HeroUpgradeLevelResp) GetHeroId() int32 {
+	if x != nil {
+		return x.HeroId
+	}
+	return 0
+}
+
+func (x *HeroUpgradeLevelResp) GetLevel() uint32 {
+	if x != nil {
+		return x.Level
+	}
+	return 0
+}
+
+// HeroCultivate 英雄培养
+type HeroCultivateReq struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	HeroId        int32  `protobuf:"varint,1,opt,name=hero_id,json=heroId,proto3" json:"hero_id,omitempty"`
+	CultivateType uint32 `protobuf:"varint,2,opt,name=cultivate_type,json=cultivateType,proto3" json:"cultivate_type,omitempty"` // 0:攻击 1:防御 2:智力 3:速度 4:拆迁
+}
+
+func (x *HeroCultivateReq) Reset() {
+	*x = HeroCultivateReq{}
+	mi := &file_hero_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HeroCultivateReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HeroCultivateReq) ProtoMessage() {}
+
+func (x *HeroCultivateReq) ProtoReflect() protoreflect.Message {
+	mi := &file_hero_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HeroCultivateReq.ProtoReflect.Descriptor instead.
+func (*HeroCultivateReq) Descriptor() ([]byte, []int) {
+	return file_hero_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *HeroCultivateReq) GetHeroId() int32 {
+	if x != nil {
+		return x.HeroId
+	}
+	return 0
+}
+
+func (x *HeroCultivateReq) GetCultivateType() uint32 {
+	if x != nil {
+		return x.CultivateType
+	}
+	return 0
+}
+
+type HeroCultivateResp struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	HeroId        int32                   `protobuf:"varint,1,opt,name=hero_id,json=heroId,proto3" json:"hero_id,omitempty"`
+	CultivateType uint32                  `protobuf:"varint,2,opt,name=cultivate_type,json=cultivateType,proto3" json:"cultivate_type,omitempty"`
+	Attr          *pb_cultivate.Cultivate `protobuf:"bytes,3,opt,name=attr,proto3" json:"attr,omitempty"`
+}
+
+func (x *HeroCultivateResp) Reset() {
+	*x = HeroCultivateResp{}
+	mi := &file_hero_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HeroCultivateResp) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HeroCultivateResp) ProtoMessage() {}
+
+func (x *HeroCultivateResp) ProtoReflect() protoreflect.Message {
+	mi := &file_hero_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HeroCultivateResp.ProtoReflect.Descriptor instead.
+func (*HeroCultivateResp) Descriptor() ([]byte, []int) {
+	return file_hero_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *HeroCultivateResp) GetHeroId() int32 {
+	if x != nil {
+		return x.HeroId
+	}
+	return 0
+}
+
+func (x *HeroCultivateResp) GetCultivateType() uint32 {
+	if x != nil {
+		return x.CultivateType
+	}
+	return 0
+}
+
+func (x *HeroCultivateResp) GetAttr() *pb_cultivate.Cultivate {
+	if x != nil {
+		return x.Attr
+	}
+	return nil
+}
+
 var File_hero_proto protoreflect.FileDescriptor
 
 var file_hero_proto_rawDesc = []byte{
@@ -276,12 +572,37 @@ var file_hero_proto_rawDesc = []byte{
 	0x0e, 0x63, 0x75, 0x72, 0x54, 0x72, 0x6f, 0x6f, 0x70, 0x54, 0x79, 0x70, 0x65, 0x49, 0x64, 0x12,
 	0x24, 0x0a, 0x06, 0x74, 0x72, 0x6f, 0x6f, 0x70, 0x73, 0x18, 0x20, 0x20, 0x03, 0x28, 0x0b, 0x32,
 	0x0c, 0x2e, 0x65, 0x71, 0x75, 0x69, 0x70, 0x2e, 0x54, 0x72, 0x6f, 0x6f, 0x70, 0x52, 0x06, 0x74,
-	0x72, 0x6f, 0x6f, 0x70, 0x73, 0x2a, 0x21, 0x0a, 0x06, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12,
-	0x0a, 0x0a, 0x06, 0x4e, 0x6f, 0x72, 0x6d, 0x61, 0x6c, 0x10, 0x00, 0x12, 0x0b, 0x0a, 0x07, 0x49,
-	0x6e, 0x6a, 0x75, 0x72, 0x65, 0x64, 0x10, 0x01, 0x42, 0x28, 0x5a, 0x26, 0x73, 0x65, 0x72, 0x76,
-	0x65, 0x72, 0x2e, 0x73, 0x6c, 0x67, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x70,
-	0x72, 0x6f, 0x74, 0x6f, 0x63, 0x6f, 0x6c, 0x2f, 0x70, 0x62, 0x2f, 0x70, 0x62, 0x5f, 0x68, 0x65,
-	0x72, 0x6f, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x72, 0x6f, 0x6f, 0x70, 0x73, 0x22, 0x0d, 0x0a, 0x0b, 0x48, 0x65, 0x72, 0x6f, 0x4c, 0x69, 0x73,
+	0x74, 0x52, 0x65, 0x71, 0x22, 0x36, 0x0a, 0x0c, 0x48, 0x65, 0x72, 0x6f, 0x4c, 0x69, 0x73, 0x74,
+	0x52, 0x65, 0x73, 0x70, 0x12, 0x26, 0x0a, 0x06, 0x68, 0x65, 0x72, 0x6f, 0x65, 0x73, 0x18, 0x01,
+	0x20, 0x03, 0x28, 0x0b, 0x32, 0x0e, 0x2e, 0x68, 0x65, 0x72, 0x6f, 0x2e, 0x48, 0x65, 0x72, 0x6f,
+	0x49, 0x6e, 0x66, 0x6f, 0x52, 0x06, 0x68, 0x65, 0x72, 0x6f, 0x65, 0x73, 0x22, 0x2e, 0x0a, 0x13,
+	0x48, 0x65, 0x72, 0x6f, 0x55, 0x70, 0x67, 0x72, 0x61, 0x64, 0x65, 0x4c, 0x65, 0x76, 0x65, 0x6c,
+	0x52, 0x65, 0x71, 0x12, 0x17, 0x0a, 0x07, 0x68, 0x65, 0x72, 0x6f, 0x5f, 0x69, 0x64, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x05, 0x52, 0x06, 0x68, 0x65, 0x72, 0x6f, 0x49, 0x64, 0x22, 0x45, 0x0a, 0x14,
+	0x48, 0x65, 0x72, 0x6f, 0x55, 0x70, 0x67, 0x72, 0x61, 0x64, 0x65, 0x4c, 0x65, 0x76, 0x65, 0x6c,
+	0x52, 0x65, 0x73, 0x70, 0x12, 0x17, 0x0a, 0x07, 0x68, 0x65, 0x72, 0x6f, 0x5f, 0x69, 0x64, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x06, 0x68, 0x65, 0x72, 0x6f, 0x49, 0x64, 0x12, 0x14, 0x0a,
+	0x05, 0x6c, 0x65, 0x76, 0x65, 0x6c, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x05, 0x6c, 0x65,
+	0x76, 0x65, 0x6c, 0x22, 0x52, 0x0a, 0x10, 0x48, 0x65, 0x72, 0x6f, 0x43, 0x75, 0x6c, 0x74, 0x69,
+	0x76, 0x61, 0x74, 0x65, 0x52, 0x65, 0x71, 0x12, 0x17, 0x0a, 0x07, 0x68, 0x65, 0x72, 0x6f, 0x5f,
+	0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x06, 0x68, 0x65, 0x72, 0x6f, 0x49, 0x64,
+	0x12, 0x25, 0x0a, 0x0e, 0x63, 0x75, 0x6c, 0x74, 0x69, 0x76, 0x61, 0x74, 0x65, 0x5f, 0x74, 0x79,
+	0x70, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x0d, 0x63, 0x75, 0x6c, 0x74, 0x69, 0x76,
+	0x61, 0x74, 0x65, 0x54, 0x79, 0x70, 0x65, 0x22, 0x7d, 0x0a, 0x11, 0x48, 0x65, 0x72, 0x6f, 0x43,
+	0x75, 0x6c, 0x74, 0x69, 0x76, 0x61, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x12, 0x17, 0x0a, 0x07,
+	0x68, 0x65, 0x72, 0x6f, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x06, 0x68,
+	0x65, 0x72, 0x6f, 0x49, 0x64, 0x12, 0x25, 0x0a, 0x0e, 0x63, 0x75, 0x6c, 0x74, 0x69, 0x76, 0x61,
+	0x74, 0x65, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x0d, 0x63,
+	0x75, 0x6c, 0x74, 0x69, 0x76, 0x61, 0x74, 0x65, 0x54, 0x79, 0x70, 0x65, 0x12, 0x28, 0x0a, 0x04,
+	0x61, 0x74, 0x74, 0x72, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x14, 0x2e, 0x63, 0x75, 0x6c,
+	0x74, 0x69, 0x76, 0x61, 0x74, 0x65, 0x2e, 0x43, 0x75, 0x6c, 0x74, 0x69, 0x76, 0x61, 0x74, 0x65,
+	0x52, 0x04, 0x61, 0x74, 0x74, 0x72, 0x2a, 0x21, 0x0a, 0x06, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73,
+	0x12, 0x0a, 0x0a, 0x06, 0x4e, 0x6f, 0x72, 0x6d, 0x61, 0x6c, 0x10, 0x00, 0x12, 0x0b, 0x0a, 0x07,
+	0x49, 0x6e, 0x6a, 0x75, 0x72, 0x65, 0x64, 0x10, 0x01, 0x42, 0x28, 0x5a, 0x26, 0x73, 0x65, 0x72,
+	0x76, 0x65, 0x72, 0x2e, 0x73, 0x6c, 0x67, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x61, 0x70, 0x69, 0x2f,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x6f, 0x6c, 0x2f, 0x70, 0x62, 0x2f, 0x70, 0x62, 0x5f, 0x68,
+	0x65, 0x72, 0x6f, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -297,28 +618,36 @@ func file_hero_proto_rawDescGZIP() []byte {
 }
 
 var file_hero_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_hero_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_hero_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_hero_proto_goTypes = []any{
 	(Status)(0),                    // 0: hero.Status
 	(*HeroInfo)(nil),               // 1: hero.HeroInfo
-	(*pb_cultivate.Cultivate)(nil), // 2: cultivate.Cultivate
-	(*pb_skill.Skill)(nil),         // 3: skill.Skill
-	(*pb_equip.Troop)(nil),         // 4: equip.Troop
+	(*HeroListReq)(nil),            // 2: hero.HeroListReq
+	(*HeroListResp)(nil),           // 3: hero.HeroListResp
+	(*HeroUpgradeLevelReq)(nil),    // 4: hero.HeroUpgradeLevelReq
+	(*HeroUpgradeLevelResp)(nil),   // 5: hero.HeroUpgradeLevelResp
+	(*HeroCultivateReq)(nil),       // 6: hero.HeroCultivateReq
+	(*HeroCultivateResp)(nil),      // 7: hero.HeroCultivateResp
+	(*pb_cultivate.Cultivate)(nil), // 8: cultivate.Cultivate
+	(*pb_skill.Skill)(nil),         // 9: skill.Skill
+	(*pb_equip.Troop)(nil),         // 10: equip.Troop
 }
 var file_hero_proto_depIdxs = []int32{
-	0, // 0: hero.HeroInfo.cur_status:type_name -> hero.Status
-	2, // 1: hero.HeroInfo.attr_attack:type_name -> cultivate.Cultivate
-	2, // 2: hero.HeroInfo.attr_defense:type_name -> cultivate.Cultivate
-	2, // 3: hero.HeroInfo.attr_intelligence:type_name -> cultivate.Cultivate
-	2, // 4: hero.HeroInfo.attr_movement:type_name -> cultivate.Cultivate
-	2, // 5: hero.HeroInfo.attr_relocation:type_name -> cultivate.Cultivate
-	3, // 6: hero.HeroInfo.skills:type_name -> skill.Skill
-	4, // 7: hero.HeroInfo.troops:type_name -> equip.Troop
-	8, // [8:8] is the sub-list for method output_type
-	8, // [8:8] is the sub-list for method input_type
-	8, // [8:8] is the sub-list for extension type_name
-	8, // [8:8] is the sub-list for extension extendee
-	0, // [0:8] is the sub-list for field type_name
+	0,  // 0: hero.HeroInfo.cur_status:type_name -> hero.Status
+	8,  // 1: hero.HeroInfo.attr_attack:type_name -> cultivate.Cultivate
+	8,  // 2: hero.HeroInfo.attr_defense:type_name -> cultivate.Cultivate
+	8,  // 3: hero.HeroInfo.attr_intelligence:type_name -> cultivate.Cultivate
+	8,  // 4: hero.HeroInfo.attr_movement:type_name -> cultivate.Cultivate
+	8,  // 5: hero.HeroInfo.attr_relocation:type_name -> cultivate.Cultivate
+	9,  // 6: hero.HeroInfo.skills:type_name -> skill.Skill
+	10, // 7: hero.HeroInfo.troops:type_name -> equip.Troop
+	1,  // 8: hero.HeroListResp.heroes:type_name -> hero.HeroInfo
+	8,  // 9: hero.HeroCultivateResp.attr:type_name -> cultivate.Cultivate
+	10, // [10:10] is the sub-list for method output_type
+	10, // [10:10] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_hero_proto_init() }
@@ -332,7 +661,7 @@ func file_hero_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_hero_proto_rawDesc,
 			NumEnums:      1,
-			NumMessages:   1,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

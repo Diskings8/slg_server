@@ -30,3 +30,35 @@ message HeroInfo {
     int32 cur_troop_type_id               = 31;  // 当前兵种类型id
     repeated equip.Troop troops           = 32;  // 所有兵种信息
 }
+
+// ---- Game RPC 请求/响应 ----
+
+// HeroList 获取英雄列表
+message HeroListReq {
+}
+
+message HeroListResp {
+    repeated HeroInfo heroes = 1;
+}
+
+// HeroUpgradeLevelReq 英雄升级
+message HeroUpgradeLevelReq {
+    int32 hero_id = 1;
+}
+
+message HeroUpgradeLevelResp {
+    int32 hero_id = 1;
+    uint32 level  = 2;
+}
+
+// HeroCultivate 英雄培养
+message HeroCultivateReq {
+    int32 hero_id         = 1;
+    uint32 cultivate_type = 2;  // 0:攻击 1:防御 2:智力 3:速度 4:拆迁
+}
+
+message HeroCultivateResp {
+    int32 hero_id            = 1;
+    uint32 cultivate_type    = 2;
+    cultivate.Cultivate attr = 3;
+}
