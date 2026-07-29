@@ -12,6 +12,7 @@ import (
 	"server.slg.com/services/game/game_entitys/game_roles/hero_skillcollections"
 	"server.slg.com/services/game/game_entitys/game_roles/hero_skills"
 	"server.slg.com/services/game/game_entitys/game_roles/role_heroes"
+	"server.slg.com/services/game/game_entitys/game_roles/role_items"
 )
 
 var _ common_declarations.DataI = new(Role)
@@ -37,6 +38,7 @@ type Role struct {
 	Skills           *hero_skills.HeroSkills                        `json:"skills,omitempty"`
 	SkillCollections *hero_skillcollections.HeroSkillCollections    `json:"skill_collections,omitempty"`
 	CultivateCosts   *cultivate_costs.CultivateCosts                `json:"cultivate_costs,omitempty"`
+	Items            *role_items.RoleItems                          `json:"items,omitempty"`
 }
 
 // UniqueID 唯一 id
@@ -128,6 +130,7 @@ func (r *Role) New() {
 	r.Skills = hero_skills.NewHeroSkills(roleID)
 	r.SkillCollections = hero_skillcollections.NewHeroSkillCollections(roleID)
 	r.CultivateCosts = cultivate_costs.NewCultivateCosts(roleID)
+	r.Items = role_items.NewRoleItems(roleID)
 }
 
 // SetStatus 设置状态
@@ -204,4 +207,21 @@ func (r *Role) GetCultivateCosts() *cultivate_costs.CultivateCosts {
 		r.CultivateCosts.Init()
 	}
 	return r.CultivateCosts
+}
+
+// GetItems 获取背包模块
+func (r *Role) GetItems() *role_items.RoleItems {
+	if !r.IsCopy() {
+		return r.Items
+	}
+	if r.Items == nil {
+		r.Items = role_items.NewRoleItems(r.ID)
+		if r.src.Items != nil {
+			r.copyLock.RLock()
+			r.Items.Copy(r.src.Items)
+			r.copyLock.RUnlock()
+		}
+		r.Items.Init()
+	}
+	return r.Items
 }

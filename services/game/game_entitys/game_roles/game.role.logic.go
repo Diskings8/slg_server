@@ -2,6 +2,11 @@ package game_roles
 
 import (
 	"time"
+
+	"server.slg.com/api/protocol/pb/pb_error_code"
+	"server.slg.com/api/protocol/pb/pb_item"
+	"server.slg.com/api/protocol/pb_confs"
+	"server.slg.com/common/common_declarations"
 )
 
 // NewTest 测试辅助 — 创建带有基本初始化的角色实例
@@ -58,4 +63,45 @@ func (r *Role) IsCrossServerMap() bool {
 	// TODO 接入 attr 子模块后:
 	// return r.GetAttr().MoveMapServerID > 0
 	return false
+}
+
+// CheckItemEnough 检查道具是否充足
+func (r *Role) CheckItemEnough(checkItems []common_declarations.ItemUse) pb_error_code.ErrorCode {
+	for _, oneItem := range checkItems {
+		switch oneItem.ItemType {
+		case pb_confs.ItemTypeNormal:
+			return r.GetItems().CheckItemEnough(oneItem)
+		}
+	}
+	return pb_error_code.ErrorCode_ParamError
+}
+
+// AddItem 获得道具
+func (r *Role) AddItem(addItems []common_declarations.ItemUse, optID, reason string, optTimeUx int64) []*pb_item.ItemChangeLog {
+	var vet []*pb_item.ItemChangeLog
+	var curCount int64
+	for _, oneItem := range addItems {
+		switch oneItem.ItemType {
+		case pb_confs.ItemTypeNormal:
+			curCount = r.GetItems().AddItem(oneItem, optTimeUx)
+		}
+		oneLog := oneItem.Format2ChangeLogPb(optID, r.ID, oneItem.Count, curCount, optTimeUx, reason)
+		vet = append(vet, oneLog)
+	}
+	return vet
+}
+
+// ReduceItem 扣除道具
+func (r *Role) ReduceItem(useItems []common_declarations.ItemUse, optID, reason string, optTimeUx int64) []*pb_item.ItemChangeLog {
+	var vet []*pb_item.ItemChangeLog
+	var curCount int64
+	for _, oneItem := range useItems {
+		switch oneItem.ItemType {
+		case pb_confs.ItemTypeNormal:
+			curCount = r.GetItems().ReduceItem(oneItem.ItemID, oneItem.Count)
+		}
+		oneLog := oneItem.Format2ChangeLogPb(optID, r.ID, -oneItem.Count, curCount, optTimeUx, reason)
+		vet = append(vet, oneLog)
+	}
+	return vet
 }

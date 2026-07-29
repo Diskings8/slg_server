@@ -9,4 +9,7 @@ enum ErrorCode {
     ProtocolNotFound = 3;
     SystemBusy       = 4;
     RoleNotFound     = 5;
+
+    ItemTypeNormalDontHave  = 10;
+    ItemTypeNormalNotEnough = 11;
 }

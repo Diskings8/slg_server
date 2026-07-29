@@ -22,3 +22,7 @@ func Error(code pb_error_code.ErrorCode, devMsg string) ResultI {
 func ErrorParam(msg string) ResultI {
 	return Error(pb_error_code.ErrorCode_ParamError, msg)
 }
+
+func ErrorCode(code pb_error_code.ErrorCode) ResultI {
+	return Error(code, "")
+}
