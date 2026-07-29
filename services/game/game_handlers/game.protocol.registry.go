@@ -40,10 +40,10 @@ func GetProtoHandler(msgID pb_protocol.MsgID) (*ProtoHandler, bool) {
 
 // Wrap 将类型安全的处理函数包装为 ProtoHandleFunc，省去手动 type assertion
 //
-//	handler := Wrap(role_handler.HandlerHeroList)
+//	handler := Wrap(hero_handler.HandlerHeroList)
 //	// 等价于:
 //	// func(ctx, roleID, req proto.Message, resp proto.Message) rpc_results.ResultI {
-//	//     return role_handler.HandlerHeroList(ctx, roleID, req.(*pb_hero.HeroListReq), resp.(*pb_hero.HeroListResp))
+//	//     return hero_handler.HandlerHeroList(ctx, roleID, req.(*pb_hero.HeroListReq), resp.(*pb_hero.HeroListResp))
 //	// }
 func Wrap[Req, Resp proto.Message](fn func(ctx context.Context, roleID uint64, req Req, resp Resp) rpc_results.ResultI) ProtoHandleFunc {
 	return func(ctx context.Context, roleID uint64, req proto.Message, resp proto.Message) rpc_results.ResultI {

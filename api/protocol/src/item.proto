@@ -19,3 +19,17 @@ message ItemUse {
     int32 conf_id = 1;  // 配置id
     int64 count   = 2;  // 数量
 }
+
+// UseItemReq 使用道具请求
+message UseItemReq {
+    ItemUse item = 1;  // 道具 + 数量
+    oneof target {
+        int64 hero_id  = 2;  // 对英雄使用
+        int64 build_id = 3;  // 对建筑使用
+    }
+}
+
+// UseItemResp 使用道具响应
+message UseItemResp {
+    ItemUse remain = 1;  // 使用后剩余
+}

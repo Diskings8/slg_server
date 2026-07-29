@@ -14,6 +14,7 @@ enum MsgID {
     GameHeroCultivate    = 1000003;  // 英雄培养(5维属性)
     GameHeroSkillUpgrade = 1000004;  // 英雄技能升级
 
+    GameUseItem            = 1000005;  // 使用道具
     // ---------------- 推送下推的信息-----------------//
     PushServerMainTain = 10000001;  // 服务器维护
     PushClientVersion  = 10000002;  // 前端版本更新通知
