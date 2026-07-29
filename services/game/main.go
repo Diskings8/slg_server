@@ -25,8 +25,9 @@ import (
 	vgc "server.slg.com/common/globals/common_globals"
 	"server.slg.com/common/loggers"
 	"server.slg.com/common/servers"
-	"server.slg.com/services/game/game_handlers"
 	"server.slg.com/services/game/game_handlers/game_servers"
+	"server.slg.com/services/game/game_handlers/game_streams"
+	"server.slg.com/services/game/game_internals/gate_stream"
 )
 
 func parseFlagVar() {
@@ -78,8 +79,8 @@ func main() {
 	// 注册 gRPC 服务
 	grpcServer := grpc.NewServer(grpcOpts...)
 	{
-		pb_game.RegisterGameServiceServer(grpcServer, game_handlers.GameStreamHandler)
-		pb_game.RegisterGameHandlerServer(grpcServer, &game_servers.HandlerServer{})
+		pb_game.RegisterGameServiceServer(grpcServer, game_streams.GameStreamHandler)
+		pb_game.RegisterGameHandlerServer(grpcServer, game_servers.GameServerHandler)
 	}
 
 	loggers.Logger.Info("gRPC 服务注册完成", zap.String("addr", rpcAddr))
@@ -100,6 +101,7 @@ func main() {
 				loggers.Logger.Info("数据库初始化完成")
 			},
 			func() {
+				gate_stream.Init(ctx)
 				etcdconn.InitEtcd(common_configs.GetEnvConf().Etcd.Dsn())
 				loggers.Logger.Info("ETCD 初始化完成")
 			},
@@ -115,6 +117,7 @@ func main() {
 
 		servers.WithShutdown(
 			func() {
+				gate_stream.ShutDown()
 				loggers.Logger.Info("清理资源...")
 			},
 		),

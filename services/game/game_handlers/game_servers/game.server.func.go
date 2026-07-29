@@ -23,7 +23,7 @@ import (
 //	NodePacket.msgId = 协议号
 //	NodePacket.message.body = 序列化的响应 proto (成功时)
 //	NodePacket.message.err_code = 0=成功, >0=错误码
-func (s *HandlerServer) Do(ctx context.Context, req *pb_common.NodePacket) (*pb_common.NodePacket, error) {
+func (s *GameServer) Do(ctx context.Context, req *pb_common.NodePacket) (*pb_common.NodePacket, error) {
 	msgID := req.GetMsgId()
 
 	handler, ok := game_handlers.GetProtoHandler(msgID)

@@ -38,6 +38,24 @@
 |---|---|
 | 文件 & 目录命名规范 | [docs/naming-convention.md](docs/naming-convention.md) |
 
+### 全局 Context 规范
+
+所有需要后台协程长驻的模块（连接管理、定时器、流处理等），必须接收并监听全局 `ctx`，不能使用 `context.Background()`。
+
+```
+main.go                        gate_stream 等模块
+──────                         ────────────
+ctx, cancel := ...             func Init(ctx) { globalCtx = ctx }
+↓                               ↓
+cancel() 信号中断触发           GrpcStreamServer 监听 globalCtx.Done()
+                               → loop 退出 → 连接自然断开
+```
+
+**要求:**
+1. 模块提供 `Init(ctx)` 方法接收全局 context
+2. 内部 goroutine 通过 `select { case <-ctx.Done(): return; ... }` 响应退出
+3. 普通 `go func()`（一次性操作）不需要监听 ctx
+
 ---
 
 ## 文档地图
@@ -47,6 +65,10 @@
 ### cores 模块
 
 入口: `services/internal/cores/CORES_OVERVIEW.md`
+
+### game 模块
+
+入口: `services/game/GAME_OVERVIEW.md`
 
 | 子包 | 详细文档 |
 |---|---|
