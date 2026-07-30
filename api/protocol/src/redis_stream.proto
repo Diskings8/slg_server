@@ -1,0 +1,31 @@
+syntax = "proto3";
+package redis_stream;
+option go_package = "server.slg.com/api/protocol/pb/pb_redis_stream";
+
+// ========== 行军事件 ==========
+
+// MarchEventType 行军事件类型
+enum MarchEventType {
+    MARCH_EVENT_UNKNOWN  = 0;
+    MARCH_EVENT_ARRIVED  = 1;  // 行军到达
+    MARCH_EVENT_CANCELED = 2;  // 行军取消
+}
+
+// MarchEvent 行军事件 — worldmap → game，经由 Redis Stream 投递
+message MarchEvent {
+    MarchEventType type = 1;
+    uint64 march_id     = 2;
+    uint64 role_id      = 3;
+    int32 to_map_id     = 4;  // 仅 ARRIVED 有效
+    int32 march_type    = 5;  // 仅 ARRIVED 有效
+    int64 ts            = 6;  // unix 时间戳
+}
+
+// ========== 通用 Stream 信封（后续扩展用） ==========
+
+// StreamEnvelope 统一的消息信封
+message StreamEnvelope {
+    string topic    = 1;  // 主题名，如 "march"
+    bytes payload   = 2;  // 业务消息序列化后的 bytes
+    int64 timestamp = 3;  // 发布时间戳
+}

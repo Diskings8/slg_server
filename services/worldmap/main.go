@@ -1,8 +1,8 @@
 package main
 
-// game
+// worldmap
 //
-// 业务逻辑，每一个 game 表示一个区服
+// 地图引擎节点，持有 cores 引擎（AOI/行军/战斗），接收 game 的行军请求
 
 import (
 	"context"
@@ -17,7 +17,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
-	"server.slg.com/api/protocol/pb/pb_game"
+	"server.slg.com/api/protocol/pb/pb_worldmap"
 	"server.slg.com/common/common_declarations"
 	"server.slg.com/common/configs"
 	"server.slg.com/common/conns/dbconn"
@@ -25,38 +25,46 @@ import (
 	vgc "server.slg.com/common/globals/common_globals"
 	"server.slg.com/common/loggers"
 	"server.slg.com/common/servers"
-	"server.slg.com/services/game/game_handlers/game_servers"
-	"server.slg.com/services/game/game_handlers/game_streams"
-	"server.slg.com/services/game/game_internals/gate_stream"
-	"server.slg.com/services/game/game_internals/march_consumer"
-	"server.slg.com/services/game/game_internals/worldmap_client"
+	"server.slg.com/services/worldmap/worldmap_handlers/worldmap_servers"
+	"server.slg.com/services/worldmap/worldmap_handlers/worldmap_streams"
+	worldmap_inits "server.slg.com/services/worldmap/worldmap_internals/worldmap_inits"
 )
 
-var cfgFormat string
+var (
+	nodeName   string
+	rpcAddr    string
+	cfgFormat  string
+)
 
 func parseFlagVar() {
 	flag.StringVar(vgc.CommonGlobalVarEnv, "env", "dev", "运行环境：dev/pre/prod")
 	flag.StringVar(vgc.CommonGlobalVarInstance, "instance", "0", "运行实例id")
+	flag.StringVar(&nodeName, "node", "worldmap-1", "节点名称，如 worldmap-1")
+	flag.StringVar(&rpcAddr, "addr", "", "监听地址，留空则从 TOML 配置读取")
 	flag.StringVar(&cfgFormat, "config-format", "yaml", "配置格式: yaml / toml")
 }
 
 func main() {
-	// 0. 参数解析
 	parseFlagVar()
 	flag.Parse()
 
-	// 1. 配置 & 日志
+	// 通用配置（DB/Redis/Etcd）统一加载
 	common_configs.LoadByFormat(cfgFormat, vgc.GetEnvPath())
 	loggers.Init()
-	loggers.Logger.Info("game 服务启动",
-		zap.String("env", *vgc.CommonGlobalVarEnv),
-		zap.String("instance", *vgc.CommonGlobalVarInstance))
 
-	// 全局 context — 通过 cancel() 统一触发所有后台协程退出
+	// 节点地址优先取命令行，否则从 TOML 节点配置读取
+	if rpcAddr == "" {
+		rpcAddr = common_configs.LoadNodeConfig(nodeName, "../../config", "config.dev")
+	}
+
+	loggers.Logger.Info("worldmap 服务启动",
+		zap.String("env", *vgc.CommonGlobalVarEnv),
+		zap.String("node", nodeName),
+		zap.String("addr", rpcAddr))
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// 信号监听 — 收到中断信号时取消 context
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
@@ -65,8 +73,6 @@ func main() {
 		cancel()
 	}()
 
-	// 构建 gRPC Server
-	rpcAddr := common_configs.GetConf().Game.Dsn()
 	grpcOpts := []grpc.ServerOption{
 		grpc.ConnectionTimeout(5 * time.Second),
 		grpc.MaxRecvMsgSize(10 * 1024 * 1024),
@@ -81,22 +87,27 @@ func main() {
 			PermitWithoutStream: true,
 		}),
 	}
-	// 注册 gRPC 服务
 	grpcServer := grpc.NewServer(grpcOpts...)
+
+	// 初始化 cores 引擎
+	engine := worldmap_inits.NewEngine()
+	worldmap_handlers.WorldMapStreamHandler.SetEngine(engine)
+	worldmap_servers.WorldMapServerHandler.SetEngine(engine)
+
+	// 注册 gRPC 服务
 	{
-		pb_game.RegisterGameServiceServer(grpcServer, game_streams.GameStreamHandler)
-		pb_game.RegisterGameHandlerServer(grpcServer, game_servers.GameServerHandler)
+		pb_worldmap.RegisterWorldMapServiceServer(grpcServer, worldmap_handlers.WorldMapStreamHandler)
+		pb_worldmap.RegisterWorldMapHandlerServer(grpcServer, worldmap_servers.WorldMapServerHandler)
 	}
 
 	loggers.Logger.Info("gRPC 服务注册完成", zap.String("addr", rpcAddr))
 
-	// 创建 TCP 监听器
 	lis, err := net.Listen("tcp", rpcAddr)
 	if err != nil {
 		loggers.Logger.Fatal("gRPC 监听失败", zap.Error(err))
 	}
 
-	// 启动生命周期 — 异步初始化 → 同步初始化 → gRPC/TCP 服务 → 等待关闭 → 清理退出
+	var engineStopped bool
 	servers.NewLifecycle(
 		servers.WithAsyncInit(
 			func() {
@@ -105,18 +116,11 @@ func main() {
 					common_configs.GetConf().DB.Game.Dsn())
 				loggers.Logger.Info("数据库初始化完成")
 			},
-			func() {
-				gate_stream.Init(ctx)
-				march_consumer.Init(ctx)
-				worldmap_client.Init(ctx)
-				etcdconn.InitEtcd(common_configs.GetConf().Etcd.Dsn())
-				loggers.Logger.Info("ETCD 初始化完成")
-			},
 		),
 
 		servers.WithSyncInit(
 			func() {
-				etcdconn.RegisterServiceByNodeType(ctx, common_declarations.NodeGameService,
+				etcdconn.RegisterServiceByNodeType(ctx, common_declarations.NodeWorldMapService,
 					*vgc.CommonGlobalVarInstance, rpcAddr)
 				loggers.Logger.Info("ETCD 服务注册完成", zap.String("addr", rpcAddr))
 			},
@@ -124,13 +128,19 @@ func main() {
 
 		servers.WithShutdown(
 			func() {
-				gate_stream.ShutDown()
-				loggers.Logger.Info("清理资源...")
+				if !engineStopped {
+					engine.Stop()
+					engineStopped = true
+				}
+				loggers.Logger.Info("worldmap 关闭...")
 			},
 		),
 
 		servers.WithGrpcServer(grpcServer, lis),
 	).Run(ctx)
 
-	loggers.Logger.Info(fmt.Sprintf("game 服务已完全关闭 [%s]", *vgc.CommonGlobalVarInstance))
+	if !engineStopped {
+		engine.Stop()
+	}
+	loggers.Logger.Info(fmt.Sprintf("worldmap 服务已完全关闭 [%s]", *vgc.CommonGlobalVarInstance))
 }

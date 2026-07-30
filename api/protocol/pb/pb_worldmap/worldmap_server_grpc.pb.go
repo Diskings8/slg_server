@@ -26,6 +26,8 @@ const (
 // WorldMapServiceClient is the client API for WorldMapService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// WorldMapService 实时流 — 用于相机移动等实时转发
 type WorldMapServiceClient interface {
 	Stream(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[pb_common.NodePacket, pb_common.NodePacket], error)
 }
@@ -54,6 +56,8 @@ type WorldMapService_StreamClient = grpc.BidiStreamingClient[pb_common.NodePacke
 // WorldMapServiceServer is the server API for WorldMapService service.
 // All implementations must embed UnimplementedWorldMapServiceServer
 // for forward compatibility.
+//
+// WorldMapService 实时流 — 用于相机移动等实时转发
 type WorldMapServiceServer interface {
 	Stream(grpc.BidiStreamingServer[pb_common.NodePacket, pb_common.NodePacket]) error
 	mustEmbedUnimplementedWorldMapServiceServer()
@@ -115,10 +119,25 @@ var WorldMapService_ServiceDesc = grpc.ServiceDesc{
 	Metadata: "services/worldmap_server.proto",
 }
 
+const (
+	WorldMapHandler_CreateMarch_FullMethodName = "/pb_worldmap.WorldMapHandler/CreateMarch"
+	WorldMapHandler_CancelMarch_FullMethodName = "/pb_worldmap.WorldMapHandler/CancelMarch"
+	WorldMapHandler_MarchInfo_FullMethodName   = "/pb_worldmap.WorldMapHandler/MarchInfo"
+	WorldMapHandler_MapData_FullMethodName     = "/pb_worldmap.WorldMapHandler/MapData"
+)
+
 // WorldMapHandlerClient is the client API for WorldMapHandler service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// WorldMapHandler 业务 RPC — game 通过 Unary 调用 worldmap
 type WorldMapHandlerClient interface {
+	// 行军
+	CreateMarch(ctx context.Context, in *CreateMarchReq, opts ...grpc.CallOption) (*CreateMarchRsp, error)
+	CancelMarch(ctx context.Context, in *CancelMarchReq, opts ...grpc.CallOption) (*CancelMarchRsp, error)
+	MarchInfo(ctx context.Context, in *MarchInfoReq, opts ...grpc.CallOption) (*MarchInfoRsp, error)
+	// 地图
+	MapData(ctx context.Context, in *MapDataReq, opts ...grpc.CallOption) (*MapDataRsp, error)
 }
 
 type worldMapHandlerClient struct {
@@ -129,10 +148,58 @@ func NewWorldMapHandlerClient(cc grpc.ClientConnInterface) WorldMapHandlerClient
 	return &worldMapHandlerClient{cc}
 }
 
+func (c *worldMapHandlerClient) CreateMarch(ctx context.Context, in *CreateMarchReq, opts ...grpc.CallOption) (*CreateMarchRsp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateMarchRsp)
+	err := c.cc.Invoke(ctx, WorldMapHandler_CreateMarch_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *worldMapHandlerClient) CancelMarch(ctx context.Context, in *CancelMarchReq, opts ...grpc.CallOption) (*CancelMarchRsp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CancelMarchRsp)
+	err := c.cc.Invoke(ctx, WorldMapHandler_CancelMarch_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *worldMapHandlerClient) MarchInfo(ctx context.Context, in *MarchInfoReq, opts ...grpc.CallOption) (*MarchInfoRsp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MarchInfoRsp)
+	err := c.cc.Invoke(ctx, WorldMapHandler_MarchInfo_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *worldMapHandlerClient) MapData(ctx context.Context, in *MapDataReq, opts ...grpc.CallOption) (*MapDataRsp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MapDataRsp)
+	err := c.cc.Invoke(ctx, WorldMapHandler_MapData_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // WorldMapHandlerServer is the server API for WorldMapHandler service.
 // All implementations must embed UnimplementedWorldMapHandlerServer
 // for forward compatibility.
+//
+// WorldMapHandler 业务 RPC — game 通过 Unary 调用 worldmap
 type WorldMapHandlerServer interface {
+	// 行军
+	CreateMarch(context.Context, *CreateMarchReq) (*CreateMarchRsp, error)
+	CancelMarch(context.Context, *CancelMarchReq) (*CancelMarchRsp, error)
+	MarchInfo(context.Context, *MarchInfoReq) (*MarchInfoRsp, error)
+	// 地图
+	MapData(context.Context, *MapDataReq) (*MapDataRsp, error)
 	mustEmbedUnimplementedWorldMapHandlerServer()
 }
 
@@ -143,6 +210,18 @@ type WorldMapHandlerServer interface {
 // pointer dereference when methods are called.
 type UnimplementedWorldMapHandlerServer struct{}
 
+func (UnimplementedWorldMapHandlerServer) CreateMarch(context.Context, *CreateMarchReq) (*CreateMarchRsp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateMarch not implemented")
+}
+func (UnimplementedWorldMapHandlerServer) CancelMarch(context.Context, *CancelMarchReq) (*CancelMarchRsp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CancelMarch not implemented")
+}
+func (UnimplementedWorldMapHandlerServer) MarchInfo(context.Context, *MarchInfoReq) (*MarchInfoRsp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MarchInfo not implemented")
+}
+func (UnimplementedWorldMapHandlerServer) MapData(context.Context, *MapDataReq) (*MapDataRsp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MapData not implemented")
+}
 func (UnimplementedWorldMapHandlerServer) mustEmbedUnimplementedWorldMapHandlerServer() {}
 func (UnimplementedWorldMapHandlerServer) testEmbeddedByValue()                         {}
 
@@ -164,13 +243,250 @@ func RegisterWorldMapHandlerServer(s grpc.ServiceRegistrar, srv WorldMapHandlerS
 	s.RegisterService(&WorldMapHandler_ServiceDesc, srv)
 }
 
+func _WorldMapHandler_CreateMarch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateMarchReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorldMapHandlerServer).CreateMarch(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorldMapHandler_CreateMarch_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorldMapHandlerServer).CreateMarch(ctx, req.(*CreateMarchReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WorldMapHandler_CancelMarch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CancelMarchReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorldMapHandlerServer).CancelMarch(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorldMapHandler_CancelMarch_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorldMapHandlerServer).CancelMarch(ctx, req.(*CancelMarchReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WorldMapHandler_MarchInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MarchInfoReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorldMapHandlerServer).MarchInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorldMapHandler_MarchInfo_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorldMapHandlerServer).MarchInfo(ctx, req.(*MarchInfoReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WorldMapHandler_MapData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MapDataReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorldMapHandlerServer).MapData(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorldMapHandler_MapData_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorldMapHandlerServer).MapData(ctx, req.(*MapDataReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // WorldMapHandler_ServiceDesc is the grpc.ServiceDesc for WorldMapHandler service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var WorldMapHandler_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "pb_worldmap.WorldMapHandler",
 	HandlerType: (*WorldMapHandlerServer)(nil),
-	Methods:     []grpc.MethodDesc{},
-	Streams:     []grpc.StreamDesc{},
-	Metadata:    "services/worldmap_server.proto",
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "CreateMarch",
+			Handler:    _WorldMapHandler_CreateMarch_Handler,
+		},
+		{
+			MethodName: "CancelMarch",
+			Handler:    _WorldMapHandler_CancelMarch_Handler,
+		},
+		{
+			MethodName: "MarchInfo",
+			Handler:    _WorldMapHandler_MarchInfo_Handler,
+		},
+		{
+			MethodName: "MapData",
+			Handler:    _WorldMapHandler_MapData_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "services/worldmap_server.proto",
+}
+
+const (
+	GameEventCallback_MarchArrived_FullMethodName  = "/pb_worldmap.GameEventCallback/MarchArrived"
+	GameEventCallback_MarchCanceled_FullMethodName = "/pb_worldmap.GameEventCallback/MarchCanceled"
+)
+
+// GameEventCallbackClient is the client API for GameEventCallback service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// GameEventCallback — worldmap → game 的事件回调，由 game 服务实现
+type GameEventCallbackClient interface {
+	// MarchArrived 行军到达目标后回调 game
+	MarchArrived(ctx context.Context, in *MarchArrivedReq, opts ...grpc.CallOption) (*MarchArrivedRsp, error)
+	// MarchCanceled 行军被取消后回调 game
+	MarchCanceled(ctx context.Context, in *MarchCanceledReq, opts ...grpc.CallOption) (*MarchCanceledRsp, error)
+}
+
+type gameEventCallbackClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewGameEventCallbackClient(cc grpc.ClientConnInterface) GameEventCallbackClient {
+	return &gameEventCallbackClient{cc}
+}
+
+func (c *gameEventCallbackClient) MarchArrived(ctx context.Context, in *MarchArrivedReq, opts ...grpc.CallOption) (*MarchArrivedRsp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MarchArrivedRsp)
+	err := c.cc.Invoke(ctx, GameEventCallback_MarchArrived_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gameEventCallbackClient) MarchCanceled(ctx context.Context, in *MarchCanceledReq, opts ...grpc.CallOption) (*MarchCanceledRsp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MarchCanceledRsp)
+	err := c.cc.Invoke(ctx, GameEventCallback_MarchCanceled_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// GameEventCallbackServer is the server API for GameEventCallback service.
+// All implementations must embed UnimplementedGameEventCallbackServer
+// for forward compatibility.
+//
+// GameEventCallback — worldmap → game 的事件回调，由 game 服务实现
+type GameEventCallbackServer interface {
+	// MarchArrived 行军到达目标后回调 game
+	MarchArrived(context.Context, *MarchArrivedReq) (*MarchArrivedRsp, error)
+	// MarchCanceled 行军被取消后回调 game
+	MarchCanceled(context.Context, *MarchCanceledReq) (*MarchCanceledRsp, error)
+	mustEmbedUnimplementedGameEventCallbackServer()
+}
+
+// UnimplementedGameEventCallbackServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedGameEventCallbackServer struct{}
+
+func (UnimplementedGameEventCallbackServer) MarchArrived(context.Context, *MarchArrivedReq) (*MarchArrivedRsp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MarchArrived not implemented")
+}
+func (UnimplementedGameEventCallbackServer) MarchCanceled(context.Context, *MarchCanceledReq) (*MarchCanceledRsp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MarchCanceled not implemented")
+}
+func (UnimplementedGameEventCallbackServer) mustEmbedUnimplementedGameEventCallbackServer() {}
+func (UnimplementedGameEventCallbackServer) testEmbeddedByValue()                           {}
+
+// UnsafeGameEventCallbackServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to GameEventCallbackServer will
+// result in compilation errors.
+type UnsafeGameEventCallbackServer interface {
+	mustEmbedUnimplementedGameEventCallbackServer()
+}
+
+func RegisterGameEventCallbackServer(s grpc.ServiceRegistrar, srv GameEventCallbackServer) {
+	// If the following call pancis, it indicates UnimplementedGameEventCallbackServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&GameEventCallback_ServiceDesc, srv)
+}
+
+func _GameEventCallback_MarchArrived_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MarchArrivedReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GameEventCallbackServer).MarchArrived(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GameEventCallback_MarchArrived_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GameEventCallbackServer).MarchArrived(ctx, req.(*MarchArrivedReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GameEventCallback_MarchCanceled_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MarchCanceledReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GameEventCallbackServer).MarchCanceled(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GameEventCallback_MarchCanceled_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GameEventCallbackServer).MarchCanceled(ctx, req.(*MarchCanceledReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// GameEventCallback_ServiceDesc is the grpc.ServiceDesc for GameEventCallback service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var GameEventCallback_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "pb_worldmap.GameEventCallback",
+	HandlerType: (*GameEventCallbackServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "MarchArrived",
+			Handler:    _GameEventCallback_MarchArrived_Handler,
+		},
+		{
+			MethodName: "MarchCanceled",
+			Handler:    _GameEventCallback_MarchCanceled_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "services/worldmap_server.proto",
 }

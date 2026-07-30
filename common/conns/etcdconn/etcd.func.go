@@ -16,7 +16,9 @@ func GetServiceKeyByNodeType(nodeType common_declarations.NodeService) string {
 		return "/node:service:game/"
 	case common_declarations.NodeGatewayService:
 		return "/node:service:gateway/"
-	default:
+	case common_declarations.NodeWorldMapService:
+		return "/node:service:worldmap/"
+		default:
 		return "/node:service:undef/"
 	}
 }
