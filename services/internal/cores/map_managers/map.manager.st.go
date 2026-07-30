@@ -22,7 +22,7 @@ type MapManager struct {
 	timeMap            map[int64]map[cores_declarations.MapID]struct{}
 	timeMapLock        sync.Mutex
 	marchDoFunc        func(*MapManager, cores_declarations.MarchID)
-	marchDoFuncHandle  func(*MapManager, marchs.MarchInfo) cores_declarations.MarchDoFuncHandleI
+	marchDoFuncHandle  func(*MapManager, *marchs.MarchInfo) cores_declarations.MarchDoFuncHandleI
 	mapBlock           *map_blocks.MapBlock
 	opts               *options // 参数
 	//

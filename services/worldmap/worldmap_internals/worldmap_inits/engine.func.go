@@ -22,14 +22,15 @@ const marchStreamKey = "slg:march:events"
 
 // Engine cores 引擎聚合
 type Engine struct {
-	Config  *DefaultMapConfig
-	MapData *map_datas.MapDataManager
-	March   *marchs.MarchInfoManager
-	Manager *map_managers.MapManager
+	ctx              context.Context
+	Config           *DefaultMapConfig
+	MapDataManager   *map_datas.MapDataManager
+	MarchInfoManager *marchs.MarchInfoManager
+	MapManager       *map_managers.MapManager
 }
 
 // NewEngine 初始化 cores 引擎
-func NewEngine() *Engine {
+func NewEngine(ctx context.Context) *Engine {
 	mapConfig := NewDefaultMapConfig()
 
 	mapData := map_datas.NewMapDataManager(mapConfig, "map_data")
@@ -38,15 +39,16 @@ func NewEngine() *Engine {
 	marchMgr := marchs.New(tickerChan, "march_info", mapConfig, cores_declarations.MarchTimeTypeStraight)
 
 	e := &Engine{
-		Config:  mapConfig,
-		MapData: mapData,
-		March:   marchMgr,
+		ctx:              ctx,
+		Config:           mapConfig,
+		MapDataManager:   mapData,
+		MarchInfoManager: marchMgr,
 	}
 
 	marchDoFunc := func(mm *map_managers.MapManager, marchID cores_declarations.MarchID) {
 		e.OnMarchArrived(mm, marchID)
 	}
-	marchDoHandleFunc := func(mm *map_managers.MapManager, info marchs.MarchInfo) cores_declarations.MarchDoFuncHandleI {
+	marchDoHandleFunc := func(mm *map_managers.MapManager, info *marchs.MarchInfo) cores_declarations.MarchDoFuncHandleI {
 		return nil
 	}
 
@@ -60,18 +62,18 @@ func NewEngine() *Engine {
 	)
 	manager.Start()
 
-	e.Manager = manager
+	e.MapManager = manager
 	return e
 }
 
 // Stop 停止引擎
 func (e *Engine) Stop() {
-	e.Manager.Stop()
+	e.MapManager.Stop()
 }
 
 // OnMarchArrived 行军到达目标后的回调处理
 func (e *Engine) OnMarchArrived(mm *map_managers.MapManager, marchID cores_declarations.MarchID) {
-	marchInfo := e.March.GetMarchInfo(marchID)
+	marchInfo := e.MarchInfoManager.GetMarchInfo(marchID)
 	if marchInfo == nil {
 		loggers.Logger.Warn("march arrived but not found", zap.Uint64("march_id", marchID.Uint64()))
 		return
@@ -84,7 +86,7 @@ func (e *Engine) OnMarchArrived(mm *map_managers.MapManager, marchID cores_decla
 		zap.Int32("to", toMapID.Int32()),
 		zap.Uint32("march_type", uint32(marchInfo.MarchType)))
 
-	publishMarchEvent(&pb_redis_stream.MarchEvent{
+	publishMarchEvent(e.ctx, &pb_redis_stream.MarchEvent{
 		Type:      pb_redis_stream.MarchEventType_MARCH_EVENT_ARRIVED,
 		MarchId:   marchID.Uint64(),
 		RoleId:    marchInfo.GetFromRoleID(),
@@ -102,7 +104,7 @@ func (e *Engine) OnMarchCanceled(marchInfo *marchs.MarchInfo) {
 		zap.Uint64("march_id", marchInfo.GetMarchID().Uint64()),
 		zap.Uint64("role_id", marchInfo.GetFromRoleID()))
 
-	publishMarchEvent(&pb_redis_stream.MarchEvent{
+	publishMarchEvent(e.ctx, &pb_redis_stream.MarchEvent{
 		Type:    pb_redis_stream.MarchEventType_MARCH_EVENT_CANCELED,
 		MarchId: marchInfo.GetMarchID().Uint64(),
 		RoleId:  marchInfo.GetFromRoleID(),
@@ -111,7 +113,7 @@ func (e *Engine) OnMarchCanceled(marchInfo *marchs.MarchInfo) {
 }
 
 // publishMarchEvent 发布行军事件到 Redis Stream (XADD)
-func publishMarchEvent(event *pb_redis_stream.MarchEvent) {
+func publishMarchEvent(ctx context.Context, event *pb_redis_stream.MarchEvent) {
 	data, err := proto.Marshal(event)
 	if err != nil {
 		loggers.Logger.Warn("march event marshal failed", zap.Error(err))
@@ -128,10 +130,10 @@ func publishMarchEvent(event *pb_redis_stream.MarchEvent) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
-	if err := pub.XAdd(ctx, &redis.XAddArgs{
+	if err := pub.XAdd(ctxWithTimeout, &redis.XAddArgs{
 		Stream: marchStreamKey,
 		Values: []string{"data", string(data)},
 	}).Err(); err != nil {

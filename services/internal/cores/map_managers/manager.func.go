@@ -16,7 +16,7 @@ func NewMapManager(
 	mapDataManager *map_datas.MapDataManager,
 	marchManage *marchs.MarchInfoManager,
 	marchDoFunc func(*MapManager, cores_declarations.MarchID),
-	marchDoHandleFunc func(*MapManager, marchs.MarchInfo) cores_declarations.MarchDoFuncHandleI,
+	marchDoHandleFunc func(*MapManager, *marchs.MarchInfo) cores_declarations.MarchDoFuncHandleI,
 	op ...Option,
 ) *MapManager {
 	mm := &MapManager{
