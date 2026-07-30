@@ -12,7 +12,7 @@ var node *snowflake.Node
 func Init() {
 	// 节点ID 1~1023，专服可以配置
 	// 从 YAML 读取配置
-	cfg := common_configs.GetEnvConf().Snowflake
+	cfg := common_configs.GetConf().Snowflake
 
 	// 设置雪花算法参数
 	snowflake.NodeBits = 10

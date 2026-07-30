@@ -23,16 +23,19 @@ import (
 	"server.slg.com/services/gateway/session_gateways"
 )
 
+var cfgFormat string
+
 func parseFlagVar() {
 	flag.StringVar(vgc.CommonGlobalVarEnv, "env", "dev", "运行环境：dev/pre/prod")
 	flag.StringVar(vgc.CommonGlobalVarInstance, "instance", "0", "运行实例id")
+	flag.StringVar(&cfgFormat, "config-format", "yaml", "配置格式: yaml / toml")
 }
 
 func main() {
 	parseFlagVar()
 	flag.Parse()
 
-	common_configs.LoadEnvConf(vgc.GetEnvPath())
+	common_configs.LoadByFormat(cfgFormat, vgc.GetEnvPath())
 
 	loggers.Init()
 	loggers.Logger.Info("网关启动")
@@ -41,9 +44,9 @@ func main() {
 	defer cancel()
 
 	// etcd
-	etcdconn.InitEtcd(common_configs.GetEnvConf().Etcd.Dsn())
-	rpcAddr := common_configs.GetEnvConf().GateWay.RpcDsn()
-	tcpAddr := common_configs.GetEnvConf().GateWay.TcpDsn()
+	etcdconn.InitEtcd(common_configs.GetConf().Etcd.Dsn())
+	rpcAddr := common_configs.GetConf().Gateway.RpcDsn()
+	tcpAddr := common_configs.GetConf().Gateway.TcpDsn()
 	etcdconn.RegisterServiceByNodeType(ctx, common_declarations.NodeGatewayService, *vgc.CommonGlobalVarInstance, rpcAddr)
 
 	// Build gRPC server

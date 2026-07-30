@@ -18,9 +18,9 @@ const genEnv = "dev"
 func GenDB() {
 	// 1. 加载配置
 	configPath := fmt.Sprintf("../../api/yaml_conf/slg.%s.yaml", genEnv)
-	configs.LoadEnvConf(configPath)
+	configs.LoadYamlConf(configPath)
 
-	dsn := configs.GetEnvConf().MysqlGame.Dsn()
+	dsn := configs.GetConf().DB.Game.Dsn()
 	if dsn == "" {
 		fmt.Fprintf(os.Stderr, "❌ mysql_game DSN 为空，请检查 %s\n", configPath)
 		os.Exit(1)
@@ -40,7 +40,7 @@ func GenDB() {
 				"    3. 数据库 %s 存在\n\n"+
 				"  你也可以修改 game_generates/gorm.go 顶部的 genEnv 变量\n"+
 				"  来切换配置文件 (dev/prod/test)\n",
-			err, configPath, configs.GetEnvConf().MysqlGame.DbNamePrefix)
+			err, configPath, configs.GetConf().DB.Game.DBName)
 		os.Exit(1)
 	}
 

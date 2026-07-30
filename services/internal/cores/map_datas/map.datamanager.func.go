@@ -9,9 +9,38 @@ import (
 	"server.slg.com/common/globals/common_globals"
 	"server.slg.com/common/loggers"
 	"server.slg.com/services/internal/cores/cores_declarations"
+	"server.slg.com/services/internal/cores/map_aois"
 	"server.slg.com/services/internal/cores/roles"
 )
 
+// NewMapDataManager 创建并初始化地图数据管理器（稠密全量地图）
+//   - mapConfig: 地图配置
+//   - tableName: 数据库表名
+//
+// 自动创建 AOI、初始化全量格子坐标，调用 Init 注册到 AOI
+func NewMapDataManager(mapConfig cores_declarations.MapConfigI, tableName string) *MapDataManager {
+	aoi := map_aois.NewAoi(mapConfig)
+
+	mdm := &MapDataManager{
+		config:    mapConfig,
+		tableName: tableName,
+		AOI:       aoi,
+	}
+
+	count := mapConfig.MapCount()
+	bigMap := make([]MapInfo, count)
+	for id := int32(0); id < count; id++ {
+		x, y := mapConfig.MapID2XY(cores_declarations.MapID(id))
+		info := &bigMap[id]
+		info.mapID = cores_declarations.MapID(id)
+		info.coreMapID = cores_declarations.MapID(id)
+		info.x = int(x)
+		info.y = int(y)
+	}
+
+	mdm.Init(bigMap)
+	return mdm
+}
 func (mdm *MapDataManager) Clear(mapIDs []cores_declarations.MapID, isNeedLock bool) {
 	mdm.ClearMapInfoSlice(mdm.GetMapInfoSlice(mapIDs), isNeedLock)
 }

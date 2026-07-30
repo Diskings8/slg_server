@@ -12,7 +12,7 @@ var defaultConf atomic.Pointer[GameConf]
 
 // InitFromConf 使用EnvConf配置初始化配置
 func InitFromConf() error {
-	filePath := common_configs.GetEnvConf().GameConf.Addr
+	filePath := common_configs.GetConf().GameConf.ConfigPath
 	return Init(filePath)
 }
 

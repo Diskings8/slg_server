@@ -30,9 +30,12 @@ import (
 	"server.slg.com/services/game/game_internals/gate_stream"
 )
 
+var cfgFormat string
+
 func parseFlagVar() {
 	flag.StringVar(vgc.CommonGlobalVarEnv, "env", "dev", "运行环境：dev/pre/prod")
 	flag.StringVar(vgc.CommonGlobalVarInstance, "instance", "0", "运行实例id")
+	flag.StringVar(&cfgFormat, "config-format", "yaml", "配置格式: yaml / toml")
 }
 
 func main() {
@@ -41,7 +44,7 @@ func main() {
 	flag.Parse()
 
 	// 1. 配置 & 日志
-	common_configs.LoadEnvConf(vgc.GetEnvPath())
+	common_configs.LoadByFormat(cfgFormat, vgc.GetEnvPath())
 	loggers.Init()
 	loggers.Logger.Info("game 服务启动",
 		zap.String("env", *vgc.CommonGlobalVarEnv),
@@ -61,7 +64,7 @@ func main() {
 	}()
 
 	// 构建 gRPC Server
-	rpcAddr := common_configs.GetEnvConf().GameServer.Dsn()
+	rpcAddr := common_configs.GetConf().Game.Dsn()
 	grpcOpts := []grpc.ServerOption{
 		grpc.ConnectionTimeout(5 * time.Second),
 		grpc.MaxRecvMsgSize(10 * 1024 * 1024),
@@ -96,13 +99,13 @@ func main() {
 		servers.WithAsyncInit(
 			func() {
 				dbconn.MustInitDB("mysql",
-					common_configs.GetEnvConf().MysqlGame.Dsn(),
-					common_configs.GetEnvConf().MysqlGame.Dsn())
+					common_configs.GetConf().DB.Game.Dsn(),
+					common_configs.GetConf().DB.Game.Dsn())
 				loggers.Logger.Info("数据库初始化完成")
 			},
 			func() {
 				gate_stream.Init(ctx)
-				etcdconn.InitEtcd(common_configs.GetEnvConf().Etcd.Dsn())
+				etcdconn.InitEtcd(common_configs.GetConf().Etcd.Dsn())
 				loggers.Logger.Info("ETCD 初始化完成")
 			},
 		),

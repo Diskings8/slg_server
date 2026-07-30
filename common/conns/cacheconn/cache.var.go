@@ -26,7 +26,7 @@ func Sep() byte {
 
 func Get() CacheI {
 	if cacheManager == nil {
-		switch common_configs.GetEnvConf().Redis.GetNodeType() {
+		switch common_configs.GetConf().Cache.GetNodeType() {
 		case "single":
 			cacheManager = NewCacheSingleManager("")
 		default:
@@ -37,9 +37,9 @@ func Get() CacheI {
 }
 
 func Key(keys ...string) string {
-	conf := common_configs.GetEnvConf()
+	conf := common_configs.GetConf()
 	buffer := util_bytes.Get().Buffer(128)
-	buffer.WriteString(conf.Redis.GetPrefix())
+	buffer.WriteString(conf.Cache.GetPrefix())
 	buffer.WriteByte(Sep())
 	buffer.WriteString(conf.GetNodeType())
 

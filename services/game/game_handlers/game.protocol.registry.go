@@ -12,7 +12,7 @@ import (
 //   - ctx: 上下文
 //   - roleID: 角色ID
 //   - req: 反序列化后的请求 proto
-//   - resp: 预创建的响应 proto（handler 填充字段后返回）
+//   - resp: 预创建的响应 proto（worldmap_handlers 填充字段后返回）
 //
 // 返回 nil 表示成功，返回 ResultI 表示业务错误
 type ProtoHandleFunc func(ctx context.Context, roleID uint64, req proto.Message, resp proto.Message) rpc_results.ResultI
@@ -40,7 +40,7 @@ func GetProtoHandler(msgID pb_protocol.MsgID) (*ProtoHandler, bool) {
 
 // Wrap 将类型安全的处理函数包装为 ProtoHandleFunc，省去手动 type assertion
 //
-//	handler := Wrap(hero_handler.HandlerHeroList)
+//	worldmap_handlers := Wrap(hero_handler.HandlerHeroList)
 //	// 等价于:
 //	// func(ctx, roleID, req proto.Message, resp proto.Message) rpc_results.ResultI {
 //	//     return hero_handler.HandlerHeroList(ctx, roleID, req.(*pb_hero.HeroListReq), resp.(*pb_hero.HeroListResp))

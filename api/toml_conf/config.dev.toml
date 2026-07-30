@@ -1,0 +1,73 @@
+# ==============================================
+# ai4slg 开发环境配置 (TOML)
+# 格式中立，与 YAML 版本结构完全一致
+# ==============================================
+
+[common]
+id = 1
+name = "local-dev"
+is_develop = true
+
+[db]
+[db.common]
+user = "root"
+password = "123456"
+host = "127.0.0.1"
+port = 3306
+db_name = "common_db_0"
+params = "charset=utf8mb4&parseTime=True&loc=Local"
+
+[db.game]
+user = "root"
+password = "123456"
+host = "127.0.0.1"
+port = 3306
+db_name = "game_db_0"
+params = "charset=utf8mb4&parseTime=True&loc=Local"
+
+[cache]
+prefix = "slg-dev"
+address = ["127.0.0.1:6379"]
+password = ""
+db = 0
+node_type = "single"
+
+[etcd]
+address = ["127.0.0.1:2379"]
+
+[snowflake]
+datacenter_id = 1
+worker_id = 1
+
+[gateway]
+tcp_addr = "127.0.0.1:13001"
+rpc_addr = "127.0.0.1:13002"
+
+[game]
+addr = "127.0.0.1:11001"
+
+[battle]
+addr = "127.0.0.1:12001"
+
+[worldmap]
+addr = ":50060"
+
+[game_conf]
+config_path = ""
+
+# ==============================================
+# 节点配置（用于 LoadNodeConfig 按名查询）
+# ==============================================
+
+[game-1]
+address = ":50050"
+
+[gateway-1]
+tcp_address = ":7001"
+rpc_address = ":7002"
+
+[worldmap-1]
+address = ":50060"
+
+[battle-1]
+address = ":50070"
