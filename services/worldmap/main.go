@@ -90,7 +90,7 @@ func main() {
 	grpcServer := grpc.NewServer(grpcOpts...)
 
 	// 初始化 cores 引擎
-	engine := worldmap_inits.NewEngine()
+	engine := worldmap_inits.NewEngine(ctx)
 	worldmap_handlers.WorldMapStreamHandler.SetEngine(engine)
 	worldmap_servers.WorldMapServerHandler.SetEngine(engine)
 

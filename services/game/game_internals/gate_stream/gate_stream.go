@@ -139,6 +139,17 @@ func pushFunc(roleID uint64, protocolID pb_protocol.MsgID, msg proto.Message) er
 	})
 }
 
+// PushNodePacket 原样推送 NodePacket 给客户端（worldmap 下推透传，不重新序列化）
+func PushNodePacket(roleID uint64, packet *pb_common.NodePacket) error {
+	roleConn, ok := Gate(roleID)
+	if !ok {
+		return nil
+	}
+	return roleConn.Send(&pb_game.GameServiceNodePacketRsp{
+		Packet: packet,
+	})
+}
+
 // GateCallBackSuccess 调用接口后返回成功数据给客户端
 func GateCallBackSuccess(roleID uint64, protocolID pb_protocol.MsgID, msg proto.Message) error {
 	roleConn, ok := Gate(roleID)

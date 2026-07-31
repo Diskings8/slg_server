@@ -4,10 +4,13 @@ import (
 	"context"
 	"time"
 
+	"server.slg.com/api/protocol/pb/pb_battle"
 	"server.slg.com/api/protocol/pb/pb_maps_march"
 	"server.slg.com/api/protocol/pb/pb_worldmap"
 	"server.slg.com/common/loggers"
 	"server.slg.com/services/internal/cores/cores_declarations"
+	"server.slg.com/services/internal/cores/map_aois"
+	"server.slg.com/services/internal/cores/map_datas"
 	"server.slg.com/services/internal/cores/marchs"
 	"server.slg.com/services/worldmap/worldmap_internals/worldmap_inits"
 
@@ -89,7 +92,17 @@ func (s *WorldMapServer) CreateMarch(ctx context.Context, req *pb_worldmap.Creat
 		},
 	}
 
-	if err := s.engine.March.CreateMarch(marchInfo); err != nil {
+	// 填充出征队伍（英雄 + 士兵），供到达后的战斗/采集结算使用
+	if teamSlots := req.GetTeamSlots(); len(teamSlots) > 0 {
+		marchInfo.Team = &marchs.Team{Slots: teamSlots}
+	}
+
+	// 无队伍数据时给空队伍兜底，避免结算时 nil 指针
+	if marchInfo.Team == nil {
+		marchInfo.Team = &marchs.Team{Slots: []*pb_battle.TeamSlotInfo{}}
+	}
+
+	if err := s.engine.MarchInfoManager.CreateMarch(marchInfo); err != nil {
 		loggers.Logger.Error("CreateMarch failed",
 			zap.Uint64("march_id", marchID.Uint64()),
 			zap.Error(err))
@@ -116,12 +129,12 @@ func (s *WorldMapServer) CancelMarch(ctx context.Context, req *pb_worldmap.Cance
 		return nil, status.Error(codes.Internal, "engine not initialized")
 	}
 
-	marchInfo := s.engine.March.GetMarchInfo(cores_declarations.MarchID(req.GetMarchId()))
+	marchInfo := s.engine.MarchInfoManager.GetMarchInfo(cores_declarations.MarchID(req.GetMarchId()))
 	if marchInfo == nil {
 		return nil, status.Error(codes.NotFound, "march not found")
 	}
 
-	if err := s.engine.March.DeleteMarch(marchInfo); err != nil {
+	if err := s.engine.MarchInfoManager.DeleteMarch(marchInfo); err != nil {
 		loggers.Logger.Error("CancelMarch failed",
 			zap.Uint64("march_id", req.GetMarchId()),
 			zap.Error(err))
@@ -140,7 +153,7 @@ func (s *WorldMapServer) MarchInfo(ctx context.Context, req *pb_worldmap.MarchIn
 		return nil, status.Error(codes.Internal, "engine not initialized")
 	}
 
-	marchInfo := s.engine.March.GetMarchInfo(cores_declarations.MarchID(req.GetMarchId()))
+	marchInfo := s.engine.MarchInfoManager.GetMarchInfo(cores_declarations.MarchID(req.GetMarchId()))
 	if marchInfo == nil {
 		return nil, status.Error(codes.NotFound, "march not found")
 	}
@@ -160,7 +173,7 @@ func (s *WorldMapServer) MarchInfo(ctx context.Context, req *pb_worldmap.MarchIn
 	}, nil
 }
 
-// MapData 查询地图数据
+// MapData 查询视野内地图数据（AOI 九宫格）
 func (s *WorldMapServer) MapData(ctx context.Context, req *pb_worldmap.MapDataReq) (*pb_worldmap.MapDataRsp, error) {
 	loggers.Logger.Info("MapData",
 		zap.Int32("map_id", req.GetMapId()),
@@ -170,8 +183,88 @@ func (s *WorldMapServer) MapData(ctx context.Context, req *pb_worldmap.MapDataRe
 		return nil, status.Error(codes.Internal, "engine not initialized")
 	}
 
-	// TODO: 返回地图格子数据
-	return &pb_worldmap.MapDataRsp{}, nil
+	mapID := cores_declarations.MapID(req.GetMapId())
+	if mapID.IsInvalid() {
+		return nil, status.Error(codes.InvalidArgument, "invalid map_id")
+	}
+
+	// 获取视野屏幕块：range<=0 用九宫格，否则用 cover 范围
+	var screens []*map_aois.Screen[cores_declarations.ScreenID]
+	if req.GetRange() <= 0 {
+		screens = s.engine.MapDataManager.AOI.Around(mapID)
+	} else {
+		screens = s.engine.MapDataManager.AOI.Cover(mapID, req.GetRange())
+	}
+
+	resp := &pb_worldmap.MapDataRsp{}
+
+	// 去重集合
+	seenCell := make(map[cores_declarations.MapID]struct{})
+	seenMarch := make(map[cores_declarations.MarchID]struct{})
+
+	for _, screen := range screens {
+		if screen == nil {
+			continue
+		}
+
+		// 非空地地块
+		screen.MapDataRange(func(cellMapID cores_declarations.MapID) bool {
+			if _, ok := seenCell[cellMapID]; ok {
+				return true
+			}
+			seenCell[cellMapID] = struct{}{}
+
+			if info, ok := s.engine.MapDataManager.GetMapInfo(cellMapID); ok {
+				resp.Cells = append(resp.Cells, buildMapCellInfo(info))
+			}
+			return true
+		})
+
+		// 视野内行军
+		screen.MarchRange(func(info cores_declarations.MarchInfoI) bool {
+			march, ok := info.(*marchs.MarchInfo)
+			if !ok || march == nil {
+				return true
+			}
+			if _, ok := seenMarch[march.GetMarchID()]; ok {
+				return true
+			}
+			seenMarch[march.GetMarchID()] = struct{}{}
+
+			resp.Marches = append(resp.Marches, buildMarchBrief(march))
+			return true
+		})
+	}
+
+	return resp, nil
+}
+
+// buildMapCellInfo 组装地块数据
+func buildMapCellInfo(info *map_datas.MapInfo) *pb_worldmap.MapCellInfo {
+	return &pb_worldmap.MapCellInfo{
+		MapId:       info.GetMapID().Int32(),
+		ElementType: int32(info.GetElementType()),
+		ElementId:   info.GetElementID(),
+		Level:       int32(info.GetLevel()),
+		OwnerId:     info.GetOwnerID(),
+		ServerId:    info.GetServerID(),
+	}
+}
+
+// buildMarchBrief 组装行军简况
+func buildMarchBrief(march *marchs.MarchInfo) *pb_worldmap.MarchBrief {
+	fromMapID, toMapID, _ := march.GetMapIDs()
+	_, endTime := march.GetMarchStartAndEndTimeUx()
+
+	return &pb_worldmap.MarchBrief{
+		MarchId:     march.GetMarchID().Uint64(),
+		FromMapId:   fromMapID.Int32(),
+		ToMapId:     toMapID.Int32(),
+		FromRoleId:  march.GetFromRoleID(),
+		MarchType:   int32(march.MarchType),
+		State:       march.MarchState,
+		EndTime:     endTime,
+	}
 }
 
 // calcMarchTime 计算行军耗时（秒）

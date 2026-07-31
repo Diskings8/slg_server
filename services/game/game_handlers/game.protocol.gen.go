@@ -3,9 +3,13 @@ package game_handlers
 import (
 	"server.slg.com/api/protocol/pb/pb_hero"
 	"server.slg.com/api/protocol/pb/pb_item"
+	"server.slg.com/api/protocol/pb/pb_maps_march"
 	"server.slg.com/api/protocol/pb/pb_protocol"
+	"server.slg.com/api/protocol/pb/pb_worldmap"
 	"server.slg.com/services/game/game_handlers/game_streams/hero_handler"
 	"server.slg.com/services/game/game_handlers/game_streams/item_handler"
+	"server.slg.com/services/game/game_handlers/game_streams/map_handler"
+	"server.slg.com/services/game/game_handlers/game_streams/march_handler"
 )
 
 // 协议注册 — 手工维护，后续可由 game_generates 自动生成
@@ -29,5 +33,19 @@ func init() {
 		F:    Wrap(item_handler.HandlerUseItem),
 		Req:  &pb_item.UseItemReq{},
 		Resp: &pb_item.UseItemResp{},
+	})
+
+	// ===== 出征 (1000006) =====
+	RegisterProto(pb_protocol.MsgID_GameMarchCreate, &ProtoHandler{
+		F:    Wrap(march_handler.HandlerMarchCreate),
+		Req:  &pb_maps_march.MarchCreateReq{},
+		Resp: &pb_maps_march.MarchCreateResp{},
+	})
+
+	// ===== 视野地图 (1000007) =====
+	RegisterProto(pb_protocol.MsgID_GameMapData, &ProtoHandler{
+		F:    Wrap(map_handler.HandlerMapData),
+		Req:  &pb_worldmap.MapDataReq{},
+		Resp: &pb_worldmap.MapDataRsp{},
 	})
 }

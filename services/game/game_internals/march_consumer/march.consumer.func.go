@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"server.slg.com/api/protocol/pb/pb_maps_march"
 	"server.slg.com/api/protocol/pb/pb_redis_stream"
 	"server.slg.com/common/conns/cacheconn"
 	"server.slg.com/common/loggers"
@@ -98,8 +99,20 @@ func handleMessage(_ context.Context, values map[string]interface{}) {
 			zap.Uint64("march_id", ev.MarchId),
 			zap.Uint64("role_id", ev.RoleId),
 			zap.Int32("to_map_id", ev.ToMapId),
-			zap.Int32("march_type", ev.MarchType))
-		// TODO: 处理行军到达（战斗结算、采集开始等）
+			zap.Int32("march_type", ev.MarchType),
+			zap.Int32("state", ev.State))
+
+		switch pb_maps_march.MarchState(ev.State) {
+		case pb_maps_march.MarchState_Stay:
+			// 到达并驻留（战斗胜利 / 占领成功 / 驻守到达）
+			// TODO: 处理驻留后的业务（占领奖励、驻守生效等）
+		case pb_maps_march.MarchState_Back:
+			// 结算失败回城，或召回到达
+			// TODO: 处理回城（归还士兵、解锁队伍等）
+		default:
+			// 其他状态（采集、扫荡等后续 march type 扩展）
+			// TODO: 处理采集开始、扫荡结算等
+		}
 
 	case pb_redis_stream.MarchEventType_MARCH_EVENT_CANCELED:
 		loggers.Logger.Info("march canceled event",

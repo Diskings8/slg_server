@@ -27,7 +27,8 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// WorldMapService 实时流 — 用于相机移动等实时转发
+// WorldMapService 实时流 — game→worldmap 的玩家视野流
+// 首条消息为握手（MsgID_WorldMapConnect），之后承载相机移动/地图下推
 type WorldMapServiceClient interface {
 	Stream(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[pb_common.NodePacket, pb_common.NodePacket], error)
 }
@@ -57,7 +58,8 @@ type WorldMapService_StreamClient = grpc.BidiStreamingClient[pb_common.NodePacke
 // All implementations must embed UnimplementedWorldMapServiceServer
 // for forward compatibility.
 //
-// WorldMapService 实时流 — 用于相机移动等实时转发
+// WorldMapService 实时流 — game→worldmap 的玩家视野流
+// 首条消息为握手（MsgID_WorldMapConnect），之后承载相机移动/地图下推
 type WorldMapServiceServer interface {
 	Stream(grpc.BidiStreamingServer[pb_common.NodePacket, pb_common.NodePacket]) error
 	mustEmbedUnimplementedWorldMapServiceServer()

@@ -40,6 +40,26 @@ type MapDataManager struct {
 	smallMapData map[cores_declarations.MapID]*MapInfo   // 稀疏：仅存有值格子
 }
 
+// GenerateMap 按生成函数批量初始化地图元素（地形/资源分布）
+//
+// 数据来源由外部注入（配置表 / 程序生成 / DB 加载），框架层不关心来源。
+// 仅对已存在的格子生效；跳过 InvalidMapID。
+func (mdm *MapDataManager) GenerateMap(genFunc func(mapID cores_declarations.MapID, x, y int32) (elementType cores_declarations.ElementType, configID uint32, level cores_declarations.MapLevel)) {
+	if genFunc == nil {
+		return
+	}
+	for id := int32(0); id < mdm.config.MapCount(); id++ {
+		mapID := cores_declarations.MapID(id)
+		info, ok := mdm.GetMapInfo(mapID)
+		if !ok || info == nil {
+			continue
+		}
+		x, y := mdm.config.MapID2XY(mapID)
+		elementType, configID, level := genFunc(mapID, x, y)
+		info.SetElement(elementType, configID, level)
+	}
+}
+
 // Init 初始化，isSparse 控制使用哪种存储策略
 func (mdm *MapDataManager) Init(mapD []MapInfo, isSparse ...bool) {
 	if len(isSparse) > 0 && isSparse[0] {

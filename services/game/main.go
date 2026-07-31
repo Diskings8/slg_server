@@ -29,7 +29,7 @@ import (
 	"server.slg.com/services/game/game_handlers/game_streams"
 	"server.slg.com/services/game/game_internals/gate_stream"
 	"server.slg.com/services/game/game_internals/march_consumer"
-	"server.slg.com/services/game/game_internals/worldmap_client"
+	"server.slg.com/services/game/game_internals/worldmap_conns"
 )
 
 var cfgFormat string
@@ -108,7 +108,7 @@ func main() {
 			func() {
 				gate_stream.Init(ctx)
 				march_consumer.Init(ctx)
-				worldmap_client.Init(ctx)
+				worldmap_conns.Init(ctx)
 				etcdconn.InitEtcd(common_configs.GetConf().Etcd.Dsn())
 				loggers.Logger.Info("ETCD 初始化完成")
 			},
