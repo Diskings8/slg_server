@@ -35,15 +35,16 @@ service GameEventCallback {
 // ---------- 行军 ----------
 
 message CreateMarchReq {
-    uint64 role_id           = 1;
-    int32 from_map_id        = 2;
-    int32 to_map_id          = 3;
-    int32 march_type         = 4;
-    uint32 server_id         = 5;  // 出发服务器
-    uint32 to_server_id      = 6;  // 目标服务器
-    uint64 union_id          = 7;
-    repeated uint64 hero_ids = 8;
-    uint32 base_speed        = 9;
+    uint64 role_id                          = 1;
+    int32 from_map_id                       = 2;
+    int32 to_map_id                         = 3;
+    int32 march_type                        = 4;
+    uint32 server_id                        = 5;  // 出发服务器
+    uint32 to_server_id                     = 6;  // 目标服务器
+    uint64 union_id                         = 7;
+    repeated uint64 hero_ids                = 8;
+    uint32 base_speed                       = 9;
+    repeated battle.TeamSlotInfo team_slots = 10;  // 出征队伍（英雄+士兵）
 }
 
 message CreateMarchRsp {
@@ -103,14 +104,8 @@ message MapDataReq {
 }
 
 message MapDataRsp {
-    // TODO: 定义地图格子数据传输格式
-    // WorldMapConnectReq game→worldmap 建立连接的握手消息（首条 NodePacket.message.body）
-    message WorldMapConnectReq {
-        int32 map_id = 1;  // 玩家所在地图ID（主城位置）
-    }
-    repeated battle.TeamSlotInfo team_slots = 10;  // 出征队伍（英雄+士兵）
-    int32 map_id                            = 1;   // 中心地图ID
-    int32 range                             = 2;   // 视野半径（格），0=仅中心格所在屏幕
+    repeated MapCellInfo cells  = 1;  // 视野内地块
+    repeated MarchBrief marches = 2;  // 视野内行军
 }
 
 // MapCellInfo 地图格子数据
@@ -121,4 +116,20 @@ message MapCellInfo {
     int32 level        = 4;
     uint64 owner_id    = 5;  // 归属角色ID，0=无主
     uint32 server_id   = 6;  // 所属服务器
+}
+
+// MarchBrief 视野内行军简况
+message MarchBrief {
+    uint64 march_id             = 1;
+    int32 from_map_id           = 2;
+    int32 to_map_id             = 3;
+    uint64 from_role_id         = 4;  // 出征角色
+    int32 march_type            = 5;
+    maps.march.MarchState state = 6;
+    int64 end_time              = 7;  // 到达时间
+}
+
+// WorldMapConnectReq game→worldmap 建立连接的握手消息（首条 NodePacket.message.body）
+message WorldMapConnectReq {
+    int32 map_id = 1;  // 玩家所在地图ID（主城位置）
 }

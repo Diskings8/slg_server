@@ -33,7 +33,7 @@ func Connect(parentCtx context.Context, roleID uint64, mapID int32) error {
 	Close(roleID)
 
 	streamCtx, cancel := context.WithCancel(parentCtx)
-	stream, err := NewStream(streamCtx)
+	stream, err := Wm().NewStream(streamCtx)
 	if err != nil {
 		cancel()
 		loggers.Logger.Warn("worldmap stream connect failed", zap.Uint64("role_id", roleID), zap.Error(err))

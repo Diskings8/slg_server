@@ -51,7 +51,7 @@ func HandlerMarchCreate(ctx context.Context, roleID uint64, req *pb_maps_march.M
 	}
 
 	// 调用 worldmap 创建行军
-	createRsp, callErr := worldmap_conns.CreateMarch(ctx, &pb_worldmap.CreateMarchReq{
+	createRsp, callErr := worldmap_conns.Wm().CreateMarch(ctx, &pb_worldmap.CreateMarchReq{
 		RoleId:    roleID,
 		FromMapId: req.GetFromMapId(),
 		ToMapId:   req.GetToMapId(),

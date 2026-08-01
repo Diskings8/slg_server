@@ -18,7 +18,7 @@ func HandlerMapData(ctx context.Context, _ uint64, req *pb_worldmap.MapDataReq, 
 		return rpc_results.Error(pb_error_code.ErrorCode_ParamError, "invalid map_id")
 	}
 
-	rsp, err := worldmap_conns.MapData(ctx, req)
+	rsp, err := worldmap_conns.Wm().MapData(ctx, req)
 	if err != nil {
 		return rpc_results.Error(pb_error_code.ErrorCode_Failed, fmt.Sprintf("map data failed: %s", err.Error()))
 	}
