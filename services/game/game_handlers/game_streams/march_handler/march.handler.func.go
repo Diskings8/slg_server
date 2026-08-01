@@ -11,7 +11,7 @@ import (
 	pb_confs "server.slg.com/api/protocol/pb_confs"
 	"server.slg.com/common/conns/rpcconn/rpc_results"
 	"server.slg.com/services/game/game_entitys/game_role_handler"
-	"server.slg.com/services/game/game_internals/worldmap_conns"
+	"server.slg.com/services/game/game_internals/game_rpc_clients"
 )
 
 // HandlerMarchCreate 创建行军 (1000006)
@@ -51,7 +51,7 @@ func HandlerMarchCreate(ctx context.Context, roleID uint64, req *pb_maps_march.M
 	}
 
 	// 调用 worldmap 创建行军
-	createRsp, callErr := worldmap_conns.Wm().CreateMarch(ctx, &pb_worldmap.CreateMarchReq{
+	createRsp, callErr := game_rpc_clients.WorldMap().CreateMarch(ctx, &pb_worldmap.CreateMarchReq{
 		RoleId:    roleID,
 		FromMapId: req.GetFromMapId(),
 		ToMapId:   req.GetToMapId(),

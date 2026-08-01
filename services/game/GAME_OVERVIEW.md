@@ -50,8 +50,18 @@ game/
 │   └── hero.logic.func.go              # HeroLevelUp/HeroCultivate（TODO: 接入消耗）
 │
 ├── game_internals/                      # 内部基础设施
-│   └── gate_stream/
-│       └── gate_stream.go             # 网关连接管理(GateJoin/Gate/Push/GateCallBack*)
+│   ├── game.internals.init.go          # Init(ctx)/ShutDown 聚合各子模块
+│   ├── gate_stream/                    # 网关连接管理（Manager 结构体 + 私有单例）
+│   │   └── gate_stream.go             # GateJoin/Gate/Push/GateCallBack*/ShutDown
+│   ├── game_rpc_clients/               # 出站 RPC 客户端（包装 rpcconn 生成 hub）
+│   │   ├── game.rpc.client.func.go    # hub 门面 + WorldMap() 访问器 + ShutDown
+│   │   ├── game.rpc.conns.st.go       # GameRpcClientHandler 单例
+│   │   └── worldmap_client/            # worldmap 客户端门面（按 instance 配对）
+│   │       ├── worldmap.client.func.go # Unary 业务方法（CreateMarch/MapData...）
+│   │       └── worldmap.client.stream.go # 角色视野流管理（RoleStream）
+│   └── stream_consumers/               # Redis Stream 消费者（行军事件）
+│       ├── consumer.init.func.go      # Init → redisstream.MultiConsume
+│       └── march.consumer.func.go     # 行军事件处理（到达/回城/取消）
 │
 ├── game_models/                         # GORM 数据模型
 │   ├── model.role_item.go             # RoleItem
@@ -143,6 +153,36 @@ GetProtoHandler(msgID) → 反序列化 → handler.F() → 回响应
 
 ---
 
+## 跨服务通信
+
+game 与 worldmap（地图引擎节点）按 `instance` **单例配对**（同一区服的 game 服 ↔ 它的 worldmap）。
+
+```
+            ┌─────────────────────────────────────────────┐
+            │  Redis Stream（worldmap → game，异步事件）    │
+            │  StreamKeyMarchEvents: ARRIVED/BACKARRIVED/CANCELED
+            │        ↑ worldmap.publishMarchEvent          │
+            │        ↓ stream_consumers.MultiConsume       │
+            └─────────────────────────────────────────────┘
+
+game ──Unary/Stream──▶ worldmap
+   game_rpc_clients ──▶ rpcconn 生成 hub（instance 感知发现）
+                        → etcd NodeWorldMapService{instance}
+```
+
+| 方向 | 通道 | 链路 |
+|------|------|------|
+| game → worldmap（Unary） | gRPC `WorldMapHandler` | `game_rpc_clients.WorldMap()` → `rpc_handlers.ClientHandler` → `rpc_conns` 连接池 |
+| game → worldmap（流） | gRPC `WorldMapService.Stream` | `ConnectRoleStream`（握手 → 相机移动上行 / 视野下推） |
+| worldmap → game（事件） | Redis Stream | `common/redisstream` `ProtoXAdd` → `stream_consumers` 消费 |
+
+基础连接维护统一在 `common/conns/rpcconn`：
+- `rpc_conns` — gRPC 连接池（按地址复用、生命周期管理）
+- `rpc_handlers` — 代码生成的 typed client hub（`client_handler_gen` 生成，绑定 instance）
+- `etcdconn.GetNodeTypeServerAddrByInstance` — 按 nodeType + instance 精确发现
+
+---
+
 ## 外部依赖
 
 - `google.golang.org/protobuf` — protobuf 序列化
@@ -162,6 +202,8 @@ GetProtoHandler(msgID) → 反序列化 → handler.F() → 回响应
 | Role 聚合 + 子模块挂载 | ✅ | heroes/items/skills/costs 已挂载 |
 | 道具背包 (Items) | ✅ | model/entity/db/logic 完整 |
 | 协议路由框架 | ✅ | registry + Do + Recv 完整 |
-| Stream 连接管理 | ✅ | gate_stream + gateConnectDo |
+| Stream 连接管理 | ✅ | gate_stream（Manager 结构体）+ gateConnectDo |
+| 出站 RPC 客户端 | ✅ | game_rpc_clients → rpcconn hub，instance 感知发现 |
+| 行军事件消费 | ✅ | stream_consumers 消费 Redis Stream（到达/回城/取消） |
 | 英雄基础 | ⚠️ | 实体/模型完成，逻辑层待接入消耗 |
 | 协议处理器 | ⬜ | 空模板，待按需补充 |

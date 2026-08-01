@@ -24,7 +24,6 @@
 ├── api/          # protobuf 协议定义与生成代码
 ├── common/       # 公共工具库（hashmaps, pollers, conns, loggers...）
 ├── envs/         # 环境配置
-├── rpc_tools/    # RPC 工具
 ├── scripts/      # 构建/同步脚本
 └── services/     # 业务服务
     └── internal/cores/    # 核心游戏逻辑 ← 主要工作区
@@ -82,6 +81,10 @@ cancel() 信号中断触发           GrpcStreamServer 监听 globalCtx.Done()
 | 行军信息 & 队伍 | [docs/marchs.md](services/internal/cores/docs/marchs.md) |
 | 行军执行器 | [docs/marchdos.md](services/internal/cores/docs/marchdos.md) |
 | 角色数据管理 | [docs/roles.md](services/internal/cores/docs/roles.md) |
+
+### worldmap 模块
+
+入口: `services/worldmap/WORLDMAP_OVERVIEW.md`
 
 ### 新增模块文档的约定
 

@@ -4,7 +4,6 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
-	"server.slg.com/services/game/game_internals/worldmap_conns"
 
 	"server.slg.com/api/protocol/pb/pb_error_code"
 	"server.slg.com/api/protocol/pb/pb_game"
@@ -13,6 +12,7 @@ import (
 	"server.slg.com/services/game/game_entitys/game_role_handler"
 	"server.slg.com/services/game/game_entitys/game_roles"
 	"server.slg.com/services/game/game_handlers"
+	"server.slg.com/services/game/game_internals/game_rpc_clients"
 	"server.slg.com/services/game/game_internals/gate_stream"
 )
 
@@ -34,7 +34,7 @@ func (gs *GameStream) Recv(stream grpc.ServerStream) error {
 	// 相机等地图实时消息 → 转发到玩家的 worldmap 视野流，由 worldmap 处理并下推
 	switch msgID {
 	case pb_protocol.MsgID_GameCameraInit, pb_protocol.MsgID_GameCameraMove:
-		if err := worldmap_conns.SendToWorldMap(roleID, packet); err != nil {
+		if err := game_rpc_clients.WorldMap().SendToWorldMap(roleID, packet); err != nil {
 			return gate_stream.GateCallBackFail(roleID, msgID, pb_error_code.ErrorCode_Failed, err.Error())
 		}
 		return nil

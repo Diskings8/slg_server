@@ -1,9 +1,8 @@
-package worldmap_conns
+package worldmap_client
 
 import (
 	"context"
 	"fmt"
-	"sync"
 
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
@@ -20,20 +19,15 @@ type RoleStream struct {
 	cancel context.CancelFunc
 }
 
-var (
-	mu      sync.RWMutex
-	streams = make(map[uint64]*RoleStream)
-)
-
-// Connect 玩家建立到 worldmap 的视野流
+// ConnectRoleStream 玩家建立到 worldmap 的视野流
 //
 // 握手后启动下行转发 goroutine：worldmap 的下推（cores push）经此流转发给客户端。
 // 已有连接时先关闭旧连接。
-func Connect(parentCtx context.Context, roleID uint64, mapID int32) error {
-	Close(roleID)
+func (c *Client) ConnectRoleStream(ctx context.Context, roleID uint64, mapID int32) error {
+	c.CloseRoleStream(roleID)
 
-	streamCtx, cancel := context.WithCancel(parentCtx)
-	stream, err := Wm().NewStream(streamCtx)
+	streamCtx, cancel := context.WithCancel(ctx)
+	stream, err := c.NewStream(streamCtx)
 	if err != nil {
 		cancel()
 		loggers.Logger.Warn("worldmap stream connect failed", zap.Uint64("role_id", roleID), zap.Error(err))
@@ -59,25 +53,25 @@ func Connect(parentCtx context.Context, roleID uint64, mapID int32) error {
 	}
 
 	rs := &RoleStream{stream: stream, cancel: cancel}
-	mu.Lock()
-	streams[roleID] = rs
-	mu.Unlock()
+	c.streamLock.Lock()
+	c.streams[roleID] = rs
+	c.streamLock.Unlock()
 
 	// 下行转发：worldmap 下推 → gate_stream → gateway → client
-	go forwardDown(streamCtx, roleID, stream)
+	go c.forwardDown(streamCtx, roleID, stream)
 
 	loggers.Logger.Info("worldmap stream connected", zap.Uint64("role_id", roleID), zap.Int32("map_id", mapID))
 	return nil
 }
 
-// Close 关闭玩家到 worldmap 的视野流
-func Close(roleID uint64) {
-	mu.Lock()
-	rs, ok := streams[roleID]
+// CloseRoleStream 关闭玩家到 worldmap 的视野流
+func (c *Client) CloseRoleStream(roleID uint64) {
+	c.streamLock.Lock()
+	rs, ok := c.streams[roleID]
 	if ok {
-		delete(streams, roleID)
+		delete(c.streams, roleID)
 	}
-	mu.Unlock()
+	c.streamLock.Unlock()
 
 	if ok && rs != nil {
 		rs.cancel()
@@ -85,10 +79,10 @@ func Close(roleID uint64) {
 }
 
 // SendToWorldMap 上行转发：把客户端的地图相关消息转发到玩家的 worldmap 流
-func SendToWorldMap(roleID uint64, packet *pb_common.NodePacket) error {
-	mu.RLock()
-	rs, ok := streams[roleID]
-	mu.RUnlock()
+func (c *Client) SendToWorldMap(roleID uint64, packet *pb_common.NodePacket) error {
+	c.streamLock.RLock()
+	rs, ok := c.streams[roleID]
+	c.streamLock.RUnlock()
 	if !ok || rs == nil {
 		return fmt.Errorf("worldmap stream not found for role %d", roleID)
 	}
@@ -96,7 +90,7 @@ func SendToWorldMap(roleID uint64, packet *pb_common.NodePacket) error {
 }
 
 // forwardDown 下行转发 goroutine
-func forwardDown(ctx context.Context, roleID uint64, stream pb_worldmap.WorldMapService_StreamClient) {
+func (c *Client) forwardDown(ctx context.Context, roleID uint64, stream pb_worldmap.WorldMapService_StreamClient) {
 	for {
 		select {
 		case <-ctx.Done():
@@ -109,7 +103,7 @@ func forwardDown(ctx context.Context, roleID uint64, stream pb_worldmap.WorldMap
 			// 流断开，清理连接
 			loggers.Logger.Info("worldmap stream down",
 				zap.Uint64("role_id", roleID), zap.Error(err))
-			Close(roleID)
+			c.CloseRoleStream(roleID)
 			return
 		}
 

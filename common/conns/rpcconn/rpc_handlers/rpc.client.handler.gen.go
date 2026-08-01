@@ -19,20 +19,23 @@ import (
 // nil 表示连接失败，调用方自行判断。
 type ClientHandler struct {
 	mu                    sync.Mutex
+	instance              string
 	conns                 map[common_declarations.NodeService]*grpc.ClientConn
 	closers               []io.Closer
+	dialOptions           []grpc.DialOption
 	gameServiceClient     pb_game.GameServiceClient
 	gameHandlerClient     pb_game.GameHandlerClient
 	gatewayServiceClient  pb_gateway.GatewayServiceClient
 	gatewayHandlerClient  pb_gateway.GatewayHandlerClient
 	worldMapServiceClient pb_worldmap.WorldMapServiceClient
 	worldMapHandlerClient pb_worldmap.WorldMapHandlerClient
-	dialOptions           []grpc.DialOption
 }
 
-// NewClientHandler creates a ClientHandler with the given dial options.
-func NewClientHandler(dialOptions []grpc.DialOption) *ClientHandler {
+// NewClientHandler creates a ClientHandler bound to the given instance.
+// 所有节点发现均按 nodeType + instance 精确定位（单例配对场景）。
+func NewClientHandler(instance string, dialOptions ...grpc.DialOption) *ClientHandler {
 	return &ClientHandler{
+		instance:    instance,
 		conns:       make(map[common_declarations.NodeService]*grpc.ClientConn),
 		dialOptions: dialOptions,
 	}

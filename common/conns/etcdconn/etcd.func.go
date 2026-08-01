@@ -55,6 +55,22 @@ func GetNodeTypeServerAddr(nodeType common_declarations.NodeService) (string, er
 	return string(resp.Kvs[0].Value), nil
 }
 
+// GetNodeTypeServerAddrByInstance 按实例 ID 精确获取节点地址
+//
+// 适用于单例配对场景：注册 key 为 {prefix}/{instance}/，
+// 调用方（如 game 服）用与目标节点相同的 instance 精确定位，避免误连其他实例。
+func GetNodeTypeServerAddrByInstance(nodeType common_declarations.NodeService, instance string) (string, error) {
+	key := GetServiceKeyByNodeType(nodeType) + instance + "/"
+	resp, err := etcdClient.Get(context.Background(), key)
+	if err != nil {
+		return "", err
+	}
+	if len(resp.Kvs) == 0 {
+		return "", fmt.Errorf("no available server for node type %d instance %s", nodeType, instance)
+	}
+	return string(resp.Kvs[0].Value), nil
+}
+
 func registerWithLease(ctx context.Context, key, value string) {
 	resp, err := etcdClient.Grant(ctx, 10)
 	if err != nil {

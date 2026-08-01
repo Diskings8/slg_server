@@ -7,7 +7,7 @@ import (
 	"server.slg.com/api/protocol/pb/pb_error_code"
 	"server.slg.com/api/protocol/pb/pb_worldmap"
 	"server.slg.com/common/conns/rpcconn/rpc_results"
-	"server.slg.com/services/game/game_internals/worldmap_conns"
+	"server.slg.com/services/game/game_internals/game_rpc_clients"
 )
 
 // HandlerMapData 查询视野地图数据 (1000007)
@@ -18,7 +18,7 @@ func HandlerMapData(ctx context.Context, _ uint64, req *pb_worldmap.MapDataReq, 
 		return rpc_results.Error(pb_error_code.ErrorCode_ParamError, "invalid map_id")
 	}
 
-	rsp, err := worldmap_conns.Wm().MapData(ctx, req)
+	rsp, err := game_rpc_clients.WorldMap().MapData(ctx, req)
 	if err != nil {
 		return rpc_results.Error(pb_error_code.ErrorCode_Failed, fmt.Sprintf("map data failed: %s", err.Error()))
 	}

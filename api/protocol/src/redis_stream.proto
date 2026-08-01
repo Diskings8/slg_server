@@ -6,9 +6,10 @@ option go_package = "server.slg.com/api/protocol/pb/pb_redis_stream";
 
 // MarchEventType 行军事件类型
 enum MarchEventType {
-    MARCH_EVENT_UNKNOWN  = 0;
-    MARCH_EVENT_ARRIVED  = 1;  // 行军到达
-    MARCH_EVENT_CANCELED = 2;  // 行军取消
+    MARCH_EVENT_UNKNOWN     = 0;
+    MARCH_EVENT_ARRIVED     = 1;  // 行军到达（目标点结算，如占领/采集/驻守）
+    MARCH_EVENT_CANCELED    = 2;  // 行军取消
+    MARCH_EVENT_BACKARRIVED = 3;  // 行军回城到站
 }
 
 // MarchEvent 行军事件 — worldmap → game，经由 Redis Stream 投递

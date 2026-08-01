@@ -5,8 +5,8 @@ import (
 	"server.slg.com/api/protocol/pb/pb_game"
 	"server.slg.com/common/loggers"
 	"server.slg.com/services/game/game_entitys/game_roles"
+	"server.slg.com/services/game/game_internals/game_rpc_clients"
 	"server.slg.com/services/game/game_internals/gate_stream"
-	"server.slg.com/services/game/game_internals/worldmap_conns"
 )
 
 // GameStreamHandler 供 main.go 注册 gRPC 服务
@@ -39,7 +39,7 @@ func (gs *GameStream) gateConnectDo(roleID uint64, stream pb_game.GameService_St
 
 	// 玩家建立到 worldmap 的视野流（cores push 经此流下推回客户端）
 	// mapID: 玩家所在地图位置，TODO 主城落位后从角色数据获取
-	if err := worldmap_conns.Connect(stream.Context(), roleID, 0); err != nil {
+	if err := game_rpc_clients.WorldMap().ConnectRoleStream(stream.Context(), roleID, 0); err != nil {
 		loggers.Logger.Warn("connect worldmap stream failed",
 			zap.Uint64("role_id", roleID), zap.Error(err))
 	}
@@ -49,7 +49,7 @@ func (gs *GameStream) gateConnectDo(roleID uint64, stream pb_game.GameService_St
 
 	// ── 连接断开，清理 ──
 	gate_stream.GateClose(roleID)
-	worldmap_conns.Close(roleID)
+	game_rpc_clients.WorldMap().CloseRoleStream(roleID)
 
 	poller, err := game_roles.GetPoller(roleID)
 	if err != nil {

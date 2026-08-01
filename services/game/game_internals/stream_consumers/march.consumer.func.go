@@ -34,6 +34,12 @@ func handleMessage(_ context.Context, msg redisstream.Message) error {
 			zap.Int32("march_type", ev.MarchType))
 		// TODO: 处理行军到达（战斗结算、采集开始等）
 
+	case pb_redis_stream.MarchEventType_MARCH_EVENT_BACKARRIVED:
+		loggers.Logger.Info("march back arrived event",
+			zap.Uint64("march_id", ev.MarchId),
+			zap.Uint64("role_id", ev.RoleId))
+		// TODO: 处理行军回城到站（归还士兵、解锁队伍等）
+
 	case pb_redis_stream.MarchEventType_MARCH_EVENT_CANCELED:
 		loggers.Logger.Info("march canceled event",
 			zap.Uint64("march_id", ev.MarchId),

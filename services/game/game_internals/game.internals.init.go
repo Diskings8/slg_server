@@ -16,4 +16,5 @@ func Init(ctx context.Context) {
 
 func ShutDown() {
 	gate_stream.ShutDown()
+	game_rpc_clients.ShutDown()
 }
