@@ -75,6 +75,15 @@ func (mi *MapInfo) GetElementType() cores_declarations.ElementType {
 	return mi.ElementType
 }
 
+// SetElement 设置地块元素类型（地形/资源/建筑），供地图初始化时调用
+func (mi *MapInfo) SetElement(elementType cores_declarations.ElementType, configID uint32, level cores_declarations.MapLevel) {
+	mi.rwLock.Lock()
+	defer mi.rwLock.Unlock()
+	mi.ElementType = elementType
+	mi.configID = configID
+	mi.Level = level
+}
+
 //----------------Lock----------------//
 
 func (mi *MapInfo) TryLock() bool {

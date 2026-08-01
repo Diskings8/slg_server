@@ -13,3 +13,7 @@ func Init(ctx context.Context) {
 	stream_consumers.Init(ctx)
 	game_rpc_clients.Init(ctx)
 }
+
+func ShutDown() {
+	gate_stream.ShutDown()
+}

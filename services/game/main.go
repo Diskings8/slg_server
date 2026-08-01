@@ -28,7 +28,6 @@ import (
 	"server.slg.com/services/game/game_handlers/game_servers"
 	"server.slg.com/services/game/game_handlers/game_streams"
 	"server.slg.com/services/game/game_internals"
-	"server.slg.com/services/game/game_internals/gate_stream"
 )
 
 var cfgFormat string
@@ -121,7 +120,7 @@ func main() {
 
 		servers.WithShutdown(
 			func() {
-				gate_stream.ShutDown()
+				game_internals.ShutDown()
 				loggers.Logger.Info("清理资源...")
 			},
 		),

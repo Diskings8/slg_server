@@ -34,6 +34,10 @@ func (mm *MapManager) GetMapDataManager() *map_datas.MapDataManager {
 	return mm.mapDataManager
 }
 
+func (mm *MapManager) GetRoleConnectManager() *map_connects.RoleConnectManager {
+	return mm.roleConnectManager
+}
+
 func (mm *MapManager) GetMarchManage() *marchs.MarchInfoManager {
 	return mm.marchManage
 }

@@ -2,83 +2,85 @@ syntax = "proto3";
 package pb_worldmap;
 option go_package = "server.slg.com/api/protocol/pb/pb_worldmap";
 
-import "camera.proto";
 import "common.proto";
 import "march.proto";
+import "battle.proto";
 
-// WorldMapService 实时流 — 用于相机移动等实时转发
+// WorldMapService 实时流 — game→worldmap 的玩家视野流
+// 首条消息为握手（MsgID_WorldMapConnect），之后承载相机移动/地图下推
 service WorldMapService {
-  rpc Stream(stream common.NodePacket) returns (stream common.NodePacket) {}
+    rpc Stream(stream common.NodePacket) returns (stream common.NodePacket) {
+    }
 }
 
 // WorldMapHandler 业务 RPC — game 通过 Unary 调用 worldmap
 service WorldMapHandler {
-  // 行军
-  rpc CreateMarch(CreateMarchReq) returns (CreateMarchRsp);
-  rpc CancelMarch(CancelMarchReq) returns (CancelMarchRsp);
-  rpc MarchInfo(MarchInfoReq) returns (MarchInfoRsp);
+    // 行军
+    rpc CreateMarch(CreateMarchReq) returns (CreateMarchRsp);
+    rpc CancelMarch(CancelMarchReq) returns (CancelMarchRsp);
+    rpc MarchInfo(MarchInfoReq) returns (MarchInfoRsp);
 
-  // 地图
-  rpc MapData(MapDataReq) returns (MapDataRsp);
+    // 地图
+    rpc MapData(MapDataReq) returns (MapDataRsp);
 }
 
 // GameEventCallback — worldmap → game 的事件回调，由 game 服务实现
 service GameEventCallback {
-  // MarchArrived 行军到达目标后回调 game
-  rpc MarchArrived(MarchArrivedReq) returns (MarchArrivedRsp);
-  // MarchCanceled 行军被取消后回调 game
-  rpc MarchCanceled(MarchCanceledReq) returns (MarchCanceledRsp);
+    // MarchArrived 行军到达目标后回调 game
+    rpc MarchArrived(MarchArrivedReq) returns (MarchArrivedRsp);
+    // MarchCanceled 行军被取消后回调 game
+    rpc MarchCanceled(MarchCanceledReq) returns (MarchCanceledRsp);
 }
 
 // ---------- 行军 ----------
 
 message CreateMarchReq {
-  uint64 role_id        = 1;
-  int32  from_map_id    = 2;
-  int32  to_map_id      = 3;
-  int32  march_type     = 4;
-  uint32 server_id      = 5;  // 出发服务器
-  uint32 to_server_id   = 6;  // 目标服务器
-  uint64 union_id       = 7;
-  repeated uint64 hero_ids = 8;
-  uint32 base_speed     = 9;
+    uint64 role_id           = 1;
+    int32 from_map_id        = 2;
+    int32 to_map_id          = 3;
+    int32 march_type         = 4;
+    uint32 server_id         = 5;  // 出发服务器
+    uint32 to_server_id      = 6;  // 目标服务器
+    uint64 union_id          = 7;
+    repeated uint64 hero_ids = 8;
+    uint32 base_speed        = 9;
 }
 
 message CreateMarchRsp {
-  uint64 march_id  = 1;
-  int64  end_time  = 2;  // unix timestamp
+    uint64 march_id = 1;
+    int64 end_time  = 2;  // unix timestamp
 }
 
 message CancelMarchReq {
-  uint64 role_id  = 1;
-  uint64 march_id = 2;
+    uint64 role_id  = 1;
+    uint64 march_id = 2;
 }
 
 message CancelMarchRsp {
 }
 
 message MarchInfoReq {
-  uint64 march_id = 1;
+    uint64 march_id = 1;
 }
 
 message MarchInfoRsp {
-  int32  from_map_id       = 1;
-  int32  to_map_id         = 2;
-  int32  march_type        = 3;
-  maps.march.MarchState state = 4;
-  int64  start_time        = 5;
-  int64  end_time          = 6;
-  uint64 role_id           = 7;
-  uint64 union_id          = 8;
+    int32 from_map_id           = 1;
+    int32 to_map_id             = 2;
+    int32 march_type            = 3;
+    maps.march.MarchState state = 4;
+    int64 start_time            = 5;
+    int64 end_time              = 6;
+    uint64 role_id              = 7;
+    uint64 union_id             = 8;
 }
 
 // MarchArrivedReq worldmap → game：行军到达
 message MarchArrivedReq {
-  uint64 march_id      = 1;
-  uint64 role_id       = 2;
-  int32  to_map_id     = 3;
-  int32  march_type    = 4;
-  // 后续可扩展战斗结果、采集结果等
+    uint64 march_id  = 1;
+    uint64 role_id   = 2;
+    int32 to_map_id  = 3;
+    int32 march_type = 4;
+    // 后续可扩展战斗结果、采集结果等
 }
 
 message MarchArrivedRsp {
@@ -86,8 +88,8 @@ message MarchArrivedRsp {
 
 // MarchCanceledReq worldmap → game：行军被取消
 message MarchCanceledReq {
-  uint64 march_id      = 1;
-  uint64 role_id       = 2;
+    uint64 march_id = 1;
+    uint64 role_id  = 2;
 }
 
 message MarchCanceledRsp {
@@ -96,11 +98,27 @@ message MarchCanceledRsp {
 // ---------- 地图 ----------
 
 message MapDataReq {
-  int32 map_id   = 1;
-  int32 range    = 2;
+    int32 map_id = 1;
+    int32 range  = 2;
 }
 
-// MapDataRsp 直接复用 camera.MapInfo 作为格子数据载体
 message MapDataRsp {
-  repeated camera.MapInfo map_infos = 1;
+    // TODO: 定义地图格子数据传输格式
+    // WorldMapConnectReq game→worldmap 建立连接的握手消息（首条 NodePacket.message.body）
+    message WorldMapConnectReq {
+        int32 map_id = 1;  // 玩家所在地图ID（主城位置）
+    }
+    repeated battle.TeamSlotInfo team_slots = 10;  // 出征队伍（英雄+士兵）
+    int32 map_id                            = 1;   // 中心地图ID
+    int32 range                             = 2;   // 视野半径（格），0=仅中心格所在屏幕
+}
+
+// MapCellInfo 地图格子数据
+message MapCellInfo {
+    int32 map_id       = 1;
+    int32 element_type = 2;  // 元素类型（cores ElementType）
+    uint32 element_id  = 3;  // 配置ID
+    int32 level        = 4;
+    uint64 owner_id    = 5;  // 归属角色ID，0=无主
+    uint32 server_id   = 6;  // 所属服务器
 }

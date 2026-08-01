@@ -19,6 +19,7 @@ message MarchEvent {
     int32 to_map_id     = 4;  // 仅 ARRIVED 有效
     int32 march_type    = 5;  // 仅 ARRIVED 有效
     int64 ts            = 6;  // unix 时间戳
+    int32 state         = 7;  // 结算后行军状态 (pb_maps_march.MarchState): 驻留=6, 回城=5
 }
 
 // ========== 通用 Stream 信封（后续扩展用） ==========
