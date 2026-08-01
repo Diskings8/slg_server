@@ -5,20 +5,17 @@ import (
 	"time"
 
 	"server.slg.com/api/protocol/pb/pb_redis_stream"
-	"server.slg.com/common/conns/cacheconn"
+	"server.slg.com/common/globals/common_globals"
 	"server.slg.com/common/loggers"
+	"server.slg.com/common/redisstream"
 	"server.slg.com/services/internal/cores/cores_declarations"
 	"server.slg.com/services/internal/cores/map_datas"
 	"server.slg.com/services/internal/cores/map_managers"
 	"server.slg.com/services/internal/cores/marchs"
 
-	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 )
-
-// marchStreamKey Redis Stream key
-const marchStreamKey = "slg:march:events"
 
 // Engine cores 引擎聚合
 type Engine struct {
@@ -80,11 +77,13 @@ func (e *Engine) OnMarchArrived(mm *map_managers.MapManager, marchID cores_decla
 	}
 
 	_, toMapID, _ := marchInfo.GetMapIDs()
-	loggers.Logger.Info("march arrived",
-		zap.Uint64("march_id", marchID.Uint64()),
-		zap.Uint64("role_id", marchInfo.GetFromRoleID()),
-		zap.Int32("to", toMapID.Int32()),
-		zap.Uint32("march_type", uint32(marchInfo.MarchType)))
+	if common_globals.IsDev() {
+		loggers.Logger.Info("march arrived",
+			zap.Uint64("march_id", marchID.Uint64()),
+			zap.Uint64("role_id", marchInfo.GetFromRoleID()),
+			zap.Int32("to", toMapID.Int32()),
+			zap.Uint32("march_type", uint32(marchInfo.MarchType)))
+	}
 
 	publishMarchEvent(e.ctx, &pb_redis_stream.MarchEvent{
 		Type:      pb_redis_stream.MarchEventType_MARCH_EVENT_ARRIVED,
@@ -120,23 +119,7 @@ func publishMarchEvent(ctx context.Context, event *pb_redis_stream.MarchEvent) {
 		return
 	}
 
-	cache := cacheconn.Get()
-	type streamPublishI interface {
-		XAdd(ctx context.Context, a *redis.XAddArgs) *redis.StringCmd
-	}
-	pub, ok := cache.(streamPublishI)
-	if !ok {
-		loggers.Logger.Warn("cache does not support XADD")
-		return
-	}
-
-	ctxWithTimeout, cancel := context.WithTimeout(ctx, 3*time.Second)
-	defer cancel()
-
-	if err := pub.XAdd(ctxWithTimeout, &redis.XAddArgs{
-		Stream: marchStreamKey,
-		Values: []string{"data", string(data)},
-	}).Err(); err != nil {
+	if err := redisstream.ProtoXAdd(ctx, redisstream.StreamKeyMarchEvents, data); err != nil {
 		loggers.Logger.Warn("publish march event to redis stream failed",
 			zap.String("event_type", event.Type.String()),
 			zap.Uint64("march_id", event.MarchId),

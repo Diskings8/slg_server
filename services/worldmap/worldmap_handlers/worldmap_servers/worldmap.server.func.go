@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"server.slg.com/api/protocol/pb/pb_camera"
 	"server.slg.com/api/protocol/pb/pb_maps_march"
 	"server.slg.com/api/protocol/pb/pb_worldmap"
 	"server.slg.com/common/loggers"
@@ -17,6 +18,9 @@ import (
 )
 
 var WorldMapServerHandler = &WorldMapServer{}
+
+// maxMapDataRange MapData 查询的最大半径，防止超大 range 触发巨量查询
+const maxMapDataRange = 100
 
 var marchIDCounter cores_declarations.MarchID
 
@@ -89,7 +93,7 @@ func (s *WorldMapServer) CreateMarch(ctx context.Context, req *pb_worldmap.Creat
 		},
 	}
 
-	if err := s.engine.March.CreateMarch(marchInfo); err != nil {
+	if err := s.engine.MarchInfoManager.CreateMarch(marchInfo); err != nil {
 		loggers.Logger.Error("CreateMarch failed",
 			zap.Uint64("march_id", marchID.Uint64()),
 			zap.Error(err))
@@ -116,12 +120,12 @@ func (s *WorldMapServer) CancelMarch(ctx context.Context, req *pb_worldmap.Cance
 		return nil, status.Error(codes.Internal, "engine not initialized")
 	}
 
-	marchInfo := s.engine.March.GetMarchInfo(cores_declarations.MarchID(req.GetMarchId()))
+	marchInfo := s.engine.MarchInfoManager.GetMarchInfo(cores_declarations.MarchID(req.GetMarchId()))
 	if marchInfo == nil {
 		return nil, status.Error(codes.NotFound, "march not found")
 	}
 
-	if err := s.engine.March.DeleteMarch(marchInfo); err != nil {
+	if err := s.engine.MarchInfoManager.DeleteMarch(marchInfo); err != nil {
 		loggers.Logger.Error("CancelMarch failed",
 			zap.Uint64("march_id", req.GetMarchId()),
 			zap.Error(err))
@@ -140,7 +144,7 @@ func (s *WorldMapServer) MarchInfo(ctx context.Context, req *pb_worldmap.MarchIn
 		return nil, status.Error(codes.Internal, "engine not initialized")
 	}
 
-	marchInfo := s.engine.March.GetMarchInfo(cores_declarations.MarchID(req.GetMarchId()))
+	marchInfo := s.engine.MarchInfoManager.GetMarchInfo(cores_declarations.MarchID(req.GetMarchId()))
 	if marchInfo == nil {
 		return nil, status.Error(codes.NotFound, "march not found")
 	}
@@ -170,8 +174,32 @@ func (s *WorldMapServer) MapData(ctx context.Context, req *pb_worldmap.MapDataRe
 		return nil, status.Error(codes.Internal, "engine not initialized")
 	}
 
-	// TODO: 返回地图格子数据
-	return &pb_worldmap.MapDataRsp{}, nil
+	// 限定查询范围，避免超大 range 引发巨量查询
+	queryRange := req.GetRange()
+	if queryRange > maxMapDataRange {
+		queryRange = maxMapDataRange
+	}
+	if queryRange < 0 {
+		queryRange = 0
+	}
+
+	// 以 map_id 为中心圈出 (2*range+1)² 范围内的格子
+	mapIDs := s.engine.Config.CoverMapIDs(req.GetMapId(), 0, int(queryRange))
+	infos := s.engine.MapDataManager.GetMapInfoSlice(mapIDs)
+
+	rsp := &pb_worldmap.MapDataRsp{
+		MapInfos: make([]*pb_camera.MapInfo, 0, len(infos)),
+	}
+	for _, mi := range infos {
+		rsp.MapInfos = append(rsp.MapInfos, &pb_camera.MapInfo{
+			MapId:    mi.GetMapID().Int32(),
+			ServerId: mi.GetServerID(),
+			RoleId:   mi.GetOwnerID(),
+			// TODO: land_cover / union_id / city 需结合建筑与联盟数据补全
+		})
+	}
+
+	return rsp, nil
 }
 
 // calcMarchTime 计算行军耗时（秒）

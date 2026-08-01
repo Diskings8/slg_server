@@ -2,6 +2,7 @@ syntax = "proto3";
 package pb_worldmap;
 option go_package = "server.slg.com/api/protocol/pb/pb_worldmap";
 
+import "camera.proto";
 import "common.proto";
 import "march.proto";
 
@@ -99,6 +100,7 @@ message MapDataReq {
   int32 range    = 2;
 }
 
+// MapDataRsp 直接复用 camera.MapInfo 作为格子数据载体
 message MapDataRsp {
-  // TODO: 定义地图格子数据传输格式
+  repeated camera.MapInfo map_infos = 1;
 }
