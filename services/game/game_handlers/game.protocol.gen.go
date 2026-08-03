@@ -30,6 +30,26 @@ func init() {
 		Req:  &pb_hero.HeroListReq{},
 		Resp: &pb_hero.HeroListResp{},
 	})
+	RegisterProto(pb_protocol.MsgID_GameHeroUpgradeLevel, &ProtoHandler{
+		F:    Wrap(hero_handler.HandlerHeroUpgradeLevel),
+		Req:  &pb_hero.HeroUpgradeLevelReq{},
+		Resp: &pb_hero.HeroUpgradeLevelResp{},
+	})
+	RegisterProto(pb_protocol.MsgID_GameHeroCultivate, &ProtoHandler{
+		F:    Wrap(hero_handler.HandlerHeroCultivate),
+		Req:  &pb_hero.HeroCultivateReq{},
+		Resp: &pb_hero.HeroCultivateResp{},
+	})
+	RegisterProto(pb_protocol.MsgID_GameHeroTroopTransform, &ProtoHandler{
+		F:    Wrap(hero_handler.HandlerHeroTroopTransform),
+		Req:  &pb_hero.HeroTroopTransformReq{},
+		Resp: &pb_hero.HeroTroopTransformResp{},
+	})
+	RegisterProto(pb_protocol.MsgID_GameHeroTroopUnlock, &ProtoHandler{
+		F:    Wrap(hero_handler.HandlerHeroTroopUnlock),
+		Req:  &pb_hero.HeroTroopUnlockReq{},
+		Resp: &pb_hero.HeroTroopUnlockResp{},
+	})
 
 	// ===== 道具 (1000005) =====
 	RegisterProto(pb_protocol.MsgID_GameUseItem, &ProtoHandler{
