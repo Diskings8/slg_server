@@ -36,6 +36,13 @@ func (c *Client) NewStream(ctx context.Context) (pb_worldmap.WorldMapService_Str
 	return svc.Stream(ctx)
 }
 
+// Close 关闭底层 gRPC 连接（进程退出时调用）
+func (c *Client) Close() {
+	if c.hub != nil {
+		c.hub.Close()
+	}
+}
+
 // ------------------------------- 业务方法 -------------------------------
 
 // CreateMarch 创建行军

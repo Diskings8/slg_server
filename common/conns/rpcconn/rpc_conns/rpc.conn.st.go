@@ -10,6 +10,8 @@ import (
 	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/keepalive"
+
+	"server.slg.com/common/conns/rpcconn/rpc_declarations"
 )
 
 // NodeConn gRPC 节点连接，封装了目标地址和 gRPC 客户端连接，通过 Alive 标记连接可用状态
@@ -23,9 +25,19 @@ func (c *NodeConn) Close() error {
 	return c.ClientConn.Close()
 }
 
-// GetConn 通过地址获取连接（连接池管理）
+// GetConn 通过地址获取连接（内置默认超时，连接池管理）
 func GetConn(addr string) (*NodeConn, error) {
-	return defaultPool.getOrCreateConn(addr)
+	return defaultPool.getOrCreateConn(addr, rpc_declarations.DefaultRPCTimeout)
+}
+
+// GetConnWithTimeout 通过地址获取连接（指定超时；timeout<=0 时无限等待）
+func GetConnWithTimeout(addr string, timeout time.Duration) (*NodeConn, error) {
+	return defaultPool.getOrCreateConn(addr, timeout)
+}
+
+// GetConnWait 通过地址获取连接（阻塞等待就绪，无超时）
+func GetConnWait(addr string) (*NodeConn, error) {
+	return defaultPool.getOrCreateConn(addr, 0)
 }
 
 // CloseAll 关闭连接池中所有连接
@@ -47,7 +59,7 @@ func newNodeConnPool() *nodeConnPool {
 	}
 }
 
-func (p *nodeConnPool) getOrCreateConn(addr string) (*NodeConn, error) {
+func (p *nodeConnPool) getOrCreateConn(addr string, timeout time.Duration) (*NodeConn, error) {
 	// 读锁快速路径
 	p.rwLock.RLock()
 	nc, ok := p.pool[addr]
@@ -64,7 +76,7 @@ func (p *nodeConnPool) getOrCreateConn(addr string) (*NodeConn, error) {
 		return nc, nil
 	}
 
-	conn, err := dial(addr)
+	conn, err := dial(addr, timeout)
 	if err != nil {
 		return nil, fmt.Errorf("dial %s: %w", addr, err)
 	}
@@ -87,9 +99,14 @@ func (p *nodeConnPool) closeAll() {
 	}
 }
 
-func dial(addr string) (*grpc.ClientConn, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
+// dial 建立连接；timeout>0 时等待就绪超时失败，timeout<=0 时阻塞等待就绪（不超时）
+func dial(addr string, timeout time.Duration) (*grpc.ClientConn, error) {
+	ctx := context.Background()
+	var cancel context.CancelFunc
+	if timeout > 0 {
+		ctx, cancel = context.WithTimeout(ctx, timeout)
+		defer cancel()
+	}
 
 	conn, err := grpc.NewClient(addr,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),

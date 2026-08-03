@@ -9,12 +9,22 @@ import (
 
 // dialNodeLocked 按节点类型 + 实例 ID 获取 gRPC 连接。
 // 已建立且就绪则复用；连接不存在或已断开则重新从 etcd 发现（instance 配对）+ 连接池创建。
+// wait=true 时阻塞等待就绪（无超时）；否则使用内置默认超时。
 // 调用前须持有 ch.mu。
-func (ch *ClientHandler) dialNodeLocked(nodeType common_declarations.NodeService) (*grpc.ClientConn, error) {
+func (ch *ClientHandler) dialNodeLocked(nodeType common_declarations.NodeService, wait bool) (*grpc.ClientConn, error) {
 	if conn, ok := ch.conns[nodeType]; ok && conn.GetState() == connectivity.Ready {
 		return conn, nil
 	}
-	nc, err := rpc_conns.GetConnByNodeTypeInstance(nodeType, ch.instance)
+
+	var (
+		nc  *rpc_conns.NodeConn
+		err error
+	)
+	if wait {
+		nc, err = rpc_conns.GetConnByNodeTypeInstanceWait(nodeType, ch.instance)
+	} else {
+		nc, err = rpc_conns.GetConnByNodeTypeInstance(nodeType, ch.instance)
+	}
 	if err != nil {
 		return nil, err
 	}

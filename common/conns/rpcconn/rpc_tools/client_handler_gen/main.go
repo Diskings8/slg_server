@@ -216,13 +216,30 @@ func NewClientHandler(instance string, dialOptions ...grpc.DialOption) *ClientHa
 {{- range .Clients }}
 
 // Get{{.ClientType}} returns the {{.PkgAlias}}.{{.ClientType}}, lazily connecting on first call.
+// 拨号使用内置默认超时。
 func (ch *ClientHandler) Get{{.ClientType}}() {{.PkgAlias}}.{{.ClientType}} {
 	ch.mu.Lock()
 	defer ch.mu.Unlock()
 	if ch.{{.FieldName}} != nil {
 		return ch.{{.FieldName}}
 	}
-	conn, err := ch.dialNodeLocked(common_declarations.{{.NodeType}})
+	conn, err := ch.dialNodeLocked(common_declarations.{{.NodeType}}, false)
+	if err != nil {
+		return nil
+	}
+	ch.{{.FieldName}} = {{.PkgAlias}}.New{{.ClientType}}(conn)
+	return ch.{{.FieldName}}
+}
+
+// Get{{.ClientType}}Wait returns the {{.PkgAlias}}.{{.ClientType}}, waiting indefinitely for the connection on first call.
+// 拨号阻塞等待就绪（无超时），适用于启动期依赖对方节点就绪的场景。
+func (ch *ClientHandler) Get{{.ClientType}}Wait() {{.PkgAlias}}.{{.ClientType}} {
+	ch.mu.Lock()
+	defer ch.mu.Unlock()
+	if ch.{{.FieldName}} != nil {
+		return ch.{{.FieldName}}
+	}
+	conn, err := ch.dialNodeLocked(common_declarations.{{.NodeType}}, true)
 	if err != nil {
 		return nil
 	}

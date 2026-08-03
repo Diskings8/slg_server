@@ -18,10 +18,22 @@ func GetConnByNodeType(nodeType common_declarations.NodeService) (*NodeConn, err
 // GetConnByNodeTypeInstance 通过节点类型 + 实例 ID 获取连接（从 etcd 精确发现 + 连接池复用）
 //
 // 适用于单例配对场景：调用方与目标节点用相同 instance 对齐（如 game 服 ↔ 它的 worldmap）。
+// 使用内置默认超时。
 func GetConnByNodeTypeInstance(nodeType common_declarations.NodeService, instance string) (*NodeConn, error) {
 	addr, err := etcdconn.GetNodeTypeServerAddrByInstance(nodeType, instance)
 	if err != nil {
 		return nil, err
 	}
 	return GetConn(addr)
+}
+
+// GetConnByNodeTypeInstanceWait 通过节点类型 + 实例 ID 获取连接（阻塞等待就绪，无超时）
+//
+// 适用于启动期依赖对方节点场景：目标节点未就绪时阻塞等待，直到拨号成功。
+func GetConnByNodeTypeInstanceWait(nodeType common_declarations.NodeService, instance string) (*NodeConn, error) {
+	addr, err := etcdconn.GetNodeTypeServerAddrByInstance(nodeType, instance)
+	if err != nil {
+		return nil, err
+	}
+	return GetConnWait(addr)
 }

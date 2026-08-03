@@ -47,15 +47,18 @@ game/
 │
 ├── game_logics/                         # 业务逻辑层
 │   ├── game.item.logic.func.go         # ItemChange() — 统一道具变更入口
-│   └── hero.logic.func.go              # HeroLevelUp/HeroCultivate（TODO: 接入消耗）
+│   ├── hero.logic.func.go              # HeroLevelUp/HeroCultivate（TODO: 接入消耗）
+│   ├── formation.logic.func.go         # 上阵/下阵英雄 + 编队查询
+│   ├── building.logic.func.go          # BuildingBuild/BuildingGetPb/BuildingListPb
+│   └── march.logic.func.go             # MarchBuildTeam — 编队 → 出征队伍（英雄快照）
 │
 ├── game_internals/                      # 内部基础设施
 │   ├── game.internals.init.go          # Init(ctx)/ShutDown 聚合各子模块
 │   ├── gate_stream/                    # 网关连接管理（Manager 结构体 + 私有单例）
 │   │   └── gate_stream.go             # GateJoin/Gate/Push/GateCallBack*/ShutDown
 │   ├── game_rpc_clients/               # 出站 RPC 客户端（包装 rpcconn 生成 hub）
-│   │   ├── game.rpc.client.func.go    # hub 门面 + WorldMap() 访问器 + ShutDown
-│   │   ├── game.rpc.conns.st.go       # GameRpcClientHandler 单例
+│   │   ├── game.rpc.client.func.go    # hub 门面 + WorldMap()/WorldMapByInstance() 访问器 + ShutDown
+│   │   ├── game.rpc.conns.st.go       # GameRpcClientHandler 单例（默认本服 instance，支持按 instance 多连接）
 │   │   └── worldmap_client/            # worldmap 客户端门面（按 instance 配对）
 │   │       ├── worldmap.client.func.go # Unary 业务方法（CreateMarch/MapData...）
 │   │       └── worldmap.client.stream.go # 角色视野流管理（RoleStream）

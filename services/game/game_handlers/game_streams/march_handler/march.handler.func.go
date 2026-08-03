@@ -4,14 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	"server.slg.com/api/protocol/pb/pb_battle"
 	"server.slg.com/api/protocol/pb/pb_error_code"
 	"server.slg.com/api/protocol/pb/pb_maps_march"
 	"server.slg.com/api/protocol/pb/pb_worldmap"
-	pb_confs "server.slg.com/api/protocol/pb_confs"
 	"server.slg.com/common/conns/rpcconn/rpc_results"
 	"server.slg.com/services/game/game_entitys/game_role_handler"
 	"server.slg.com/services/game/game_internals/game_rpc_clients"
+	"server.slg.com/services/game/game_logics"
 )
 
 // HandlerMarchCreate 创建行军 (1000006)
@@ -28,35 +27,10 @@ func HandlerMarchCreate(ctx context.Context, roleID uint64, req *pb_maps_march.M
 	}
 	defer poller.Release()
 
-	// 从已上阵队伍（唯一队列ID）取英雄 + 士兵
-	formation := role.GetFormations().GetFormationByID(req.GetFormationId())
-	if formation == nil {
-		return rpc_results.Error(pb_error_code.ErrorCode_ParamError, "formation not found")
-	}
-
 	// 构造出征队伍（英雄快照 + 士兵）
-	var teamSlots []*pb_battle.TeamSlotInfo
-	for i, hs := range formation.HeroSlots {
-		if hs == nil {
-			continue // 空槽位跳过
-		}
-		hero := role.GetHeroes().GetHero(pb_confs.ItemID(hs.GetHeroId()))
-		if hero == nil {
-			continue
-		}
-
-		soldierNum := hs.GetSoldierNum()
-		teamSlots = append(teamSlots, &pb_battle.TeamSlotInfo{
-			SlotId:        int32(i + 1),
-			HeroInfo:      hero.Format2Pb(),
-			MaxSoldierNum: soldierNum,
-			CurAliveNum:   soldierNum,
-			CurInjuredNum: 0,
-		})
-	}
-
-	if len(teamSlots) == 0 {
-		return rpc_results.Error(pb_error_code.ErrorCode_ParamError, "no valid hero slot")
+	teamSlots, result := game_logics.MarchBuildTeam(role, req)
+	if result != nil {
+		return result
 	}
 
 	// 调用 worldmap 创建行军

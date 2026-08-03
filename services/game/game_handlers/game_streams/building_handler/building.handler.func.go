@@ -6,9 +6,8 @@ import (
 	"server.slg.com/api/protocol/pb/pb_city"
 	"server.slg.com/api/protocol/pb/pb_error_code"
 	"server.slg.com/common/conns/rpcconn/rpc_results"
-	"server.slg.com/common/utils/snowflakes"
 	"server.slg.com/services/game/game_entitys/game_role_handler"
-	"server.slg.com/services/game/game_models"
+	"server.slg.com/services/game/game_logics"
 )
 
 // HandlerBuildingBuild 建造建筑 (1000011)
@@ -27,53 +26,15 @@ func HandlerBuildingBuild(ctx context.Context, roleID uint64, req *pb_city.Build
 	}
 	defer poller.Release()
 
-	// 仅允许建造角色建筑类型
-	if !isRoleBuildingType(req.GetType()) {
-		return rpc_results.Error(pb_error_code.ErrorCode_ParamError, "invalid building type")
-	}
-
-	// TODO: 资源消耗检查与扣除（预留 BuildingCostI，接入货币道具后实现）
-	// cost := buildingCostOf(req.GetType())
-	// if err := cost.CheckCost(role); err != nil { ... }
-	// if err := cost.DeductCost(role); err != nil { ... }
-
-	// 创建建筑记录
-	building := &game_models.RoleBuilding{
-		RoleID:    roleID,
-		Type:      req.GetType(),
-		Footprint: footprintOf(req.GetType()),
-		MapID:     req.GetMapId(),
-		Level:     1,
-		State:     pb_city.BuildingState_Completed, // TODO: 引入建造时长后置为 Constructing
-	}
-	building.ID = snowflakes.GenUUID()
-
-	role.GetBuildings().AddBuilding(building)
-
-	// 城市建成 → 按校场等级分配队列（每级 1 个队列）
-	if isCity(req.GetType()) {
-		queueNum := drillLevelOf(req.GetType())
-		for i := uint32(0); i < queueNum; i++ {
-			role.GetFormations().CreateFormation(roleID, building.ID)
-		}
+	buildingID, result := game_logics.BuildingBuild(role, roleID, req)
+	if result != nil {
+		return result
 	}
 
 	poller.Save() // 打脏标记，异步保存
 
-	// TODO: 地图落位（Phase 4：调用 cores 放置建筑到地图格）
-
-	resp.Building = formatBuilding(building)
+	resp.Building = game_logics.BuildingGetPb(role, buildingID)
 	return nil
-}
-
-// isCity 是否城市类建筑（主城/分城，拥有校场）
-func isCity(t pb_city.BuildingType) bool {
-	return t == pb_city.BuildingType_RoleMainCity || t == pb_city.BuildingType_RoleBranchCity
-}
-
-// drillLevelOf 城市校场等级（TODO: 接入配置，不同玩家城市不同）
-func drillLevelOf(t pb_city.BuildingType) uint32 {
-	return 1 // 默认 1 级 → 1 个队列
 }
 
 // HandlerBuildingList 查询建筑列表 (1000012)
@@ -84,50 +45,6 @@ func HandlerBuildingList(ctx context.Context, roleID uint64, req *pb_city.Buildi
 	}
 	defer poller.Release()
 
-	for _, modelOne := range role.GetBuildings().List {
-		resp.Buildings = append(resp.Buildings, formatBuilding(modelOne))
-	}
+	resp.Buildings = game_logics.BuildingListPb(role)
 	return nil
-}
-
-//-------------------------------
-
-// isRoleBuildingType 是否为角色可建造的建筑类型
-func isRoleBuildingType(t pb_city.BuildingType) bool {
-	switch t {
-	case pb_city.BuildingType_RoleMainCity,
-		pb_city.BuildingType_RoleBranchCity,
-		pb_city.BuildingType_RoleMilitary:
-		return true
-	}
-	return false
-}
-
-// footprintOf 按类型返回默认占地（TODO: 接入配置）
-func footprintOf(t pb_city.BuildingType) pb_city.BuildingFootprint {
-	switch t {
-	case pb_city.BuildingType_RoleMainCity:
-		return pb_city.BuildingFootprint_Footprint9
-	case pb_city.BuildingType_RoleBranchCity:
-		return pb_city.BuildingFootprint_Footprint9 // TODO: 按分城功能配置 4/9
-	case pb_city.BuildingType_RoleMilitary:
-		return pb_city.BuildingFootprint_Footprint4 // TODO: 确认军事建筑占地
-	default:
-		return pb_city.BuildingFootprint_Footprint_None
-	}
-}
-
-// formatBuilding 模型 → proto
-func formatBuilding(b *game_models.RoleBuilding) *pb_city.RoleBuildingInfo {
-	if b == nil {
-		return nil
-	}
-	return &pb_city.RoleBuildingInfo{
-		Id:        b.ID,
-		Type:      b.Type,
-		Footprint: b.Footprint,
-		MapId:     b.MapID,
-		Level:     b.Level,
-		State:     b.State,
-	}
 }

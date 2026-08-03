@@ -42,13 +42,30 @@ func NewClientHandler(instance string, dialOptions ...grpc.DialOption) *ClientHa
 }
 
 // GetGameServiceClient returns the pb_game.GameServiceClient, lazily connecting on first call.
+// 拨号使用内置默认超时。
 func (ch *ClientHandler) GetGameServiceClient() pb_game.GameServiceClient {
 	ch.mu.Lock()
 	defer ch.mu.Unlock()
 	if ch.gameServiceClient != nil {
 		return ch.gameServiceClient
 	}
-	conn, err := ch.dialNodeLocked(common_declarations.NodeGameService)
+	conn, err := ch.dialNodeLocked(common_declarations.NodeGameService, false)
+	if err != nil {
+		return nil
+	}
+	ch.gameServiceClient = pb_game.NewGameServiceClient(conn)
+	return ch.gameServiceClient
+}
+
+// GetGameServiceClientWait returns the pb_game.GameServiceClient, waiting indefinitely for the connection on first call.
+// 拨号阻塞等待就绪（无超时），适用于启动期依赖对方节点就绪的场景。
+func (ch *ClientHandler) GetGameServiceClientWait() pb_game.GameServiceClient {
+	ch.mu.Lock()
+	defer ch.mu.Unlock()
+	if ch.gameServiceClient != nil {
+		return ch.gameServiceClient
+	}
+	conn, err := ch.dialNodeLocked(common_declarations.NodeGameService, true)
 	if err != nil {
 		return nil
 	}
@@ -57,13 +74,30 @@ func (ch *ClientHandler) GetGameServiceClient() pb_game.GameServiceClient {
 }
 
 // GetGameHandlerClient returns the pb_game.GameHandlerClient, lazily connecting on first call.
+// 拨号使用内置默认超时。
 func (ch *ClientHandler) GetGameHandlerClient() pb_game.GameHandlerClient {
 	ch.mu.Lock()
 	defer ch.mu.Unlock()
 	if ch.gameHandlerClient != nil {
 		return ch.gameHandlerClient
 	}
-	conn, err := ch.dialNodeLocked(common_declarations.NodeGameService)
+	conn, err := ch.dialNodeLocked(common_declarations.NodeGameService, false)
+	if err != nil {
+		return nil
+	}
+	ch.gameHandlerClient = pb_game.NewGameHandlerClient(conn)
+	return ch.gameHandlerClient
+}
+
+// GetGameHandlerClientWait returns the pb_game.GameHandlerClient, waiting indefinitely for the connection on first call.
+// 拨号阻塞等待就绪（无超时），适用于启动期依赖对方节点就绪的场景。
+func (ch *ClientHandler) GetGameHandlerClientWait() pb_game.GameHandlerClient {
+	ch.mu.Lock()
+	defer ch.mu.Unlock()
+	if ch.gameHandlerClient != nil {
+		return ch.gameHandlerClient
+	}
+	conn, err := ch.dialNodeLocked(common_declarations.NodeGameService, true)
 	if err != nil {
 		return nil
 	}
@@ -72,13 +106,30 @@ func (ch *ClientHandler) GetGameHandlerClient() pb_game.GameHandlerClient {
 }
 
 // GetGatewayServiceClient returns the pb_gateway.GatewayServiceClient, lazily connecting on first call.
+// 拨号使用内置默认超时。
 func (ch *ClientHandler) GetGatewayServiceClient() pb_gateway.GatewayServiceClient {
 	ch.mu.Lock()
 	defer ch.mu.Unlock()
 	if ch.gatewayServiceClient != nil {
 		return ch.gatewayServiceClient
 	}
-	conn, err := ch.dialNodeLocked(common_declarations.NodeGatewayService)
+	conn, err := ch.dialNodeLocked(common_declarations.NodeGatewayService, false)
+	if err != nil {
+		return nil
+	}
+	ch.gatewayServiceClient = pb_gateway.NewGatewayServiceClient(conn)
+	return ch.gatewayServiceClient
+}
+
+// GetGatewayServiceClientWait returns the pb_gateway.GatewayServiceClient, waiting indefinitely for the connection on first call.
+// 拨号阻塞等待就绪（无超时），适用于启动期依赖对方节点就绪的场景。
+func (ch *ClientHandler) GetGatewayServiceClientWait() pb_gateway.GatewayServiceClient {
+	ch.mu.Lock()
+	defer ch.mu.Unlock()
+	if ch.gatewayServiceClient != nil {
+		return ch.gatewayServiceClient
+	}
+	conn, err := ch.dialNodeLocked(common_declarations.NodeGatewayService, true)
 	if err != nil {
 		return nil
 	}
@@ -87,13 +138,30 @@ func (ch *ClientHandler) GetGatewayServiceClient() pb_gateway.GatewayServiceClie
 }
 
 // GetGatewayHandlerClient returns the pb_gateway.GatewayHandlerClient, lazily connecting on first call.
+// 拨号使用内置默认超时。
 func (ch *ClientHandler) GetGatewayHandlerClient() pb_gateway.GatewayHandlerClient {
 	ch.mu.Lock()
 	defer ch.mu.Unlock()
 	if ch.gatewayHandlerClient != nil {
 		return ch.gatewayHandlerClient
 	}
-	conn, err := ch.dialNodeLocked(common_declarations.NodeGatewayService)
+	conn, err := ch.dialNodeLocked(common_declarations.NodeGatewayService, false)
+	if err != nil {
+		return nil
+	}
+	ch.gatewayHandlerClient = pb_gateway.NewGatewayHandlerClient(conn)
+	return ch.gatewayHandlerClient
+}
+
+// GetGatewayHandlerClientWait returns the pb_gateway.GatewayHandlerClient, waiting indefinitely for the connection on first call.
+// 拨号阻塞等待就绪（无超时），适用于启动期依赖对方节点就绪的场景。
+func (ch *ClientHandler) GetGatewayHandlerClientWait() pb_gateway.GatewayHandlerClient {
+	ch.mu.Lock()
+	defer ch.mu.Unlock()
+	if ch.gatewayHandlerClient != nil {
+		return ch.gatewayHandlerClient
+	}
+	conn, err := ch.dialNodeLocked(common_declarations.NodeGatewayService, true)
 	if err != nil {
 		return nil
 	}
@@ -102,13 +170,30 @@ func (ch *ClientHandler) GetGatewayHandlerClient() pb_gateway.GatewayHandlerClie
 }
 
 // GetWorldMapServiceClient returns the pb_worldmap.WorldMapServiceClient, lazily connecting on first call.
+// 拨号使用内置默认超时。
 func (ch *ClientHandler) GetWorldMapServiceClient() pb_worldmap.WorldMapServiceClient {
 	ch.mu.Lock()
 	defer ch.mu.Unlock()
 	if ch.worldMapServiceClient != nil {
 		return ch.worldMapServiceClient
 	}
-	conn, err := ch.dialNodeLocked(common_declarations.NodeWorldMapService)
+	conn, err := ch.dialNodeLocked(common_declarations.NodeWorldMapService, false)
+	if err != nil {
+		return nil
+	}
+	ch.worldMapServiceClient = pb_worldmap.NewWorldMapServiceClient(conn)
+	return ch.worldMapServiceClient
+}
+
+// GetWorldMapServiceClientWait returns the pb_worldmap.WorldMapServiceClient, waiting indefinitely for the connection on first call.
+// 拨号阻塞等待就绪（无超时），适用于启动期依赖对方节点就绪的场景。
+func (ch *ClientHandler) GetWorldMapServiceClientWait() pb_worldmap.WorldMapServiceClient {
+	ch.mu.Lock()
+	defer ch.mu.Unlock()
+	if ch.worldMapServiceClient != nil {
+		return ch.worldMapServiceClient
+	}
+	conn, err := ch.dialNodeLocked(common_declarations.NodeWorldMapService, true)
 	if err != nil {
 		return nil
 	}
@@ -117,13 +202,30 @@ func (ch *ClientHandler) GetWorldMapServiceClient() pb_worldmap.WorldMapServiceC
 }
 
 // GetWorldMapHandlerClient returns the pb_worldmap.WorldMapHandlerClient, lazily connecting on first call.
+// 拨号使用内置默认超时。
 func (ch *ClientHandler) GetWorldMapHandlerClient() pb_worldmap.WorldMapHandlerClient {
 	ch.mu.Lock()
 	defer ch.mu.Unlock()
 	if ch.worldMapHandlerClient != nil {
 		return ch.worldMapHandlerClient
 	}
-	conn, err := ch.dialNodeLocked(common_declarations.NodeWorldMapService)
+	conn, err := ch.dialNodeLocked(common_declarations.NodeWorldMapService, false)
+	if err != nil {
+		return nil
+	}
+	ch.worldMapHandlerClient = pb_worldmap.NewWorldMapHandlerClient(conn)
+	return ch.worldMapHandlerClient
+}
+
+// GetWorldMapHandlerClientWait returns the pb_worldmap.WorldMapHandlerClient, waiting indefinitely for the connection on first call.
+// 拨号阻塞等待就绪（无超时），适用于启动期依赖对方节点就绪的场景。
+func (ch *ClientHandler) GetWorldMapHandlerClientWait() pb_worldmap.WorldMapHandlerClient {
+	ch.mu.Lock()
+	defer ch.mu.Unlock()
+	if ch.worldMapHandlerClient != nil {
+		return ch.worldMapHandlerClient
+	}
+	conn, err := ch.dialNodeLocked(common_declarations.NodeWorldMapService, true)
 	if err != nil {
 		return nil
 	}
