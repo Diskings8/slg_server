@@ -47,6 +47,14 @@ func (hrs *RoleHeroes) Format2Pb() []*pb_hero.HeroInfo {
 	return list
 }
 
+// GetHero 获取英雄（按英雄ID）
+func (hrs *RoleHeroes) GetHero(heroID pb_confs.ItemID) *RoleHero {
+	if v, ok := hrs.Mem.Load(heroID); ok {
+		return v
+	}
+	return nil
+}
+
 //-------------------------------
 
 func NewRoleHero(one *game_models.RoleHero) *RoleHero {

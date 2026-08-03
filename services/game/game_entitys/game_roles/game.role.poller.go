@@ -13,6 +13,8 @@ import (
 	"server.slg.com/services/game/game_entitys/game_roles/cultivate_costs"
 	"server.slg.com/services/game/game_entitys/game_roles/hero_skillcollections"
 	"server.slg.com/services/game/game_entitys/game_roles/hero_skills"
+	"server.slg.com/services/game/game_entitys/game_roles/role_buildings"
+	"server.slg.com/services/game/game_entitys/game_roles/role_formations"
 	"server.slg.com/services/game/game_entitys/game_roles/role_heroes"
 	"server.slg.com/services/game/game_entitys/game_roles/role_items"
 )
@@ -122,6 +124,8 @@ func Init(writeDB common_declarations.DbcI) {
 	cultivate_costs.Init(writeDB)
 	role_heroes.Init(writeDB)
 	role_items.Init(writeDB)
+	role_buildings.Init(writeDB)
+	role_formations.Init(writeDB)
 
 	// 初始化轮询管理器
 	initPoller()

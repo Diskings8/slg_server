@@ -45,4 +45,6 @@ func (r *Role) Reset() {
 	r.SkillCollections = nil
 	r.CultivateCosts = nil
 	r.Items = nil
+	r.Buildings = nil
+	r.Formations = nil
 }

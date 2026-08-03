@@ -20,32 +20,44 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// BuildingType 建筑类型
+// BuildingType 建筑类型（场景建筑 + 角色建筑统一枚举）
+// Scene* 前缀 = 地图场景建筑；Role* 前缀 = 角色建造/拥有的建筑
 type BuildingType int32
 
 const (
-	BuildingType_None       BuildingType = 0
-	BuildingType_UrbanArea  BuildingType = 1 // 城区
-	BuildingType_CityCenter BuildingType = 2 // 城中心
-	BuildingType_Pass       BuildingType = 3 // 关隘
-	BuildingType_Fortress   BuildingType = 4 // 要塞
+	BuildingType_BuildingNone BuildingType = 0
+	// ── 场景建筑（地图上生成） ──
+	BuildingType_SceneUrbanArea  BuildingType = 1 // 城区
+	BuildingType_SceneCityCenter BuildingType = 2 // 城中心
+	BuildingType_ScenePass       BuildingType = 3 // 关隘
+	BuildingType_SceneFortress   BuildingType = 4 // 要塞
+	// ── 角色建筑（角色建造/拥有） ──
+	BuildingType_RoleMainCity   BuildingType = 101 // 主城
+	BuildingType_RoleBranchCity BuildingType = 102 // 分城
+	BuildingType_RoleMilitary   BuildingType = 103 // 军事建筑
 )
 
 // Enum value maps for BuildingType.
 var (
 	BuildingType_name = map[int32]string{
-		0: "None",
-		1: "UrbanArea",
-		2: "CityCenter",
-		3: "Pass",
-		4: "Fortress",
+		0:   "BuildingNone",
+		1:   "SceneUrbanArea",
+		2:   "SceneCityCenter",
+		3:   "ScenePass",
+		4:   "SceneFortress",
+		101: "RoleMainCity",
+		102: "RoleBranchCity",
+		103: "RoleMilitary",
 	}
 	BuildingType_value = map[string]int32{
-		"None":       0,
-		"UrbanArea":  1,
-		"CityCenter": 2,
-		"Pass":       3,
-		"Fortress":   4,
+		"BuildingNone":    0,
+		"SceneUrbanArea":  1,
+		"SceneCityCenter": 2,
+		"ScenePass":       3,
+		"SceneFortress":   4,
+		"RoleMainCity":    101,
+		"RoleBranchCity":  102,
+		"RoleMilitary":    103,
 	}
 )
 
@@ -74,6 +86,106 @@ func (x BuildingType) Number() protoreflect.EnumNumber {
 // Deprecated: Use BuildingType.Descriptor instead.
 func (BuildingType) EnumDescriptor() ([]byte, []int) {
 	return file_city_proto_rawDescGZIP(), []int{0}
+}
+
+// BuildingFootprint 建筑占地（格数）
+type BuildingFootprint int32
+
+const (
+	BuildingFootprint_Footprint_None BuildingFootprint = 0
+	BuildingFootprint_Footprint4     BuildingFootprint = 4 // 2×2
+	BuildingFootprint_Footprint9     BuildingFootprint = 9 // 3×3
+)
+
+// Enum value maps for BuildingFootprint.
+var (
+	BuildingFootprint_name = map[int32]string{
+		0: "Footprint_None",
+		4: "Footprint4",
+		9: "Footprint9",
+	}
+	BuildingFootprint_value = map[string]int32{
+		"Footprint_None": 0,
+		"Footprint4":     4,
+		"Footprint9":     9,
+	}
+)
+
+func (x BuildingFootprint) Enum() *BuildingFootprint {
+	p := new(BuildingFootprint)
+	*p = x
+	return p
+}
+
+func (x BuildingFootprint) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (BuildingFootprint) Descriptor() protoreflect.EnumDescriptor {
+	return file_city_proto_enumTypes[1].Descriptor()
+}
+
+func (BuildingFootprint) Type() protoreflect.EnumType {
+	return &file_city_proto_enumTypes[1]
+}
+
+func (x BuildingFootprint) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use BuildingFootprint.Descriptor instead.
+func (BuildingFootprint) EnumDescriptor() ([]byte, []int) {
+	return file_city_proto_rawDescGZIP(), []int{1}
+}
+
+// BuildingState 建筑状态
+type BuildingState int32
+
+const (
+	BuildingState_None         BuildingState = 0 // 无效
+	BuildingState_Constructing BuildingState = 1 // 建设中
+	BuildingState_Completed    BuildingState = 2 // 已完成
+)
+
+// Enum value maps for BuildingState.
+var (
+	BuildingState_name = map[int32]string{
+		0: "None",
+		1: "Constructing",
+		2: "Completed",
+	}
+	BuildingState_value = map[string]int32{
+		"None":         0,
+		"Constructing": 1,
+		"Completed":    2,
+	}
+)
+
+func (x BuildingState) Enum() *BuildingState {
+	p := new(BuildingState)
+	*p = x
+	return p
+}
+
+func (x BuildingState) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (BuildingState) Descriptor() protoreflect.EnumDescriptor {
+	return file_city_proto_enumTypes[2].Descriptor()
+}
+
+func (BuildingState) Type() protoreflect.EnumType {
+	return &file_city_proto_enumTypes[2]
+}
+
+func (x BuildingState) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use BuildingState.Descriptor instead.
+func (BuildingState) EnumDescriptor() ([]byte, []int) {
+	return file_city_proto_rawDescGZIP(), []int{2}
 }
 
 // FirstOccRecordData 首占记录数据
@@ -244,6 +356,273 @@ func (*CityData) Descriptor() ([]byte, []int) {
 	return file_city_proto_rawDescGZIP(), []int{2}
 }
 
+// RoleBuildingInfo 角色建筑信息
+type RoleBuildingInfo struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Id        uint64            `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`                                           // 建筑ID
+	Type      BuildingType      `protobuf:"varint,2,opt,name=type,proto3,enum=city.BuildingType" json:"type,omitempty"`                // 类型（场景/角色建筑统一枚举）
+	Footprint BuildingFootprint `protobuf:"varint,3,opt,name=footprint,proto3,enum=city.BuildingFootprint" json:"footprint,omitempty"` // 占地
+	MapId     int32             `protobuf:"varint,4,opt,name=map_id,json=mapId,proto3" json:"map_id,omitempty"`                        // 中心格
+	Level     uint32            `protobuf:"varint,5,opt,name=level,proto3" json:"level,omitempty"`
+	State     BuildingState     `protobuf:"varint,6,opt,name=state,proto3,enum=city.BuildingState" json:"state,omitempty"` // 建筑状态
+}
+
+func (x *RoleBuildingInfo) Reset() {
+	*x = RoleBuildingInfo{}
+	mi := &file_city_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RoleBuildingInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RoleBuildingInfo) ProtoMessage() {}
+
+func (x *RoleBuildingInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_city_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RoleBuildingInfo.ProtoReflect.Descriptor instead.
+func (*RoleBuildingInfo) Descriptor() ([]byte, []int) {
+	return file_city_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *RoleBuildingInfo) GetId() uint64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *RoleBuildingInfo) GetType() BuildingType {
+	if x != nil {
+		return x.Type
+	}
+	return BuildingType_BuildingNone
+}
+
+func (x *RoleBuildingInfo) GetFootprint() BuildingFootprint {
+	if x != nil {
+		return x.Footprint
+	}
+	return BuildingFootprint_Footprint_None
+}
+
+func (x *RoleBuildingInfo) GetMapId() int32 {
+	if x != nil {
+		return x.MapId
+	}
+	return 0
+}
+
+func (x *RoleBuildingInfo) GetLevel() uint32 {
+	if x != nil {
+		return x.Level
+	}
+	return 0
+}
+
+func (x *RoleBuildingInfo) GetState() BuildingState {
+	if x != nil {
+		return x.State
+	}
+	return BuildingState_None
+}
+
+// 建造建筑（主城/分城/军事建筑）
+type BuildingBuildReq struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Type  BuildingType `protobuf:"varint,1,opt,name=type,proto3,enum=city.BuildingType" json:"type,omitempty"` // 角色建筑类型（RoleMainCity/BranchCity/Military）
+	MapId int32        `protobuf:"varint,2,opt,name=map_id,json=mapId,proto3" json:"map_id,omitempty"`         // 放置的中心格
+}
+
+func (x *BuildingBuildReq) Reset() {
+	*x = BuildingBuildReq{}
+	mi := &file_city_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BuildingBuildReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BuildingBuildReq) ProtoMessage() {}
+
+func (x *BuildingBuildReq) ProtoReflect() protoreflect.Message {
+	mi := &file_city_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BuildingBuildReq.ProtoReflect.Descriptor instead.
+func (*BuildingBuildReq) Descriptor() ([]byte, []int) {
+	return file_city_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *BuildingBuildReq) GetType() BuildingType {
+	if x != nil {
+		return x.Type
+	}
+	return BuildingType_BuildingNone
+}
+
+func (x *BuildingBuildReq) GetMapId() int32 {
+	if x != nil {
+		return x.MapId
+	}
+	return 0
+}
+
+type BuildingBuildResp struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Building *RoleBuildingInfo `protobuf:"bytes,1,opt,name=building,proto3" json:"building,omitempty"`
+}
+
+func (x *BuildingBuildResp) Reset() {
+	*x = BuildingBuildResp{}
+	mi := &file_city_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BuildingBuildResp) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BuildingBuildResp) ProtoMessage() {}
+
+func (x *BuildingBuildResp) ProtoReflect() protoreflect.Message {
+	mi := &file_city_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BuildingBuildResp.ProtoReflect.Descriptor instead.
+func (*BuildingBuildResp) Descriptor() ([]byte, []int) {
+	return file_city_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *BuildingBuildResp) GetBuilding() *RoleBuildingInfo {
+	if x != nil {
+		return x.Building
+	}
+	return nil
+}
+
+// 查询建筑列表
+type BuildingListReq struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *BuildingListReq) Reset() {
+	*x = BuildingListReq{}
+	mi := &file_city_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BuildingListReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BuildingListReq) ProtoMessage() {}
+
+func (x *BuildingListReq) ProtoReflect() protoreflect.Message {
+	mi := &file_city_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BuildingListReq.ProtoReflect.Descriptor instead.
+func (*BuildingListReq) Descriptor() ([]byte, []int) {
+	return file_city_proto_rawDescGZIP(), []int{6}
+}
+
+type BuildingListResp struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Buildings []*RoleBuildingInfo `protobuf:"bytes,1,rep,name=buildings,proto3" json:"buildings,omitempty"`
+}
+
+func (x *BuildingListResp) Reset() {
+	*x = BuildingListResp{}
+	mi := &file_city_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BuildingListResp) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BuildingListResp) ProtoMessage() {}
+
+func (x *BuildingListResp) ProtoReflect() protoreflect.Message {
+	mi := &file_city_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BuildingListResp.ProtoReflect.Descriptor instead.
+func (*BuildingListResp) Descriptor() ([]byte, []int) {
+	return file_city_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *BuildingListResp) GetBuildings() []*RoleBuildingInfo {
+	if x != nil {
+		return x.Buildings
+	}
+	return nil
+}
+
 var File_city_proto protoreflect.FileDescriptor
 
 var file_city_proto_rawDesc = []byte{
@@ -271,15 +650,58 @@ var file_city_proto_rawDesc = []byte{
 	0x32, 0x18, 0x2e, 0x63, 0x69, 0x74, 0x79, 0x2e, 0x46, 0x69, 0x72, 0x73, 0x74, 0x4f, 0x63, 0x63,
 	0x52, 0x65, 0x63, 0x6f, 0x72, 0x64, 0x44, 0x61, 0x74, 0x61, 0x52, 0x14, 0x64, 0x65, 0x6d, 0x6f,
 	0x6c, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x63, 0x6f, 0x72, 0x64, 0x44, 0x61, 0x74, 0x61,
-	0x22, 0x0a, 0x0a, 0x08, 0x43, 0x69, 0x74, 0x79, 0x44, 0x61, 0x74, 0x61, 0x2a, 0x4f, 0x0a, 0x0c,
-	0x42, 0x75, 0x69, 0x6c, 0x64, 0x69, 0x6e, 0x67, 0x54, 0x79, 0x70, 0x65, 0x12, 0x08, 0x0a, 0x04,
-	0x4e, 0x6f, 0x6e, 0x65, 0x10, 0x00, 0x12, 0x0d, 0x0a, 0x09, 0x55, 0x72, 0x62, 0x61, 0x6e, 0x41,
-	0x72, 0x65, 0x61, 0x10, 0x01, 0x12, 0x0e, 0x0a, 0x0a, 0x43, 0x69, 0x74, 0x79, 0x43, 0x65, 0x6e,
-	0x74, 0x65, 0x72, 0x10, 0x02, 0x12, 0x08, 0x0a, 0x04, 0x50, 0x61, 0x73, 0x73, 0x10, 0x03, 0x12,
-	0x0c, 0x0a, 0x08, 0x46, 0x6f, 0x72, 0x74, 0x72, 0x65, 0x73, 0x73, 0x10, 0x04, 0x42, 0x28, 0x5a,
-	0x26, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x2e, 0x73, 0x6c, 0x67, 0x2e, 0x63, 0x6f, 0x6d, 0x2f,
-	0x61, 0x70, 0x69, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x6f, 0x6c, 0x2f, 0x70, 0x62, 0x2f,
-	0x70, 0x62, 0x5f, 0x63, 0x69, 0x74, 0x79, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x22, 0x0a, 0x0a, 0x08, 0x43, 0x69, 0x74, 0x79, 0x44, 0x61, 0x74, 0x61, 0x22, 0xd9, 0x01, 0x0a,
+	0x10, 0x52, 0x6f, 0x6c, 0x65, 0x42, 0x75, 0x69, 0x6c, 0x64, 0x69, 0x6e, 0x67, 0x49, 0x6e, 0x66,
+	0x6f, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x02, 0x69,
+	0x64, 0x12, 0x26, 0x0a, 0x04, 0x74, 0x79, 0x70, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0e, 0x32,
+	0x12, 0x2e, 0x63, 0x69, 0x74, 0x79, 0x2e, 0x42, 0x75, 0x69, 0x6c, 0x64, 0x69, 0x6e, 0x67, 0x54,
+	0x79, 0x70, 0x65, 0x52, 0x04, 0x74, 0x79, 0x70, 0x65, 0x12, 0x35, 0x0a, 0x09, 0x66, 0x6f, 0x6f,
+	0x74, 0x70, 0x72, 0x69, 0x6e, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x17, 0x2e, 0x63,
+	0x69, 0x74, 0x79, 0x2e, 0x42, 0x75, 0x69, 0x6c, 0x64, 0x69, 0x6e, 0x67, 0x46, 0x6f, 0x6f, 0x74,
+	0x70, 0x72, 0x69, 0x6e, 0x74, 0x52, 0x09, 0x66, 0x6f, 0x6f, 0x74, 0x70, 0x72, 0x69, 0x6e, 0x74,
+	0x12, 0x15, 0x0a, 0x06, 0x6d, 0x61, 0x70, 0x5f, 0x69, 0x64, 0x18, 0x04, 0x20, 0x01, 0x28, 0x05,
+	0x52, 0x05, 0x6d, 0x61, 0x70, 0x49, 0x64, 0x12, 0x14, 0x0a, 0x05, 0x6c, 0x65, 0x76, 0x65, 0x6c,
+	0x18, 0x05, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x05, 0x6c, 0x65, 0x76, 0x65, 0x6c, 0x12, 0x29, 0x0a,
+	0x05, 0x73, 0x74, 0x61, 0x74, 0x65, 0x18, 0x06, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x13, 0x2e, 0x63,
+	0x69, 0x74, 0x79, 0x2e, 0x42, 0x75, 0x69, 0x6c, 0x64, 0x69, 0x6e, 0x67, 0x53, 0x74, 0x61, 0x74,
+	0x65, 0x52, 0x05, 0x73, 0x74, 0x61, 0x74, 0x65, 0x22, 0x51, 0x0a, 0x10, 0x42, 0x75, 0x69, 0x6c,
+	0x64, 0x69, 0x6e, 0x67, 0x42, 0x75, 0x69, 0x6c, 0x64, 0x52, 0x65, 0x71, 0x12, 0x26, 0x0a, 0x04,
+	0x74, 0x79, 0x70, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x12, 0x2e, 0x63, 0x69, 0x74,
+	0x79, 0x2e, 0x42, 0x75, 0x69, 0x6c, 0x64, 0x69, 0x6e, 0x67, 0x54, 0x79, 0x70, 0x65, 0x52, 0x04,
+	0x74, 0x79, 0x70, 0x65, 0x12, 0x15, 0x0a, 0x06, 0x6d, 0x61, 0x70, 0x5f, 0x69, 0x64, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x6d, 0x61, 0x70, 0x49, 0x64, 0x22, 0x47, 0x0a, 0x11, 0x42,
+	0x75, 0x69, 0x6c, 0x64, 0x69, 0x6e, 0x67, 0x42, 0x75, 0x69, 0x6c, 0x64, 0x52, 0x65, 0x73, 0x70,
+	0x12, 0x32, 0x0a, 0x08, 0x62, 0x75, 0x69, 0x6c, 0x64, 0x69, 0x6e, 0x67, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x0b, 0x32, 0x16, 0x2e, 0x63, 0x69, 0x74, 0x79, 0x2e, 0x52, 0x6f, 0x6c, 0x65, 0x42, 0x75,
+	0x69, 0x6c, 0x64, 0x69, 0x6e, 0x67, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x08, 0x62, 0x75, 0x69, 0x6c,
+	0x64, 0x69, 0x6e, 0x67, 0x22, 0x11, 0x0a, 0x0f, 0x42, 0x75, 0x69, 0x6c, 0x64, 0x69, 0x6e, 0x67,
+	0x4c, 0x69, 0x73, 0x74, 0x52, 0x65, 0x71, 0x22, 0x48, 0x0a, 0x10, 0x42, 0x75, 0x69, 0x6c, 0x64,
+	0x69, 0x6e, 0x67, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x65, 0x73, 0x70, 0x12, 0x34, 0x0a, 0x09, 0x62,
+	0x75, 0x69, 0x6c, 0x64, 0x69, 0x6e, 0x67, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x16,
+	0x2e, 0x63, 0x69, 0x74, 0x79, 0x2e, 0x52, 0x6f, 0x6c, 0x65, 0x42, 0x75, 0x69, 0x6c, 0x64, 0x69,
+	0x6e, 0x67, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x09, 0x62, 0x75, 0x69, 0x6c, 0x64, 0x69, 0x6e, 0x67,
+	0x73, 0x2a, 0xa3, 0x01, 0x0a, 0x0c, 0x42, 0x75, 0x69, 0x6c, 0x64, 0x69, 0x6e, 0x67, 0x54, 0x79,
+	0x70, 0x65, 0x12, 0x10, 0x0a, 0x0c, 0x42, 0x75, 0x69, 0x6c, 0x64, 0x69, 0x6e, 0x67, 0x4e, 0x6f,
+	0x6e, 0x65, 0x10, 0x00, 0x12, 0x12, 0x0a, 0x0e, 0x53, 0x63, 0x65, 0x6e, 0x65, 0x55, 0x72, 0x62,
+	0x61, 0x6e, 0x41, 0x72, 0x65, 0x61, 0x10, 0x01, 0x12, 0x13, 0x0a, 0x0f, 0x53, 0x63, 0x65, 0x6e,
+	0x65, 0x43, 0x69, 0x74, 0x79, 0x43, 0x65, 0x6e, 0x74, 0x65, 0x72, 0x10, 0x02, 0x12, 0x0d, 0x0a,
+	0x09, 0x53, 0x63, 0x65, 0x6e, 0x65, 0x50, 0x61, 0x73, 0x73, 0x10, 0x03, 0x12, 0x11, 0x0a, 0x0d,
+	0x53, 0x63, 0x65, 0x6e, 0x65, 0x46, 0x6f, 0x72, 0x74, 0x72, 0x65, 0x73, 0x73, 0x10, 0x04, 0x12,
+	0x10, 0x0a, 0x0c, 0x52, 0x6f, 0x6c, 0x65, 0x4d, 0x61, 0x69, 0x6e, 0x43, 0x69, 0x74, 0x79, 0x10,
+	0x65, 0x12, 0x12, 0x0a, 0x0e, 0x52, 0x6f, 0x6c, 0x65, 0x42, 0x72, 0x61, 0x6e, 0x63, 0x68, 0x43,
+	0x69, 0x74, 0x79, 0x10, 0x66, 0x12, 0x10, 0x0a, 0x0c, 0x52, 0x6f, 0x6c, 0x65, 0x4d, 0x69, 0x6c,
+	0x69, 0x74, 0x61, 0x72, 0x79, 0x10, 0x67, 0x2a, 0x47, 0x0a, 0x11, 0x42, 0x75, 0x69, 0x6c, 0x64,
+	0x69, 0x6e, 0x67, 0x46, 0x6f, 0x6f, 0x74, 0x70, 0x72, 0x69, 0x6e, 0x74, 0x12, 0x12, 0x0a, 0x0e,
+	0x46, 0x6f, 0x6f, 0x74, 0x70, 0x72, 0x69, 0x6e, 0x74, 0x5f, 0x4e, 0x6f, 0x6e, 0x65, 0x10, 0x00,
+	0x12, 0x0e, 0x0a, 0x0a, 0x46, 0x6f, 0x6f, 0x74, 0x70, 0x72, 0x69, 0x6e, 0x74, 0x34, 0x10, 0x04,
+	0x12, 0x0e, 0x0a, 0x0a, 0x46, 0x6f, 0x6f, 0x74, 0x70, 0x72, 0x69, 0x6e, 0x74, 0x39, 0x10, 0x09,
+	0x2a, 0x3a, 0x0a, 0x0d, 0x42, 0x75, 0x69, 0x6c, 0x64, 0x69, 0x6e, 0x67, 0x53, 0x74, 0x61, 0x74,
+	0x65, 0x12, 0x08, 0x0a, 0x04, 0x4e, 0x6f, 0x6e, 0x65, 0x10, 0x00, 0x12, 0x10, 0x0a, 0x0c, 0x43,
+	0x6f, 0x6e, 0x73, 0x74, 0x72, 0x75, 0x63, 0x74, 0x69, 0x6e, 0x67, 0x10, 0x01, 0x12, 0x0d, 0x0a,
+	0x09, 0x43, 0x6f, 0x6d, 0x70, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x10, 0x02, 0x42, 0x28, 0x5a, 0x26,
+	0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x2e, 0x73, 0x6c, 0x67, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x61,
+	0x70, 0x69, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x6f, 0x6c, 0x2f, 0x70, 0x62, 0x2f, 0x70,
+	0x62, 0x5f, 0x63, 0x69, 0x74, 0x79, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -294,22 +716,35 @@ func file_city_proto_rawDescGZIP() []byte {
 	return file_city_proto_rawDescData
 }
 
-var file_city_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_city_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_city_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
+var file_city_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_city_proto_goTypes = []any{
 	(BuildingType)(0),          // 0: city.BuildingType
-	(*FirstOccRecordData)(nil), // 1: city.FirstOccRecordData
-	(*CityFirstOccRecord)(nil), // 2: city.CityFirstOccRecord
-	(*CityData)(nil),           // 3: city.CityData
+	(BuildingFootprint)(0),     // 1: city.BuildingFootprint
+	(BuildingState)(0),         // 2: city.BuildingState
+	(*FirstOccRecordData)(nil), // 3: city.FirstOccRecordData
+	(*CityFirstOccRecord)(nil), // 4: city.CityFirstOccRecord
+	(*CityData)(nil),           // 5: city.CityData
+	(*RoleBuildingInfo)(nil),   // 6: city.RoleBuildingInfo
+	(*BuildingBuildReq)(nil),   // 7: city.BuildingBuildReq
+	(*BuildingBuildResp)(nil),  // 8: city.BuildingBuildResp
+	(*BuildingListReq)(nil),    // 9: city.BuildingListReq
+	(*BuildingListResp)(nil),   // 10: city.BuildingListResp
 }
 var file_city_proto_depIdxs = []int32{
-	1, // 0: city.CityFirstOccRecord.kill_garrison_record_data:type_name -> city.FirstOccRecordData
-	1, // 1: city.CityFirstOccRecord.demolition_record_data:type_name -> city.FirstOccRecordData
-	2, // [2:2] is the sub-list for method output_type
-	2, // [2:2] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	3, // 0: city.CityFirstOccRecord.kill_garrison_record_data:type_name -> city.FirstOccRecordData
+	3, // 1: city.CityFirstOccRecord.demolition_record_data:type_name -> city.FirstOccRecordData
+	0, // 2: city.RoleBuildingInfo.type:type_name -> city.BuildingType
+	1, // 3: city.RoleBuildingInfo.footprint:type_name -> city.BuildingFootprint
+	2, // 4: city.RoleBuildingInfo.state:type_name -> city.BuildingState
+	0, // 5: city.BuildingBuildReq.type:type_name -> city.BuildingType
+	6, // 6: city.BuildingBuildResp.building:type_name -> city.RoleBuildingInfo
+	6, // 7: city.BuildingListResp.buildings:type_name -> city.RoleBuildingInfo
+	8, // [8:8] is the sub-list for method output_type
+	8, // [8:8] is the sub-list for method input_type
+	8, // [8:8] is the sub-list for extension type_name
+	8, // [8:8] is the sub-list for extension extendee
+	0, // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_city_proto_init() }
@@ -322,8 +757,8 @@ func file_city_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_city_proto_rawDesc,
-			NumEnums:      1,
-			NumMessages:   3,
+			NumEnums:      3,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

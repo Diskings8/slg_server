@@ -11,6 +11,8 @@ import (
 	"server.slg.com/services/game/game_entitys/game_roles/cultivate_costs"
 	"server.slg.com/services/game/game_entitys/game_roles/hero_skillcollections"
 	"server.slg.com/services/game/game_entitys/game_roles/hero_skills"
+	"server.slg.com/services/game/game_entitys/game_roles/role_buildings"
+	"server.slg.com/services/game/game_entitys/game_roles/role_formations"
 	"server.slg.com/services/game/game_entitys/game_roles/role_heroes"
 	"server.slg.com/services/game/game_entitys/game_roles/role_items"
 )
@@ -39,6 +41,8 @@ type Role struct {
 	SkillCollections *hero_skillcollections.HeroSkillCollections    `json:"skill_collections,omitempty"`
 	CultivateCosts   *cultivate_costs.CultivateCosts                `json:"cultivate_costs,omitempty"`
 	Items            *role_items.RoleItems                          `json:"items,omitempty"`
+	Buildings        *role_buildings.RoleBuildings                  `json:"buildings,omitempty"`
+	Formations       *role_formations.RoleFormations                `json:"formations,omitempty"`
 }
 
 // UniqueID 唯一 id
@@ -131,6 +135,8 @@ func (r *Role) New() {
 	r.SkillCollections = hero_skillcollections.NewHeroSkillCollections(roleID)
 	r.CultivateCosts = cultivate_costs.NewCultivateCosts(roleID)
 	r.Items = role_items.NewRoleItems(roleID)
+	r.Buildings = role_buildings.NewRoleBuildings(roleID)
+	r.Formations = role_formations.NewRoleFormations(roleID)
 }
 
 // SetStatus 设置状态
@@ -224,4 +230,38 @@ func (r *Role) GetItems() *role_items.RoleItems {
 		r.Items.Init()
 	}
 	return r.Items
+}
+
+// GetBuildings 获取建筑模块（主城/分城/军事建筑统一）
+func (r *Role) GetBuildings() *role_buildings.RoleBuildings {
+	if !r.IsCopy() {
+		return r.Buildings
+	}
+	if r.Buildings == nil {
+		r.Buildings = role_buildings.NewRoleBuildings(r.ID)
+		if r.src.Buildings != nil {
+			r.copyLock.RLock()
+			r.Buildings.Copy(r.src.Buildings)
+			r.copyLock.RUnlock()
+		}
+		r.Buildings.Init()
+	}
+	return r.Buildings
+}
+
+// GetFormations 获取上阵队伍模块
+func (r *Role) GetFormations() *role_formations.RoleFormations {
+	if !r.IsCopy() {
+		return r.Formations
+	}
+	if r.Formations == nil {
+		r.Formations = role_formations.NewRoleFormations(r.ID)
+		if r.src.Formations != nil {
+			r.copyLock.RLock()
+			r.Formations.Copy(r.src.Formations)
+			r.copyLock.RUnlock()
+		}
+		r.Formations.Init()
+	}
+	return r.Formations
 }

@@ -32,10 +32,10 @@ message MarchInfo {
 
 // MarchCreateReq 创建行军请求
 message MarchCreateReq {
-    int32 to_map_id              = 1;  // 目标地图ID
-    int32 march_type             = 2;  // 行军类型
-    int32 from_map_id            = 3;  // 起始地图ID
-    repeated HeroSlot hero_slots = 4;  // 出征英雄槽位
+    int32 to_map_id     = 1;  // 目标地图ID
+    int32 march_type    = 2;  // 行军类型
+    int32 from_map_id   = 3;  // 起始地图ID
+    uint64 formation_id = 4;  // 引用已上阵队伍（唯一队列ID）
 }
 
 // HeroSlot 出征英雄槽位
@@ -48,4 +48,47 @@ message HeroSlot {
 message MarchCreateResp {
     uint64 march_id = 1;
     int64 end_time  = 2;
+}
+
+// ========== 编队协议 (game 前端 → game) ==========
+
+// Formation 已上阵队伍（队列，归属城市）
+message Formation {
+    uint64 city_id               = 1;  // 归属城市ID
+    uint64 formation_id          = 2;  // 唯一队列ID（校场等级分配）
+    repeated HeroSlot hero_slots = 3;  // 上阵英雄槽位
+}
+
+// 上阵英雄到编队
+// 前置：队列已分配（城市校场等级），城市存在
+message FormationFieldReq {
+    uint64 city_id      = 1;  // 上阵所在城市ID
+    uint64 formation_id = 2;  // 队列ID（引用已分配队列）
+    uint32 slot_pos     = 3;  // 队列内位置（第几槽位，1 起）
+    uint64 hero_id      = 4;  // 英雄ID
+    uint32 soldier_num  = 5;  // 携带士兵数
+}
+
+message FormationFieldResp {
+    Formation formation = 1;  // 上阵后的编队
+}
+
+// 下阵英雄
+message FormationRemoveReq {
+    uint64 city_id      = 1;  // 所属城市ID
+    uint64 formation_id = 2;  // 队列ID
+    uint32 slot_pos     = 3;  // 队列内位置（1 起）
+}
+
+message FormationRemoveResp {
+    Formation formation = 1;
+}
+
+// 查询编队；city_id 可选：传则返回该城市队列，不传（0）返回全部建筑队列
+message FormationListReq {
+    uint64 city_id = 1;  // 筛选城市，0 = 全部
+}
+
+message FormationListResp {
+    repeated Formation formations = 1;
 }

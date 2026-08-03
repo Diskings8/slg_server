@@ -11,6 +11,7 @@ type Poller interface {
 	Release()
 	GetCopy() *game_roles.Role
 	Get() (*game_roles.Role, error)
+	Save() // 打脏标记，异步保存器持久化
 }
 
 // GetRole 获取角色 poller + 数据

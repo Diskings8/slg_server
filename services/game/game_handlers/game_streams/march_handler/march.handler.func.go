@@ -16,7 +16,7 @@ import (
 
 // HandlerMarchCreate 创建行军 (1000006)
 //
-// 从角色英雄数据构造出征队伍（英雄快照 + 士兵），调用 worldmap 创建行军。
+// 从已上阵队伍（formation_id）取英雄+士兵构造出征队伍，调用 worldmap 创建行军。
 func HandlerMarchCreate(ctx context.Context, roleID uint64, req *pb_maps_march.MarchCreateReq, resp *pb_maps_march.MarchCreateResp) rpc_results.ResultI {
 	if req.GetToMapId() < 0 || req.GetMarchType() < 1 {
 		return rpc_results.Error(pb_error_code.ErrorCode_ParamError, "invalid march params")
@@ -28,11 +28,20 @@ func HandlerMarchCreate(ctx context.Context, roleID uint64, req *pb_maps_march.M
 	}
 	defer poller.Release()
 
-	// 构造出征队伍（英雄 + 士兵）
+	// 从已上阵队伍（唯一队列ID）取英雄 + 士兵
+	formation := role.GetFormations().GetFormationByID(req.GetFormationId())
+	if formation == nil {
+		return rpc_results.Error(pb_error_code.ErrorCode_ParamError, "formation not found")
+	}
+
+	// 构造出征队伍（英雄快照 + 士兵）
 	var teamSlots []*pb_battle.TeamSlotInfo
-	for i, hs := range req.GetHeroSlots() {
-		hero, ok := role.GetHeroes().Mem.Load(pb_confs.ItemID(hs.GetHeroId()))
-		if !ok || hero == nil {
+	for i, hs := range formation.HeroSlots {
+		if hs == nil {
+			continue // 空槽位跳过
+		}
+		hero := role.GetHeroes().GetHero(pb_confs.ItemID(hs.GetHeroId()))
+		if hero == nil {
 			continue
 		}
 

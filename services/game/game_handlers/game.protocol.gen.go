@@ -1,11 +1,14 @@
 package game_handlers
 
 import (
+	"server.slg.com/api/protocol/pb/pb_city"
 	"server.slg.com/api/protocol/pb/pb_hero"
 	"server.slg.com/api/protocol/pb/pb_item"
 	"server.slg.com/api/protocol/pb/pb_maps_march"
 	"server.slg.com/api/protocol/pb/pb_protocol"
 	"server.slg.com/api/protocol/pb/pb_worldmap"
+	"server.slg.com/services/game/game_handlers/game_streams/building_handler"
+	"server.slg.com/services/game/game_handlers/game_streams/formation_handler"
 	"server.slg.com/services/game/game_handlers/game_streams/hero_handler"
 	"server.slg.com/services/game/game_handlers/game_streams/item_handler"
 	"server.slg.com/services/game/game_handlers/game_streams/map_handler"
@@ -47,5 +50,34 @@ func init() {
 		F:    Wrap(map_handler.HandlerMapData),
 		Req:  &pb_worldmap.MapDataReq{},
 		Resp: &pb_worldmap.MapDataRsp{},
+	})
+
+	// ===== 编队 (1000008~1000010) =====
+	RegisterProto(pb_protocol.MsgID_GameFormationField, &ProtoHandler{
+		F:    Wrap(formation_handler.HandlerFormationField),
+		Req:  &pb_maps_march.FormationFieldReq{},
+		Resp: &pb_maps_march.FormationFieldResp{},
+	})
+	RegisterProto(pb_protocol.MsgID_GameFormationRemove, &ProtoHandler{
+		F:    Wrap(formation_handler.HandlerFormationRemove),
+		Req:  &pb_maps_march.FormationRemoveReq{},
+		Resp: &pb_maps_march.FormationRemoveResp{},
+	})
+	RegisterProto(pb_protocol.MsgID_GameFormationList, &ProtoHandler{
+		F:    Wrap(formation_handler.HandlerFormationList),
+		Req:  &pb_maps_march.FormationListReq{},
+		Resp: &pb_maps_march.FormationListResp{},
+	})
+
+	// ===== 建筑 (1000011~1000012) =====
+	RegisterProto(pb_protocol.MsgID_GameBuildingBuild, &ProtoHandler{
+		F:    Wrap(building_handler.HandlerBuildingBuild),
+		Req:  &pb_city.BuildingBuildReq{},
+		Resp: &pb_city.BuildingBuildResp{},
+	})
+	RegisterProto(pb_protocol.MsgID_GameBuildingList, &ProtoHandler{
+		F:    Wrap(building_handler.HandlerBuildingList),
+		Req:  &pb_city.BuildingListReq{},
+		Resp: &pb_city.BuildingListResp{},
 	})
 }

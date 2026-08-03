@@ -2,31 +2,81 @@ syntax = "proto3";
 package city;
 option go_package = "server.slg.com/api/protocol/pb/pb_city";
 
-
-// BuildingType 建筑类型
+// BuildingType 建筑类型（场景建筑 + 角色建筑统一枚举）
+// Scene* 前缀 = 地图场景建筑；Role* 前缀 = 角色建造/拥有的建筑
 enum BuildingType {
-    None       = 0;
-    UrbanArea  = 1; // 城区
-    CityCenter = 2; // 城中心
-    Pass       = 3; // 关隘
-    Fortress   = 4; // 要塞
+    BuildingNone = 0;
+
+    // ── 场景建筑（地图上生成） ──
+    SceneUrbanArea  = 1;  // 城区
+    SceneCityCenter = 2;  // 城中心
+    ScenePass       = 3;  // 关隘
+    SceneFortress   = 4;  // 要塞
+
+    // ── 角色建筑（角色建造/拥有） ──
+    RoleMainCity   = 101;  // 主城
+    RoleBranchCity = 102;  // 分城
+    RoleMilitary   = 103;  // 军事建筑
+}
+
+// BuildingFootprint 建筑占地（格数）
+enum BuildingFootprint {
+    Footprint_None = 0;
+    Footprint4     = 4;  // 2×2
+    Footprint9     = 9;  // 3×3
+}
+
+// BuildingState 建筑状态
+enum BuildingState {
+    None         = 0;  // 无效
+    Constructing = 1;  // 建设中
+    Completed    = 2;  // 已完成
 }
 
 // FirstOccRecordData 首占记录数据
 message FirstOccRecordData {
-    string role_name    = 1; // 记录名称
-    uint64 record_score = 2; // 记录得分
-    int32  rank         = 3; // 记录排名
+    string role_name    = 1;  // 记录名称
+    uint64 record_score = 2;  // 记录得分
+    int32 rank          = 3;  // 记录排名
 }
 
 // CityFirstOccRecord 城市首占记录
 message CityFirstOccRecord {
-    uint64 occ_union_id = 1; // 占领联盟id
-    string occ_union_name = 2; // 占领联盟名称
-    repeated FirstOccRecordData kill_garrison_record_data = 3; // 记录数据
-    repeated FirstOccRecordData demolition_record_data    = 4; // 记录数据
+    uint64 occ_union_id                                   = 1;  // 占领联盟id
+    string occ_union_name                                 = 2;  // 占领联盟名称
+    repeated FirstOccRecordData kill_garrison_record_data = 3;  // 记录数据
+    repeated FirstOccRecordData demolition_record_data    = 4;  // 记录数据
 }
 
 message CityData {
+}
 
+// ========== 建筑协议 (game 前端 → game) ==========
+
+// RoleBuildingInfo 角色建筑信息
+message RoleBuildingInfo {
+    uint64 id                   = 1;  // 建筑ID
+    BuildingType type           = 2;  // 类型（场景/角色建筑统一枚举）
+    BuildingFootprint footprint = 3;  // 占地
+    int32 map_id                = 4;  // 中心格
+    uint32 level                = 5;
+    BuildingState state         = 6;  // 建筑状态
+}
+
+// 建造建筑（主城/分城/军事建筑）
+message BuildingBuildReq {
+    BuildingType type = 1;  // 角色建筑类型（RoleMainCity/BranchCity/Military）
+    int32 map_id      = 2;  // 放置的中心格
+}
+
+message BuildingBuildResp {
+    RoleBuildingInfo building = 1;
+}
+
+// 查询建筑列表
+message BuildingListReq {
+}
+
+message BuildingListResp {
+    repeated RoleBuildingInfo buildings = 1;
 }
