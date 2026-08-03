@@ -1,0 +1,57 @@
+syntax = "proto3";
+package battle;
+option go_package = "server.slg.com/api/protocol/pb/pb_battle";
+
+import "battle.proto";
+
+// BattleHandler 战斗结算 RPC — worldmap 行军到达(attack_march)时调用
+service BattleHandler {
+    rpc BattleSettle(BattleSettleReq) returns (BattleSettleRsp);
+}
+
+// DefenderGroupType 防守方分组类型
+enum DefenderGroupType {
+    DEFENDER_GROUP_UNKNOWN   = 0;
+    DEFENDER_GROUP_ASSIST    = 1;  // 驻守(assist)
+    DEFENDER_GROUP_STAY_IDLE = 2;  // 停留/等待(stay+idle)
+}
+
+// DefenderMarch 单个防守方行军快照
+message DefenderMarch {
+    uint64 march_id = 1;
+    uint64 role_id  = 2;
+    TeamInfo team   = 3;  // 复用 battle.proto
+}
+
+// DefenderGroup 一层防守方
+message DefenderGroup {
+    DefenderGroupType group_type = 1;
+    repeated DefenderMarch marches = 2;
+}
+
+// BattleSettleReq 战斗结算请求
+message BattleSettleReq {
+    uint64 role_id         = 1;  // 攻击方角色ID
+    uint64 march_id        = 2;  // 攻击方行军ID
+    int32  march_type      = 3;
+    TeamInfo attacker_team = 4;  // 攻击方队伍快照
+    repeated DefenderGroup defender_groups = 5;  // 按层顺序：assist → stay/idle
+    bool   has_building    = 6;  // 目标是否有建筑（区分攻城/PvE）
+    uint64 building_hp     = 7;  // 目标建筑当前耐久
+    uint32 building_level  = 8;  // 目标建筑等级（信息）
+}
+
+// DefeatedDefender 被击败（回城）的防守方行军及其战后队伍
+message DefeatedDefender {
+    uint64 march_id = 1;
+    TeamInfo team_after = 2;  // 战后队伍快照（当前算法不扣防守方伤亡，等于战前）
+}
+
+// BattleSettleRsp 战斗结算响应
+message BattleSettleRsp {
+    BattleResults results = 1;              // 复用 battle.proto，每层一个 OneBattleResult
+    bool attacker_win = 2;                  // 攻击方是否获胜（=最终未溃败）
+    bool occupied = 3;                      // 是否占领
+    repeated DefeatedDefender defeated_defenders = 4;  // 被击败防守方
+    uint64 building_damage = 5;             // 攻城造成的建筑伤害（未攻城=0）
+}

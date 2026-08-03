@@ -3,9 +3,14 @@ package cores_declarations
 import (
 	"time"
 
+	"server.slg.com/api/protocol/pb/pb_battle"
 	"server.slg.com/api/protocol/pb/pb_city"
 	"server.slg.com/api/protocol/pb/pb_common"
 )
+
+// BattleSettleFunc 战斗结算回调：由节点层（worldmap）注入，cores 只依赖函数类型，
+// 具体实现内部调用 battle 节点 RPC。保持 cores 不依赖 rpcconn。
+type BattleSettleFunc func(req *pb_battle.BattleSettleReq) (*pb_battle.BattleSettleRsp, error)
 
 type AoiScreenI interface {
 	MarchDelete(info MarchInfoI)
@@ -100,4 +105,8 @@ type BuildingI interface {
 	BeAttack(info MarchInfoI) (right uint64, isBroken bool)
 	LevelUp()
 	VisionRange() int32 // 战争视野范围（格），0 表示仅自身地块
+
+	// 战斗结算用：当前耐久读取（组请求）+ 耐久扣减（结果回写）
+	GetBuildingsCurHp() uint64
+	ReduceBuildingsHp(reduce uint64) (right uint64, isBroken bool)
 }

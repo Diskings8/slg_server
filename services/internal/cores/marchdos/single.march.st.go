@@ -125,20 +125,28 @@ func (m *SingleMarch) CallBackNow() error {
 }
 
 // BackArrive 召回到达处理
+//
+// 由 SingleMarch.Do() 调用，此时行军 RwLock 已被 handle.Lock 持有，
+// 不再重复加锁（对齐 callbackSwapDirection 的"调用方已持锁"约定）。
 func (m *SingleMarch) BackArrive() error {
 	if m.single == nil || m.mgr == nil {
 		return nil
 	}
-	if !m.single.TryLock() {
-		return cores_declarations.ErrLockFailed
-	}
-	defer m.single.Unlock()
 
 	m.BaseMarch.BackArrive()
 
 	m.mgr.UpdateMarchPush(m.single)
 	m.mgr.GetMarchManage().DeleteMarch(m.single)
 	return nil
+}
+
+// DefeatRecall 战败召回：行军已在目标地块且战斗失败，反转方向返回实际出发地（TransitMapID）。
+//
+// 复用 callbackSwapDirection：交换 From/To、To 路由到 TransitMapID（-1 回退 SrcFromMapID）、
+// 等比例重算返回时间、重新入队 ticker、置 MarchState_Back。
+// 调用方需已持有行军 RwLock（attack_march Do opt 内调用）。
+func (m *SingleMarch) DefeatRecall(mgr *map_managers.MapManager) {
+	m.callbackSwapDirection(mgr)
 }
 
 // ReTry 召回重试

@@ -28,6 +28,18 @@ type MapManager struct {
 	//
 	waitUpdateMapID   map[cores_declarations.MapID]struct{}
 	waitUpdateMapLock sync.Mutex
+
+	battleSettleFunc cores_declarations.BattleSettleFunc // 战斗结算回调（worldmap 注入，内部调 battle 节点 RPC）
+}
+
+// SetBattleSettleFunc 注入战斗结算回调
+func (mm *MapManager) SetBattleSettleFunc(f cores_declarations.BattleSettleFunc) {
+	mm.battleSettleFunc = f
+}
+
+// GetBattleSettleFunc 获取战斗结算回调（未注入返回 nil，attack 到点将走召回兜底）
+func (mm *MapManager) GetBattleSettleFunc() cores_declarations.BattleSettleFunc {
+	return mm.battleSettleFunc
 }
 
 func (mm *MapManager) GetMapDataManager() *map_datas.MapDataManager {

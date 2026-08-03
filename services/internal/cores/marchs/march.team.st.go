@@ -17,6 +17,16 @@ func (t *Team) Format2Pb() *pb_battle.TeamInfo {
 	}
 }
 
+// ApplyTeamInfo 用战斗结算快照覆盖队伍 slot 数据。
+// battle 节点返回的 rsp 是独立反序列化对象，直接替换整片 slice，无指针别名问题。
+// 调用方需已持有 MarchInfo 写锁。
+func (t *Team) ApplyTeamInfo(snapshot *pb_battle.TeamInfo) {
+	if t == nil || snapshot == nil {
+		return
+	}
+	t.Slots = snapshot.SlotInfo
+}
+
 func (t *Team) GetAliveSoliderCount() uint64 {
 	var sum = uint64(0)
 	for _, v := range t.Slots {

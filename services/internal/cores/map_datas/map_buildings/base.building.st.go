@@ -54,6 +54,11 @@ func (b *BaseBuilding) GetBuildingType() pb_city.BuildingType {
 	return b.BuildingsType
 }
 
+// GetBuildingsCurHp 当前耐久（战斗结算请求用）
+func (b *BaseBuilding) GetBuildingsCurHp() uint64 {
+	return b.BuildingsCurHp
+}
+
 func (b *BaseBuilding) AfterFree(time.Time) {
 
 }

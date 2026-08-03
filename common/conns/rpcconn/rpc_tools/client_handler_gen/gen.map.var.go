@@ -5,4 +5,5 @@ var pkgNodeMap = map[string]string{
 	"pb_game":     "NodeGameService",
 	"pb_gateway":  "NodeGatewayService",
 	"pb_worldmap": "NodeWorldMapService",
+	"pb_battle":   "NodeBattleService",
 }

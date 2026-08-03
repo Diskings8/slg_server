@@ -209,11 +209,9 @@ func (m *MultiMarch) BackArrive() error {
 	if len(m.multi) == 0 || m.mgr == nil {
 		return nil
 	}
-	if !m.TryLock(true, false, false) {
-		return cores_declarations.ErrLockFailed
-	}
-	defer m.unlock()
-
+	// 由 MultiMarch.Do() 调用，此时各成员行军 RwLock 已被 handle.Lock 持有，
+	// 不再重复加锁（对齐 multiCallbackSwapDirection 的"调用方已持锁"约定），
+	// 解锁由调用方的 handle.Unlock() 负责。
 	m.BaseMarch.BackArrive()
 
 	for _, info := range m.multi {

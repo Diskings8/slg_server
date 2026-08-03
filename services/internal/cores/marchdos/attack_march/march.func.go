@@ -1,7 +1,10 @@
 package attack_march
 
 import (
+	"go.uber.org/zap"
+	"server.slg.com/api/protocol/pb/pb_battle"
 	"server.slg.com/api/protocol/pb/pb_maps_march"
+	"server.slg.com/common/loggers"
 	"server.slg.com/services/internal/cores/cores_declarations"
 	"server.slg.com/services/internal/cores/map_managers"
 	"server.slg.com/services/internal/cores/marchdos"
@@ -13,7 +16,7 @@ import (
 // 攻击行军（10001）到达流水线：
 //
 //	Prepare → 战前合法性校验 → 不合格则直接返回
-//	Do      → 战斗结算 → 战损处理 → 占领判定
+//	Do      → 组装结算请求 → 调 battle 节点 RPC 结算 → 应用结果（伤亡/占城/状态/耐久）
 //	Finish  → 战报推送 → 事件触发
 func New(mm *map_managers.MapManager, marchInfo *marchs.MarchInfo) cores_declarations.MarchDoFuncHandleI {
 	m := marchdos.NewSingleMarch(mm)
@@ -26,7 +29,7 @@ func New(mm *map_managers.MapManager, marchInfo *marchs.MarchInfo) cores_declara
 		m.SetToMapInfo(toInfo)
 	}
 
-	var battleResult *BattleResult
+	var battleRsp *pb_battle.BattleSettleRsp
 
 	// ---- Prepare：战前校验 ----
 	m.AddPrepareOpt(func(mgr *map_managers.MapManager) {
@@ -35,33 +38,57 @@ func New(mm *map_managers.MapManager, marchInfo *marchs.MarchInfo) cores_declara
 			return
 		}
 		if !checkTargetLegality(mgr, info) {
-			info.MarchState = pb_maps_march.MarchState_Back
+			// 目标不合法 → 战败召回（返回 TransitMapID）
+			m.DefeatRecall(mgr)
 		}
 	})
 
-	// ---- Do：战斗结算 + 战损 + 占领 ----
+	// ---- Do：组装请求 → 调 battle 节点结算 → 应用结果 ----
 	m.AddDoOpt(func(mgr *map_managers.MapManager) {
 		info := m.MarchInfo()
 		if info == nil {
 			return
 		}
 		if info.GetMarchState() == pb_maps_march.MarchState_Back {
+			return // 战前校验失败已召回
+		}
+
+		settle := mgr.GetBattleSettleFunc()
+		if settle == nil {
+			loggers.Logger.Warn("battle settle func not injected",
+				zap.Uint64("march_id", info.GetMarchID().Uint64()))
+			m.DefeatRecall(mgr) // 兜底：战败召回（返回 TransitMapID）
 			return
 		}
 
-		battleResult = settleBattle(mgr, info, info.GetToMapID())
-		processBattleResult(mgr, info, battleResult)
+		req := buildBattleSettleReq(mgr, info, info.GetToMapID())
+		rsp, err := settle(req)
+		if err != nil || rsp == nil {
+			loggers.Logger.Warn("battle settle failed",
+				zap.Uint64("march_id", info.GetMarchID().Uint64()),
+				zap.Error(err))
+			m.DefeatRecall(mgr) // 兜底：战败召回（返回 TransitMapID）
+			return
+		}
+
+		battleRsp = rsp
+		applyBattleSettleRsp(mgr, info, rsp)
+
+		// 战败 → 优先返回当前的 TransitMapID
+		if !rsp.GetAttackerWin() {
+			m.DefeatRecall(mgr)
+		}
 	})
 
 	// ---- Finish：战报推送 + 事件触发 ----
 	m.AddFinishOpt(func(mgr *map_managers.MapManager) {
 		info := m.MarchInfo()
-		if info == nil || battleResult == nil {
+		if info == nil || battleRsp == nil {
 			return
 		}
 
-		pushBattleResult(mgr, info, battleResult)
-		triggerBattleEvents(mgr, info, battleResult)
+		pushBattleResult(mgr, info, battleRsp.GetAttackerWin())
+		triggerBattleEvents(mgr, info)
 	})
 
 	return m

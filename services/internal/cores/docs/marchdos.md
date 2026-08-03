@@ -210,37 +210,48 @@ func init() {
 
 **文件**: `attack_march/march.func.go`
 
-攻击行军到达流水线：
+攻击行军到达流水线（战斗**计算**迁移到独立 battle 节点，本层负责组装请求 + 应用结果）：
 
 ```
 Prepare → checkTargetLegality()
     ├─ 校验通过 → continue
-    └─ 校验失败 → MarchState = Back
+    └─ 校验失败 → DefeatRecall()（反转方向返回 TransitMapID）
 
-Do → settleBattle()
-    ├─ calcTeamPower()     ← 存活士兵 × 10 + 英雄等级 × 100
-    ├─ calcDefenderPower() ← 驻军战力 + 建筑默认守军
-    └─ 按战力比例分配伤亡 → BattleResult
-
-Do → processBattleResult()
-    ├─ 攻击方胜 → occupyTile() → 地块转属
-    └─ 防守方胜 → MarchState = Back
+Do → buildBattleSettleReq()            ← 组装攻守快照（依赖 MapManager 构建防守方）
+    ├─ mgr.GetBattleSettleFunc()(req)  ← 调 battle 节点 RPC（worldmap 注入回调）
+    │    ├─ 回调未注入 / RPC 失败 → DefeatRecall()（兜底召回）
+    │    └─ 成功 → rsp（BattleSettleRsp）
+    ├─ applyBattleSettleRsp()
+    │    ├─ applyAttackerCasualties()  ← 最后一轮攻方快照覆盖 MarchInfo.Team
+    │    ├─ updateAttackerState()      ← 胜→Stay；败→仅重置 PVPWinCount（状态由 DefeatRecall 处理）
+    │    ├─ processDefeatedDefenders() ← 防守方伤亡写回 + 回城 + AssistCallBack + push
+    │    ├─ applyBuildingDamage()      ← ReduceBuildingsHp 回写
+    │    ├─ tryOccupy()                ← 地块转属
+    │    └─ updateWinStreak()
+    └─ 战败（!rsp.AttackerWin）→ DefeatRecall()
+         ├─ 交换 From/To，To 路由到 TransitMapID（-1 回退 SrcFromMapID）
+         ├─ 等比例重算返回时间 + TickerAddMarch 重新入队
+         └─ MarchState = Back → 回城到站时 BackArrive() 清理
 
 Finish → pushBattleResult() + triggerBattleEvents()
 ```
 
-### BattleResult
+> 战败召回 `DefeatRecall()` 复用 `callbackSwapDirection`（`single.march.st.go`），调用方需已持有行军锁。
+> `SingleMarch` / `MultiMarch` 的 `BackArrive()` 均已改为不自行加锁（`Do()` 时锁已被 `handle.Lock` 持有），修复了回城到站路径的双重加锁问题。
+> BACKARRIVED 事件时机：worldmap 侧在行军返回途中不发事件，真正回城到站（BackArrive 已删除行军）才发。
 
-```go
-type BattleResult struct {
-    AttackerWin  bool
-    DefenderWin  bool
-    AtkTotalLoss uint32
-    DefTotalLoss uint32
-    AtkSurvive   uint32
-    DefSurvive   uint32
-}
-```
+### 战斗结算结果
+
+本地运行时结构 `BattleResult`/`LayerResult`（`march.result.st.go`）已随战斗计算迁移而**删除**，
+结果统一为 battle 节点返回的 `pb_battle.BattleSettleRsp`：
+
+- `results` — 逐层 `OneBattleResult`（攻守双方 `BattleSide` + 是否占领）
+- `attacker_win` / `occupied` — 攻击方获胜 / 占领判定
+- `defeated_defenders` — 被击败防守方 march_id 列表（cores 据此召回）
+- `building_damage` — 攻城伤害（cores 就地扣减建筑耐久）
+
+结算回调通过 `cores_declarations.BattleSettleFunc` 注入 `MapManager`（`SetBattleSettleFunc`），
+cores 保持纯逻辑包，不依赖 rpcconn；battle 节点实现见 `services/battle/BATTLE_OVERVIEW.md`。
 
 ---
 

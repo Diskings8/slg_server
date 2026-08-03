@@ -7,7 +7,7 @@
 
 ## 概述
 
-`worldmap` 是 SLG 服务端的**地图引擎节点**，持有 `services/internal/cores` 引擎（AOI 视野 / 行军 / 战斗），负责大地图的视野管理、行军结算与地块状态维护。与 `game`（区服业务层）按 `instance` **单例配对**：一个 game 服对应一个 worldmap 节点。
+`worldmap` 是 SLG 服务端的**地图引擎节点**，持有 `services/internal/cores` 引擎（AOI 视野 / 行军 / 地块状态），负责大地图的视野管理与行军状态机。战斗**计算**委托独立 `battle` 节点（见 `services/battle/BATTLE_OVERVIEW.md`），worldmap 在行军到达时通过注入回调调用并应用结果。与 `game`（区服业务层）按 `instance` **单例配对**：一个 game 服对应一个 worldmap 节点。
 
 ---
 

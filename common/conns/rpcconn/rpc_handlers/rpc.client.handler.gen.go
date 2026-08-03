@@ -8,6 +8,7 @@ import (
 
 	"google.golang.org/grpc"
 
+	pb_battle "server.slg.com/api/protocol/pb/pb_battle"
 	pb_game "server.slg.com/api/protocol/pb/pb_game"
 	pb_gateway "server.slg.com/api/protocol/pb/pb_gateway"
 	pb_worldmap "server.slg.com/api/protocol/pb/pb_worldmap"
@@ -23,6 +24,7 @@ type ClientHandler struct {
 	conns                 map[common_declarations.NodeService]*grpc.ClientConn
 	closers               []io.Closer
 	dialOptions           []grpc.DialOption
+	battleHandlerClient   pb_battle.BattleHandlerClient
 	gameServiceClient     pb_game.GameServiceClient
 	gameHandlerClient     pb_game.GameHandlerClient
 	gatewayServiceClient  pb_gateway.GatewayServiceClient
@@ -39,6 +41,38 @@ func NewClientHandler(instance string, dialOptions ...grpc.DialOption) *ClientHa
 		conns:       make(map[common_declarations.NodeService]*grpc.ClientConn),
 		dialOptions: dialOptions,
 	}
+}
+
+// GetBattleHandlerClient returns the pb_battle.BattleHandlerClient, lazily connecting on first call.
+// 拨号使用内置默认超时。
+func (ch *ClientHandler) GetBattleHandlerClient() pb_battle.BattleHandlerClient {
+	ch.mu.Lock()
+	defer ch.mu.Unlock()
+	if ch.battleHandlerClient != nil {
+		return ch.battleHandlerClient
+	}
+	conn, err := ch.dialNodeLocked(common_declarations.NodeBattleService, false)
+	if err != nil {
+		return nil
+	}
+	ch.battleHandlerClient = pb_battle.NewBattleHandlerClient(conn)
+	return ch.battleHandlerClient
+}
+
+// GetBattleHandlerClientWait returns the pb_battle.BattleHandlerClient, waiting indefinitely for the connection on first call.
+// 拨号阻塞等待就绪（无超时），适用于启动期依赖对方节点就绪的场景。
+func (ch *ClientHandler) GetBattleHandlerClientWait() pb_battle.BattleHandlerClient {
+	ch.mu.Lock()
+	defer ch.mu.Unlock()
+	if ch.battleHandlerClient != nil {
+		return ch.battleHandlerClient
+	}
+	conn, err := ch.dialNodeLocked(common_declarations.NodeBattleService, true)
+	if err != nil {
+		return nil
+	}
+	ch.battleHandlerClient = pb_battle.NewBattleHandlerClient(conn)
+	return ch.battleHandlerClient
 }
 
 // GetGameServiceClient returns the pb_game.GameServiceClient, lazily connecting on first call.

@@ -2,10 +2,14 @@ package worldmap_inits
 
 import (
 	"context"
+	"fmt"
 	"time"
 
+	"server.slg.com/api/protocol/pb/pb_battle"
 	"server.slg.com/api/protocol/pb/pb_maps_march"
 	"server.slg.com/api/protocol/pb/pb_redis_stream"
+	"server.slg.com/common/conns/rpcconn/rpc_handlers"
+	vgc "server.slg.com/common/globals/common_globals"
 	"server.slg.com/common/loggers"
 	"server.slg.com/common/redisstream"
 	"server.slg.com/services/internal/cores/cores_declarations"
@@ -25,6 +29,8 @@ type Engine struct {
 	MapDataManager   *map_datas.MapDataManager
 	MarchInfoManager *marchs.MarchInfoManager
 	MapManager       *map_managers.MapManager
+
+	battleHub *rpc_handlers.ClientHandler // 战斗节点客户端（battle 结算回调）
 }
 
 // NewEngine 初始化 cores 引擎
@@ -66,7 +72,31 @@ func NewEngine(ctx context.Context) *Engine {
 	manager.Start()
 
 	e.MapManager = manager
+
+	// 注入战斗结算回调（内部调用 battle 节点 RPC）
+	e.initBattleSettle(manager)
+
 	return e
+}
+
+// initBattleSettle 初始化战斗结算客户端并注入回调
+func (e *Engine) initBattleSettle(mm *map_managers.MapManager) {
+	e.battleHub = rpc_handlers.NewClientHandler(*vgc.CommonGlobalVarInstance)
+	mm.SetBattleSettleFunc(e.settleBattle)
+}
+
+// settleBattle 注入回调实现：调用 battle 节点 BattleSettle RPC
+func (e *Engine) settleBattle(req *pb_battle.BattleSettleReq) (*pb_battle.BattleSettleRsp, error) {
+	if e.battleHub == nil {
+		return nil, fmt.Errorf("battle hub not initialized")
+	}
+	cli := e.battleHub.GetBattleHandlerClient()
+	if cli == nil {
+		return nil, fmt.Errorf("battle node not connected")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	return cli.BattleSettle(ctx, req)
 }
 
 // Stop 停止引擎
@@ -138,6 +168,14 @@ func (e *Engine) OnMarchArrived(marchInfo *marchs.MarchInfo) {
 	eventType := pb_redis_stream.MarchEventType_MARCH_EVENT_ARRIVED
 	if marchInfo.MarchState == pb_maps_march.MarchState_Back {
 		eventType = pb_redis_stream.MarchEventType_MARCH_EVENT_BACKARRIVED
+
+		// 战败召回：行军在返回途中（尚未回城到站）不发事件；
+		// 真正回城到站（BackArrive 已 DeleteMarch，行军不在管理器）才发 BACKARRIVED。
+		if e.MapManager.GetMarchManage().GetMarchInfo(marchInfo.GetMarchID()) != nil {
+			loggers.Logger.Info("march defeated, recalling to transit, BACKARRIVED deferred",
+				zap.Uint64("march_id", marchInfo.GetMarchID().Uint64()))
+			return
+		}
 	}
 
 	publishMarchEvent(e.ctx, &pb_redis_stream.MarchEvent{
