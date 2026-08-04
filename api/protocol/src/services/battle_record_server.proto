@@ -12,6 +12,7 @@ service BattleRecordHandler {
     rpc SaveBattleRecord(SaveBattleRecordReq) returns (SaveBattleRecordRsp);
     rpc GetBattleRecord(GetBattleRecordReq) returns (GetBattleRecordRsp);
     rpc ListBattleRecords(ListBattleRecordsReq) returns (ListBattleRecordsRsp);
+    rpc ListBattleRecordChildren(ListBattleRecordChildrenReq) returns (ListBattleRecordChildrenRsp);
 }
 
 // TagType 战报查询维度
@@ -36,6 +37,7 @@ message SaveBattleRecordReq {
     uint64 building_damage   = 10;
     battle.BattleResults results = 11;  // 完整战报
     int64  battle_time       = 12;  // 战斗发生时间（unix，0=now）
+    uint64 parent_id         = 13;  // 主战报 ID；0 = 本记录即主战报（车轮战 n 队整合）
 }
 
 // SaveBattleRecordRsp 保存战报响应
@@ -68,6 +70,7 @@ message BattleRecordInfo {
     uint64 building_damage    = 11;
     battle.BattleResults results = 12;
     int64  battle_time        = 13;
+    uint64 parent_id          = 14;  // 主战报 ID；0 = 主战报
 }
 
 // ListBattleRecordsReq 按 tag 分页查询请求
@@ -82,4 +85,17 @@ message ListBattleRecordsReq {
 message ListBattleRecordsRsp {
     repeated BattleRecordInfo records = 1;
     int32 total = 2;  // 总条数
+}
+
+// ListBattleRecordChildrenReq 查询主战报的子战报（车轮战 n 队整合）
+message ListBattleRecordChildrenReq {
+    uint64 record_id = 1;  // 主战报 ID
+    int32  page      = 2;  // 从 1 开始
+    int32  page_size = 3;  // 默认 20，上限 100
+}
+
+// ListBattleRecordChildrenRsp 主战报子战报分页响应
+message ListBattleRecordChildrenRsp {
+    repeated BattleRecordInfo records = 1;
+    int32 total = 2;  // 子战报总条数
 }

@@ -113,6 +113,9 @@ func (e *Engine) saveBattleRecord(req *pb_battle.BattleSettleReq, rsp *pb_battle
 		return
 	}
 
+	// TODO(车轮战编排，未实现)：车轮战 n 队应整合到一个主战报。
+	// 需要先建主战报（parent_id=0）拿到 id，再通过行军链路透传 parent_id 到每次结算的 SaveBattleRecord。
+	// 当前每次结算都存独立主战报（parent_id=0）。
 	saveReq := &pb_battle_record.SaveBattleRecordReq{
 		MarchId:         req.GetMarchId(),
 		AttackerRoleId:  req.GetRoleId(),

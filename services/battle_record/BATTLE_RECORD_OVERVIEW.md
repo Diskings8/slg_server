@@ -67,13 +67,24 @@ ListBattleRecords(tag_type, tag_id, page, page_size)
 
 节点内 `time.Ticker` 每小时 goroutine（监听全局 ctx），`DELETE ... WHERE battle_time < now-14d`（两张表）。
 
-### 4. RPC 服务（BattleRecordHandler）
+### 4. 主战报 + 子战报（parent_id 关联）
+
+`battle_record.parent_id` 指向主战报（0 = 主战报）：
+- **主战报**（parent_id=0）：生成角色/联盟/地块 tag → 玩家列表一条
+- **子战报**（parent_id≠0）：**不生成 tag**，只通过主战报进入，避免玩家列表重复
+- 查询：`ListBattleRecordChildren(record_id)` 分页取主战报的子战报
+
+> ⚠️ **存储能力已实现，车轮战编排未实现**：当前每次结算仍存独立主战报（parent_id=0）。
+> 车轮战（一串 n 队连续进攻）需：先建主战报拿 id → 透传 parent_id 到每次结算的 SaveBattleRecord。见 `worldmap_inits/engine.func.go` 的 saveBattleRecord TODO。
+
+### 5. RPC 服务（BattleRecordHandler）
 
 | RPC | 说明 |
 |-----|------|
 | `SaveBattleRecord` | worldmap 战斗结算后落库（含完整 BattleResults + 攻守角色/联盟） |
 | `GetBattleRecord` | 按战报 ID 查询详情 |
 | `ListBattleRecords` | 按 tag（角色/联盟/地块）分页查询，battle_time 倒序 |
+| `ListBattleRecordChildren` | 查询主战报的子战报（车轮战 n 队整合） |
 
 ---
 

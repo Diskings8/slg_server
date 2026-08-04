@@ -24,6 +24,7 @@ type BattleRecord struct {
 	BuildingDamage   uint64   `gorm:"column:building_damage;type:bigint(20);not null;default:0"`
 	Results          []byte   `gorm:"column:results;type:blob;not null"` // proto.Marshal(BattleResults)
 	BattleTime       int64    `gorm:"column:battle_time;type:bigint(20);not null;index:idx_bt"`
+	ParentID         uint64   `gorm:"column:parent_id;type:bigint(20);not null;default:0;index:idx_parent"` // 子战报指向主战报；0=主战报
 }
 
 func (BattleRecord) TableName() string { return battleRecordTable }

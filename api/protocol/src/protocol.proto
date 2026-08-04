@@ -23,7 +23,10 @@ enum MsgID {
     GameFormationList      = 1000010;  // 查询编队
     GameBuildingBuild      = 1000011;  // 建造建筑
     GameBuildingList       = 1000012;  // 查询建筑
-    GameBattleRecordList   = 1000013;  // 查询战报
+
+    GameHeroTroopTransform = 1000013;  // 英雄兵种转化
+    GameHeroTroopUnlock    = 1000014;  // 英雄兵种扩展
+    GameBattleRecordList   = 1000015;  // 查询战报
 
     // ---------------- Camera 相机 (42200~) ----------------//
     GameCameraInit         = 42200;  // 相机初始化

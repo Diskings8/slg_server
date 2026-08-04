@@ -19,9 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	BattleRecordHandler_SaveBattleRecord_FullMethodName  = "/battle_record.BattleRecordHandler/SaveBattleRecord"
-	BattleRecordHandler_GetBattleRecord_FullMethodName   = "/battle_record.BattleRecordHandler/GetBattleRecord"
-	BattleRecordHandler_ListBattleRecords_FullMethodName = "/battle_record.BattleRecordHandler/ListBattleRecords"
+	BattleRecordHandler_SaveBattleRecord_FullMethodName         = "/battle_record.BattleRecordHandler/SaveBattleRecord"
+	BattleRecordHandler_GetBattleRecord_FullMethodName          = "/battle_record.BattleRecordHandler/GetBattleRecord"
+	BattleRecordHandler_ListBattleRecords_FullMethodName        = "/battle_record.BattleRecordHandler/ListBattleRecords"
+	BattleRecordHandler_ListBattleRecordChildren_FullMethodName = "/battle_record.BattleRecordHandler/ListBattleRecordChildren"
 )
 
 // BattleRecordHandlerClient is the client API for BattleRecordHandler service.
@@ -36,6 +37,7 @@ type BattleRecordHandlerClient interface {
 	SaveBattleRecord(ctx context.Context, in *SaveBattleRecordReq, opts ...grpc.CallOption) (*SaveBattleRecordRsp, error)
 	GetBattleRecord(ctx context.Context, in *GetBattleRecordReq, opts ...grpc.CallOption) (*GetBattleRecordRsp, error)
 	ListBattleRecords(ctx context.Context, in *ListBattleRecordsReq, opts ...grpc.CallOption) (*ListBattleRecordsRsp, error)
+	ListBattleRecordChildren(ctx context.Context, in *ListBattleRecordChildrenReq, opts ...grpc.CallOption) (*ListBattleRecordChildrenRsp, error)
 }
 
 type battleRecordHandlerClient struct {
@@ -76,6 +78,16 @@ func (c *battleRecordHandlerClient) ListBattleRecords(ctx context.Context, in *L
 	return out, nil
 }
 
+func (c *battleRecordHandlerClient) ListBattleRecordChildren(ctx context.Context, in *ListBattleRecordChildrenReq, opts ...grpc.CallOption) (*ListBattleRecordChildrenRsp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListBattleRecordChildrenRsp)
+	err := c.cc.Invoke(ctx, BattleRecordHandler_ListBattleRecordChildren_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // BattleRecordHandlerServer is the server API for BattleRecordHandler service.
 // All implementations must embed UnimplementedBattleRecordHandlerServer
 // for forward compatibility.
@@ -88,6 +100,7 @@ type BattleRecordHandlerServer interface {
 	SaveBattleRecord(context.Context, *SaveBattleRecordReq) (*SaveBattleRecordRsp, error)
 	GetBattleRecord(context.Context, *GetBattleRecordReq) (*GetBattleRecordRsp, error)
 	ListBattleRecords(context.Context, *ListBattleRecordsReq) (*ListBattleRecordsRsp, error)
+	ListBattleRecordChildren(context.Context, *ListBattleRecordChildrenReq) (*ListBattleRecordChildrenRsp, error)
 	mustEmbedUnimplementedBattleRecordHandlerServer()
 }
 
@@ -106,6 +119,9 @@ func (UnimplementedBattleRecordHandlerServer) GetBattleRecord(context.Context, *
 }
 func (UnimplementedBattleRecordHandlerServer) ListBattleRecords(context.Context, *ListBattleRecordsReq) (*ListBattleRecordsRsp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListBattleRecords not implemented")
+}
+func (UnimplementedBattleRecordHandlerServer) ListBattleRecordChildren(context.Context, *ListBattleRecordChildrenReq) (*ListBattleRecordChildrenRsp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListBattleRecordChildren not implemented")
 }
 func (UnimplementedBattleRecordHandlerServer) mustEmbedUnimplementedBattleRecordHandlerServer() {}
 func (UnimplementedBattleRecordHandlerServer) testEmbeddedByValue()                             {}
@@ -182,6 +198,24 @@ func _BattleRecordHandler_ListBattleRecords_Handler(srv interface{}, ctx context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BattleRecordHandler_ListBattleRecordChildren_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListBattleRecordChildrenReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BattleRecordHandlerServer).ListBattleRecordChildren(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BattleRecordHandler_ListBattleRecordChildren_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BattleRecordHandlerServer).ListBattleRecordChildren(ctx, req.(*ListBattleRecordChildrenReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // BattleRecordHandler_ServiceDesc is the grpc.ServiceDesc for BattleRecordHandler service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -200,6 +234,10 @@ var BattleRecordHandler_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListBattleRecords",
 			Handler:    _BattleRecordHandler_ListBattleRecords_Handler,
+		},
+		{
+			MethodName: "ListBattleRecordChildren",
+			Handler:    _BattleRecordHandler_ListBattleRecordChildren_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

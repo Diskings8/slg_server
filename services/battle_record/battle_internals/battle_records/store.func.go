@@ -131,6 +131,37 @@ func (s *Store) ListRecords(tagType int32, tagID uint64, page, pageSize int32) (
 	return recs, total, nil
 }
 
+// ListChildRecords 查询主战报的子战报（车轮战 n 队整合），battle_time 倒序分页
+func (s *Store) ListChildRecords(parentID uint64, page, pageSize int32) ([]*battle_record_models.BattleRecord, int64, error) {
+	if page < 1 {
+		page = 1
+	}
+	if pageSize <= 0 {
+		pageSize = 20
+	}
+	if pageSize > 100 {
+		pageSize = 100
+	}
+
+	var total int64
+	if err := s.db.Model(&battle_record_models.BattleRecord{}).
+		Where("parent_id = ?", parentID).
+		Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	var recs []*battle_record_models.BattleRecord
+	offset := (page - 1) * pageSize
+	if err := s.db.Where("parent_id = ?", parentID).
+		Order("battle_time DESC").
+		Limit(int(pageSize)).
+		Offset(int(offset)).
+		Find(&recs).Error; err != nil {
+		return nil, 0, err
+	}
+	return recs, total, nil
+}
+
 // CleanupExpired 清理 battle_time 早于 cutoff 的过期战报（两张表）
 func (s *Store) CleanupExpired(cutoff int64) error {
 	if err := s.db.Where("battle_time < ?", cutoff).Delete(&battle_record_models.BattleRecord{}).Error; err != nil {
@@ -139,8 +170,13 @@ func (s *Store) CleanupExpired(cutoff int64) error {
 	return s.db.Where("battle_time < ?", cutoff).Delete(&battle_record_models.BattleRecordTag{}).Error
 }
 
-// buildTags 由主表记录生成查询索引行（攻守双方 × role/union + tile，去重）
+// buildTags 由主表记录生成查询索引行（攻守双方 × role/union + tile，去重）。
+// 子战报（parent_id != 0）不生成 tag —— 只通过主战报进入，避免玩家列表重复。
 func buildTags(rec *battle_record_models.BattleRecord) []*battle_record_models.BattleRecordTag {
+	if rec.ParentID != 0 {
+		return nil
+	}
+
 	type tagKey struct {
 		t  int32
 		id uint64
@@ -198,6 +234,7 @@ func RecordFromReq(req *pb_battle_record.SaveBattleRecordReq) (*battle_record_mo
 		IsOccupied:       req.GetIsOccupied(),
 		BuildingDamage:   req.GetBuildingDamage(),
 		BattleTime:       battleTime,
+		ParentID:         req.GetParentId(),
 	}
 
 	if req.GetResults() != nil {
@@ -225,6 +262,7 @@ func RecordToInfo(rec *battle_record_models.BattleRecord) (*pb_battle_record.Bat
 		IsOccupied:       rec.IsOccupied,
 		BuildingDamage:   rec.BuildingDamage,
 		BattleTime:       rec.BattleTime,
+		ParentId:         rec.ParentID,
 	}
 
 	if len(rec.Results) > 0 {

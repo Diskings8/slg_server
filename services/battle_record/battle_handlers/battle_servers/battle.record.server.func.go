@@ -52,6 +52,31 @@ func (s *BattleRecordServer) GetBattleRecord(ctx context.Context, req *pb_battle
 	return &pb_battle_record.GetBattleRecordRsp{Record: info}, nil
 }
 
+// ListBattleRecordChildren 查询主战报的子战报（车轮战 n 队整合）
+func (s *BattleRecordServer) ListBattleRecordChildren(ctx context.Context, req *pb_battle_record.ListBattleRecordChildrenReq) (*pb_battle_record.ListBattleRecordChildrenRsp, error) {
+	if s.store == nil {
+		return nil, status.Error(codes.Internal, "store not initialized")
+	}
+	if req == nil || req.GetRecordId() == 0 {
+		return nil, status.Error(codes.InvalidArgument, "record_id required")
+	}
+
+	recs, total, err := s.store.ListChildRecords(req.GetRecordId(), req.GetPage(), req.GetPageSize())
+	if err != nil {
+		return nil, status.Error(codes.Internal, "list children failed: "+err.Error())
+	}
+
+	resp := &pb_battle_record.ListBattleRecordChildrenRsp{Total: int32(total)}
+	for _, rec := range recs {
+		info, err := battle_records.RecordToInfo(rec)
+		if err != nil {
+			return nil, status.Error(codes.Internal, "decode record failed: "+err.Error())
+		}
+		resp.Records = append(resp.Records, info)
+	}
+	return resp, nil
+}
+
 // ListBattleRecords 按 tag（角色/联盟/地块）分页查询
 func (s *BattleRecordServer) ListBattleRecords(ctx context.Context, req *pb_battle_record.ListBattleRecordsReq) (*pb_battle_record.ListBattleRecordsRsp, error) {
 	if s.store == nil {

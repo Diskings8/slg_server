@@ -37,3 +37,12 @@ func (c *Client) ListBattleRecords(ctx context.Context, req *pb_battle_record.Li
 	}
 	return cli.ListBattleRecords(ctx, req)
 }
+
+// ListBattleRecordChildren 查询主战报的子战报（车轮战 n 队整合）
+func (c *Client) ListBattleRecordChildren(ctx context.Context, req *pb_battle_record.ListBattleRecordChildrenReq) (*pb_battle_record.ListBattleRecordChildrenRsp, error) {
+	cli := c.hub.GetBattleRecordHandlerClient()
+	if cli == nil {
+		return nil, fmt.Errorf("battle_record not connected")
+	}
+	return cli.ListBattleRecordChildren(ctx, req)
+}
