@@ -10,6 +10,7 @@ enum CultivateType {
     CultivateSkill  = 1;
     CultivateTroop  = 2;
     CultivateAwaken = 3;
+    CultivateStar   = 4;  // 英雄升星（消耗同配置英雄卡）
 }
 
 // Cultivate 养成属性
@@ -26,4 +27,5 @@ message Cultivate {
 message CultivateCost {
     repeated common.Int32KV skill_use = 1;  // 技能消耗
     repeated common.Int32KV troop_use = 2;  // 兵种消耗
+    repeated common.Int32KV hero_use  = 3;  // 英雄卡消耗（升星等，K=被消耗英雄配置ID）
 }

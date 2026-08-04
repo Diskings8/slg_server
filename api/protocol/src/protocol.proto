@@ -29,6 +29,7 @@ enum MsgID {
     GameBattleRecordList   = 1000015;  // 查询战报
     GameHeroEquipSkill     = 1000016;  // 装配技能到英雄技能槽
     GameHeroUnequipSkill   = 1000017;  // 拆卸英雄技能槽技能
+    GameHeroUpgradeStar    = 1000018;  // 英雄升星（消耗同配置英雄卡）
 
     // ---------------- Camera 相机 (42200~) ----------------//
     GameCameraInit         = 42200;  // 相机初始化

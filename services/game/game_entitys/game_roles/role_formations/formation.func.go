@@ -53,6 +53,18 @@ func (rfs *RoleFormations) GetFormationByID(id uint64) *RoleFormation {
 	return nil
 }
 
+// FormationHasHero 是否存在任何队列引用了该英雄（用于升星消耗等防误删）
+func (rfs *RoleFormations) FormationHasHero(heroID uint64) bool {
+	for _, f := range rfs.List {
+		for _, hs := range f.HeroSlots {
+			if hs.GetHeroId() == heroID {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // CreateFormation 分配一个队列（校场等级/建筑完成时调用），返回新队列
 func (rfs *RoleFormations) CreateFormation(roleID, cityID uint64) *RoleFormation {
 	formation := &game_models.RoleFormation{

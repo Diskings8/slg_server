@@ -102,6 +102,19 @@ message HeroSkillUpgradeResp {
     skill.Skill skill = 1;  // 升级后的槽位技能（含新 level）
 }
 
+// HeroUpgradeStar 英雄升星
+//
+// 指定待升星英雄，消耗一张与之相同配置（hero_conf_id）的英雄卡，升 1 星。
+// 星级上限由服务端常量配置。消耗的英雄卡配置记录进养成消耗记录。
+message HeroUpgradeStarReq {
+    int32 hero_id = 1;  // 待升星英雄实例ID
+}
+
+message HeroUpgradeStarResp {
+    int32 hero_id    = 1;  // 升星英雄实例ID
+    int32 star_stage = 2;  // 升星后星级
+}
+
 // HeroEquipSkill 装配技能
 //
 // 将角色技能库（hero_skills）的技能放入英雄技能槽。装配前校验槽位可用性

@@ -40,6 +40,11 @@ func (hrs *RoleHeroes) DBDelete(writeDB common_declarations.DbcI) error {
 	return writeDB.Where("role_id = ?", hrs.RoleID).Delete(&game_models.RoleHero{}).Error()
 }
 
+// DBDeleteHero 删除单张英雄卡记录（升星消耗等）
+func (hrs *RoleHeroes) DBDeleteHero(writeDB common_declarations.DbcI, heroID uint64) error {
+	return writeDB.Where("id = ? AND role_id = ?", heroID, hrs.RoleID).Delete(&game_models.RoleHero{}).Error()
+}
+
 // DBSave 保存英雄记录
 func (hrs *RoleHeroes) DBSave(writeDB common_declarations.DbcI) error {
 	if len(hrs.List) < 1 {

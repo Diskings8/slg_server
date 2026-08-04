@@ -67,6 +67,21 @@ func (hrs *RoleHeroes) GetHeroesByConf(confID int32) []*RoleHero {
 	return out
 }
 
+// RemoveHero 从内存中移除指定英雄卡（List + Mem 索引）
+//
+// 仅移除内存，DB 删除需另行调用 DBDeleteHero（DBSave 是 upsert 不会清理 List 外记录）。
+func (hrs *RoleHeroes) RemoveHero(heroID uint64) *RoleHero {
+	hrs.Mem.Delete(pb_confs.ItemID(heroID))
+	for i, v := range hrs.List {
+		if v.ID == heroID {
+			out := hrs.List[i]
+			hrs.List = append(hrs.List[:i], hrs.List[i+1:]...)
+			return NewRoleHero(out)
+		}
+	}
+	return nil
+}
+
 //-------------------------------
 
 func NewRoleHero(one *game_models.RoleHero) *RoleHero {
@@ -107,6 +122,7 @@ func (hr *RoleHero) Format2Pb() *pb_hero.HeroInfo {
 
 	return &pb_hero.HeroInfo{
 		ConfigId:         hr.HeroConfID,
+		StarStage:        hr.StarStage,
 		CurLevel:         hr.Level,
 		CurExp:           hr.Exp,
 		AttrPoint:        hr.AttrPoint,

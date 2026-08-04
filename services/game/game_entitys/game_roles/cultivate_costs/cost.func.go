@@ -1,10 +1,15 @@
 package cultivate_costs
 
 import (
+	"time"
+
 	"go.uber.org/zap"
+	"server.slg.com/api/protocol/pb/pb_common"
 	"server.slg.com/api/protocol/pb/pb_cultivate"
 	"server.slg.com/api/protocol/pb_confs"
 	"server.slg.com/common/loggers"
+	"server.slg.com/common/models"
+	"server.slg.com/common/utils/snowflakes"
 	"server.slg.com/common/utils/util_jsons"
 	"server.slg.com/services/game/game_models"
 )
@@ -67,7 +72,28 @@ func (cc *CultivateCost) Format2Pb() *pb_cultivate.CultivateCost {
 		pb.SkillUse = cc.Cost
 	case pb_cultivate.CultivateType_CultivateTroop:
 		pb.TroopUse = cc.Cost
+	case pb_cultivate.CultivateType_CultivateStar:
+		pb.HeroUse = cc.Cost
 	}
 
 	return pb
+}
+
+// AddCost 记录一次养成消耗（K=消耗配置ID，V=数量）
+func (ccs *CultivateCosts) AddCost(cultivateType pb_cultivate.CultivateType, cost []*pb_common.Int32KV) *CultivateCost {
+	now := time.Now().Unix()
+	modelOne := &game_models.CultivateCost{
+		ModelBase: models.ModelBase{
+			ID:        snowflakes.GenUUID(),
+			CreatedAt: now,
+			UpdatedAt: now,
+		},
+		RoleID:        ccs.RoleID,
+		Cost:          cost,
+		CultivateType: cultivateType,
+	}
+	one := NewCultivateCost(modelOne)
+	ccs.List = append(ccs.List, modelOne)
+	ccs.Mem.Store(pb_confs.ItemID(modelOne.ID), one)
+	return one
 }

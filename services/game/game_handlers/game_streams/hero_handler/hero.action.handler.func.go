@@ -2,6 +2,7 @@ package hero_handler
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"server.slg.com/api/protocol/pb/pb_error_code"
@@ -66,5 +67,36 @@ func HandlerHeroCultivate(ctx context.Context, roleID uint64, req *pb_hero.HeroC
 	resp.CultivateType = req.GetCultivateType()
 	resp.Attr = attr
 	resp.AttrPoint = hero.GetAttrPoint()
+	return nil
+}
+
+// HandlerHeroUpgradeStar 英雄升星 (1000018)
+//
+// 消耗一张同配置英雄卡升 1 星，星级上限常量配置，被消耗卡配置记录进养成消耗记录。
+func HandlerHeroUpgradeStar(ctx context.Context, roleID uint64, req *pb_hero.HeroUpgradeStarReq, resp *pb_hero.HeroUpgradeStarResp) rpc_results.ResultI {
+	poller, role, err := game_role_handler.GetRole(roleID)
+	if err != nil {
+		return err
+	}
+	defer poller.Release()
+
+	hero := role.GetHeroes().GetHero(pb_confs.ItemID(req.GetHeroId()))
+	if hero == nil {
+		return rpc_results.Error(pb_error_code.ErrorCode_ParamError, "hero not found")
+	}
+
+	if logicErr := game_logics.HeroUpgradeStar(role, hero); logicErr != nil {
+		switch {
+		case errors.Is(logicErr, game_logics.ErrHeroStarFull),
+			errors.Is(logicErr, game_logics.ErrHeroNoConsumeCard):
+			return rpc_results.Error(pb_error_code.ErrorCode_ParamError, logicErr.Error())
+		default:
+			return rpc_results.Error(pb_error_code.ErrorCode_Failed, fmt.Sprintf("upgrade star failed: %s", logicErr.Error()))
+		}
+	}
+
+	poller.Save()
+	resp.HeroId = req.GetHeroId()
+	resp.StarStage = hero.GetStarStage()
 	return nil
 }

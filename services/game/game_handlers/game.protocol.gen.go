@@ -57,6 +57,11 @@ func init() {
 		Req:  &pb_hero.HeroUnequipSkillReq{},
 		Resp: &pb_hero.HeroUnequipSkillResp{},
 	})
+	RegisterProto(pb_protocol.MsgID_GameHeroUpgradeStar, &ProtoHandler{
+		F:    Wrap(hero_handler.HandlerHeroUpgradeStar),
+		Req:  &pb_hero.HeroUpgradeStarReq{},
+		Resp: &pb_hero.HeroUpgradeStarResp{},
+	})
 	RegisterProto(pb_protocol.MsgID_GameHeroTroopTransform, &ProtoHandler{
 		F:    Wrap(hero_handler.HandlerHeroTroopTransform),
 		Req:  &pb_hero.HeroTroopTransformReq{},
