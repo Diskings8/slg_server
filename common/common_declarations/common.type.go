@@ -33,6 +33,7 @@ const (
 	ReasonSell     ItemChangeReason = "sell"     // 出售
 	ReasonMerge    ItemChangeReason = "merge"    // 合成/融合
 	ReasonSplit    ItemChangeReason = "split"    // 拆分
+	ReasonTroop    ItemChangeReason = "troop"    // 兵种（转化/扩展消耗）
 )
 
 type ItemUse struct {

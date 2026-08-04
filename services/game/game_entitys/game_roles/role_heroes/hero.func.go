@@ -47,12 +47,23 @@ func (hrs *RoleHeroes) Format2Pb() []*pb_hero.HeroInfo {
 	return list
 }
 
-// GetHero 获取英雄（按英雄ID）
+// GetHero 获取英雄（按英雄实例ID）
 func (hrs *RoleHeroes) GetHero(heroID pb_confs.ItemID) *RoleHero {
 	if v, ok := hrs.Mem.Load(heroID); ok {
 		return v
 	}
 	return nil
+}
+
+// GetHeroesByConf 获取所有指定配置ID的英雄（同配置可多张，用于重复卡/突破等玩法）
+func (hrs *RoleHeroes) GetHeroesByConf(confID int32) []*RoleHero {
+	out := make([]*RoleHero, 0)
+	for _, v := range hrs.List {
+		if v.HeroConfID == confID {
+			out = append(out, NewRoleHero(v))
+		}
+	}
+	return out
 }
 
 //-------------------------------
@@ -97,6 +108,7 @@ func (hr *RoleHero) Format2Pb() *pb_hero.HeroInfo {
 		ConfigId:         hr.HeroConfID,
 		CurLevel:         hr.Level,
 		CurExp:           hr.Exp,
+		AttrPoint:        hr.AttrPoint,
 		CurStatus:        status,
 		AttrAttack:       attrAttack,
 		AttrDefense:      attrDefense,
@@ -105,5 +117,6 @@ func (hr *RoleHero) Format2Pb() *pb_hero.HeroInfo {
 		AttrRelocation:   attrRelocation,
 		Skills:           hr.EquipSkills,
 		Troops:           hr.Troops,
+		CurTroopTypeId:   hr.CurTroopTypeID,
 	}
 }

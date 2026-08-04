@@ -44,11 +44,13 @@ message HeroListResp {
 // HeroUpgradeLevelReq 英雄升级
 message HeroUpgradeLevelReq {
     int32 hero_id = 1;
+    uint32 exp    = 2;  // 本次获得的经验
 }
 
 message HeroUpgradeLevelResp {
-    int32 hero_id = 1;
-    uint32 level  = 2;
+    int32 hero_id     = 1;
+    uint32 level      = 2;
+    uint32 attr_point = 3;  // 升级后的自由属性点
 }
 
 // HeroCultivate 英雄培养
@@ -61,4 +63,28 @@ message HeroCultivateResp {
     int32 hero_id            = 1;
     uint32 cultivate_type    = 2;
     cultivate.Cultivate attr = 3;
+    uint32 attr_point        = 4;  // 加点后的剩余自由属性点
+}
+
+// HeroTroopTransform 兵种转化（x 等级后选择已解锁派生类型，消耗资源）
+message HeroTroopTransformReq {
+    int32 hero_id       = 1;
+    int32 troop_type_id = 2;  // 目标派生兵种类型
+}
+
+message HeroTroopTransformResp {
+    int32 hero_id           = 1;
+    int32 cur_troop_type_id = 2;  // 转化后的当前兵种
+}
+
+// HeroTroopUnlock 扩展兵种（使用道具解锁新的可选派生类型）
+message HeroTroopUnlockReq {
+    int32 hero_id       = 1;
+    int32 troop_type_id = 2;  // 要解锁的派生兵种类型
+}
+
+message HeroTroopUnlockResp {
+    int32 hero_id               = 1;
+    int32 troop_type_id         = 2;
+    repeated equip.Troop troops = 3;  // 解锁后的兵种列表
 }

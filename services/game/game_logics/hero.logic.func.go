@@ -7,39 +7,67 @@ import (
 	"server.slg.com/services/game/game_entitys/game_roles/role_heroes"
 )
 
-// HeroLevelUp 英雄升级
+// 配置占位常量
 //
-//   - hero: 目标英雄
-//   - 返回: 升级后的等级
+// TODO: 接入配置表（等级上限、升级所需经验、每10级属性点）
+const (
+	heroMaxLevel        uint32 = 100 // 英雄等级上限
+	heroFreePointPer10L uint32 = 5   // 每10级获得的自由属性点
+)
+
+// needExp 升级所需经验
 //
-// TODO: 接入配置表（等级上限、经验需求、每次升级属性点）
-// TODO: 接入消耗系统（扣除道具/经验）
-func HeroLevelUp(hero *role_heroes.RoleHero) (uint32, error) {
-	curLevel := hero.GetLevel()
-
-	// TODO: 从配置表读取等级上限
-	const maxLevel uint32 = 100
-	if curLevel >= maxLevel {
-		return 0, fmt.Errorf("hero already max level: %d", curLevel)
-	}
-
-	newLevel := curLevel + 1
-	hero.SetLevel(newLevel)
-	hero.SetExp(0)
-
-	return newLevel, nil
+// TODO: 接入配置表（按等级读取升级经验需求），当前为占位实现
+func needExp(level uint32) uint32 {
+	return level * 100
 }
 
-// HeroCultivate 英雄培养
+// HeroAddExp 英雄获得经验 → 升级判断
 //
-//   - hero: 目标英雄
-//   - cultivateType: 0=攻击 1=防御 2=智力 3=速度 4=拆迁
-//   - 返回: 培养后的属性
+//   - 累加经验后循环判断：满足当前等级所需经验即升级（可能连升多级）
+//   - 每升 10 级发放自由属性点（heroFreePointPer10L）
+//   - 达到等级上限后多余经验不再触发升级
 //
-// TODO: 接入消耗系统（扣除属性点/道具）
+//   - 返回: 升级后的等级
+func HeroAddExp(hero *role_heroes.RoleHero, exp uint32) (uint32, error) {
+	if exp == 0 {
+		return hero.GetLevel(), nil
+	}
+
+	newExp := uint64(hero.GetExp()) + uint64(exp)
+	level := hero.GetLevel()
+
+	for level < heroMaxLevel {
+		need := uint64(needExp(level))
+		if newExp < need {
+			break
+		}
+		newExp -= need
+		level++
+
+		// 每10级获得自由属性点
+		if level%10 == 0 {
+			hero.SetAttrPoint(hero.GetAttrPoint() + heroFreePointPer10L)
+		}
+	}
+
+	hero.SetLevel(level)
+	hero.SetExp(uint32(newExp))
+
+	return level, nil
+}
+
+// HeroCultivate 英雄加点
+//
+//   - 消耗 1 点自由属性点，给指定属性 +1（add_val_camp）
+//   - cultivateType: 0=攻击 1=防御 2=智力 3=移动（拆迁值 4 不可加点）
+//   - 返回: 加点后的属性
 func HeroCultivate(hero *role_heroes.RoleHero, cultivateType uint32) (*pb_cultivate.Cultivate, error) {
-	if cultivateType > 4 {
-		return nil, fmt.Errorf("invalid cultivate type: %d", cultivateType)
+	if cultivateType > 3 {
+		return nil, fmt.Errorf("cultivate type %d not allowed, relocation cannot add point", cultivateType)
+	}
+	if hero.GetAttrPoint() < 1 {
+		return nil, fmt.Errorf("no attr point left")
 	}
 
 	// 补齐5维数组
@@ -50,8 +78,10 @@ func HeroCultivate(hero *role_heroes.RoleHero, cultivateType uint32) (*pb_cultiv
 
 	attr := cultivates[cultivateType]
 	attr.AddValCamp++
-
 	hero.Cultivates = cultivates
+
+	// 消耗自由属性点
+	hero.SetAttrPoint(hero.GetAttrPoint() - 1)
 
 	return attr, nil
 }

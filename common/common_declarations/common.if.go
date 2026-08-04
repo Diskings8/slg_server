@@ -21,6 +21,7 @@ type DbcI interface {
 	Create(any) DbcI
 	CreateInBatches(march any, i int) DbcI
 	Transaction(fn func(tx DbcI) error) error
+	Exec(sql string, values ...any) DbcI
 }
 
 // SaveEntityI 存储数据必须实现的接口

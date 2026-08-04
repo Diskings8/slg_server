@@ -86,6 +86,11 @@ func (m *MysqlDriver) Delete(model any, query ...any) common_declarations.DbcI {
 	return m
 }
 
+func (m *MysqlDriver) Exec(sql string, values ...any) common_declarations.DbcI {
+	m.err = m.db.Exec(sql, values...).Error
+	return m
+}
+
 // ---- 非链式方法 ----
 
 func (m *MysqlDriver) Error() error {

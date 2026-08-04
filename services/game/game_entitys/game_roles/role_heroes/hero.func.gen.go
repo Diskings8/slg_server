@@ -9,6 +9,8 @@ func (hr *RoleHero) GetRoleID() uint64        { return hr.RoleHero.RoleID }
 func (hr *RoleHero) GetHeroConfID() int32     { return hr.RoleHero.HeroConfID }
 func (hr *RoleHero) GetLevel() uint32         { return hr.RoleHero.Level }
 func (hr *RoleHero) GetExp() uint32           { return hr.RoleHero.Exp }
+func (hr *RoleHero) GetAttrPoint() uint32     { return hr.RoleHero.AttrPoint }
+func (hr *RoleHero) GetCurTroopTypeID() int32 { return hr.RoleHero.CurTroopTypeID }
 func (hr *RoleHero) GetIsLocked() bool        { return hr.RoleHero.IsLocked }
 
 //------------------------------- setters -------------------------------
@@ -20,4 +22,6 @@ func (hr *RoleHero) SetRoleID(v uint64)       { hr.RoleHero.RoleID = v }
 func (hr *RoleHero) SetHeroConfID(v int32)    { hr.RoleHero.HeroConfID = v }
 func (hr *RoleHero) SetLevel(v uint32)        { hr.RoleHero.Level = v }
 func (hr *RoleHero) SetExp(v uint32)          { hr.RoleHero.Exp = v }
+func (hr *RoleHero) SetAttrPoint(v uint32)    { hr.RoleHero.AttrPoint = v }
+func (hr *RoleHero) SetCurTroopTypeID(v int32) { hr.RoleHero.CurTroopTypeID = v }
 func (hr *RoleHero) SetIsLocked(v bool)       { hr.RoleHero.IsLocked = v }

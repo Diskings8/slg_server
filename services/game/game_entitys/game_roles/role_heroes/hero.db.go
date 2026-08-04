@@ -17,6 +17,11 @@ func Init(writeDB common_declarations.DbcI) {
 	if err != nil {
 		panic(fmt.Sprintf("role_hero auto_migrate failed, err: %s", err.Error()))
 	}
+
+	// 迁移：旧版 idx_hero_skill 唯一索引限制"一角色一行"（无法多张同配置英雄），
+	// 方案B 已改为普通索引 idx_role_hero；AutoMigrate 不会删除旧索引，这里手动清理。
+	// 索引不存在时 DROP 报错，忽略即可（新库/已清理过的库无此索引）。
+	_ = writeDB.Exec("ALTER TABLE role_hero DROP INDEX idx_hero_skill").Error()
 }
 
 // DBCreate 创建英雄记录
