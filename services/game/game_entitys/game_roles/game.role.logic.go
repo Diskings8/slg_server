@@ -66,10 +66,12 @@ func (r *Role) IsCrossServerMap() bool {
 }
 
 // CheckItemEnough 检查道具是否充足
+//
+// 普通道具与货币（一级/二级）统一走背包(role_items)按 ConfigID 校验。
 func (r *Role) CheckItemEnough(checkItems []common_declarations.ItemUse) pb_error_code.ErrorCode {
 	for _, oneItem := range checkItems {
 		switch oneItem.ItemType {
-		case pb_confs.ItemTypeNormal:
+		case pb_confs.ItemTypeNormal, pb_confs.ItemTypeCurrency1, pb_confs.ItemTypeCurrency2:
 			return r.GetItems().CheckItemEnough(oneItem)
 		}
 	}
@@ -82,7 +84,7 @@ func (r *Role) AddItem(addItems []common_declarations.ItemUse, optID, reason str
 	var curCount int64
 	for _, oneItem := range addItems {
 		switch oneItem.ItemType {
-		case pb_confs.ItemTypeNormal:
+		case pb_confs.ItemTypeNormal, pb_confs.ItemTypeCurrency1, pb_confs.ItemTypeCurrency2:
 			curCount = r.GetItems().AddItem(oneItem, optTimeUx)
 		}
 		oneLog := oneItem.Format2ChangeLogPb(optID, r.ID, oneItem.Count, curCount, optTimeUx, reason)
@@ -97,7 +99,7 @@ func (r *Role) ReduceItem(useItems []common_declarations.ItemUse, optID, reason 
 	var curCount int64
 	for _, oneItem := range useItems {
 		switch oneItem.ItemType {
-		case pb_confs.ItemTypeNormal:
+		case pb_confs.ItemTypeNormal, pb_confs.ItemTypeCurrency1, pb_confs.ItemTypeCurrency2:
 			curCount = r.GetItems().ReduceItem(oneItem.ItemID, oneItem.Count)
 		}
 		oneLog := oneItem.Format2ChangeLogPb(optID, r.ID, -oneItem.Count, curCount, optTimeUx, reason)
