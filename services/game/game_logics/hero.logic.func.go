@@ -3,29 +3,15 @@ package game_logics
 import (
 	"fmt"
 
+	"server.slg.com/api/game_conf"
 	"server.slg.com/api/protocol/pb/pb_cultivate"
 	"server.slg.com/services/game/game_entitys/game_roles/role_heroes"
 )
 
-// 配置占位常量
-//
-// TODO: 接入配置表（等级上限、升级所需经验、每10级属性点）
-const (
-	heroMaxLevel        uint32 = 100 // 英雄等级上限
-	heroFreePointPer10L uint32 = 5   // 每10级获得的自由属性点
-)
-
-// needExp 升级所需经验
-//
-// TODO: 接入配置表（按等级读取升级经验需求），当前为占位实现
-func needExp(level uint32) uint32 {
-	return level * 100
-}
-
 // HeroAddExp 英雄获得经验 → 升级判断
 //
 //   - 累加经验后循环判断：满足当前等级所需经验即升级（可能连升多级）
-//   - 每升 10 级发放自由属性点（heroFreePointPer10L）
+//   - 每升 10 级发放自由属性点（配置 hero.FreePointPer10L）
 //   - 达到等级上限后多余经验不再触发升级
 //
 //   - 返回: 升级后的等级
@@ -34,11 +20,12 @@ func HeroAddExp(hero *role_heroes.RoleHero, exp uint32) (uint32, error) {
 		return hero.GetLevel(), nil
 	}
 
+	hc := game_conf.Load().Hero
 	newExp := uint64(hero.GetExp()) + uint64(exp)
 	level := hero.GetLevel()
 
-	for level < heroMaxLevel {
-		need := uint64(needExp(level))
+	for level < hc.MaxLevel {
+		need := uint64(hc.NeedExp(level))
 		if newExp < need {
 			break
 		}
@@ -47,7 +34,7 @@ func HeroAddExp(hero *role_heroes.RoleHero, exp uint32) (uint32, error) {
 
 		// 每10级获得自由属性点
 		if level%10 == 0 {
-			hero.SetAttrPoint(hero.GetAttrPoint() + heroFreePointPer10L)
+			hero.SetAttrPoint(hero.GetAttrPoint() + hc.FreePointPer10L)
 		}
 	}
 

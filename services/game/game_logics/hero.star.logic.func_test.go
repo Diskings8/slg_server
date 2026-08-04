@@ -1,10 +1,10 @@
 package game_logics
 
 import (
-	"errors"
 	"testing"
 
 	"server.slg.com/api/protocol/pb/pb_cultivate"
+	"server.slg.com/api/protocol/pb/pb_error_code"
 	"server.slg.com/api/protocol/pb/pb_maps_march"
 	"server.slg.com/api/protocol/pb/pb_skill"
 	"server.slg.com/common/models"
@@ -69,7 +69,7 @@ func TestHeroUpgradeStar_Success(t *testing.T) {
 // TestHeroUpgradeStar_MaxStar 满星不可升
 func TestHeroUpgradeStar_MaxStar(t *testing.T) {
 	role, hero := newStarRole(t, 5, 1) // 已满星（上限 5）
-	if err := HeroUpgradeStar(role, hero); !errors.Is(err, ErrHeroStarFull) {
+	if err := HeroUpgradeStar(role, hero); !assertErrorCode(t, err, pb_error_code.ErrorCode_HeroStarFull) {
 		t.Fatalf("err = %v, want ErrHeroStarFull", err)
 	}
 }
@@ -77,7 +77,7 @@ func TestHeroUpgradeStar_MaxStar(t *testing.T) {
 // TestHeroUpgradeStar_NoConsumeCard 无同配置卡不可升
 func TestHeroUpgradeStar_NoConsumeCard(t *testing.T) {
 	role, hero := newStarRole(t, 0, 0) // 无消耗卡
-	if err := HeroUpgradeStar(role, hero); !errors.Is(err, ErrHeroNoConsumeCard) {
+	if err := HeroUpgradeStar(role, hero); !assertErrorCode(t, err, pb_error_code.ErrorCode_HeroNoConsumeCard) {
 		t.Fatalf("err = %v, want ErrHeroNoConsumeCard", err)
 	}
 }
@@ -90,7 +90,7 @@ func TestHeroUpgradeStar_ConsumeCardInFormation(t *testing.T) {
 		RoleID:    role.ID,
 		HeroSlots: []*pb_maps_march.HeroSlot{{HeroId: 3001}},
 	})
-	if err := HeroUpgradeStar(role, hero); !errors.Is(err, ErrHeroNoConsumeCard) {
+	if err := HeroUpgradeStar(role, hero); !assertErrorCode(t, err, pb_error_code.ErrorCode_HeroNoConsumeCard) {
 		t.Fatalf("err = %v, want ErrHeroNoConsumeCard (card in formation)", err)
 	}
 	if hero.GetStarStage() != 0 {
@@ -102,7 +102,7 @@ func TestHeroUpgradeStar_ConsumeCardInFormation(t *testing.T) {
 func TestHeroUpgradeStar_ConsumeCardHasSkill(t *testing.T) {
 	role, hero := newStarRole(t, 0, 1)
 	role.GetHeroes().List[1].EquipSkills = []*pb_skill.Skill{{ConfigId: 101, SlotId: 1}}
-	if err := HeroUpgradeStar(role, hero); !errors.Is(err, ErrHeroNoConsumeCard) {
+	if err := HeroUpgradeStar(role, hero); !assertErrorCode(t, err, pb_error_code.ErrorCode_HeroNoConsumeCard) {
 		t.Fatalf("err = %v, want ErrHeroNoConsumeCard (card has skill)", err)
 	}
 }
@@ -111,7 +111,7 @@ func TestHeroUpgradeStar_ConsumeCardHasSkill(t *testing.T) {
 func TestHeroUpgradeStar_ConsumeCardInvested(t *testing.T) {
 	role, hero := newStarRole(t, 0, 1)
 	role.GetHeroes().List[1].StarStage = 1 // 消耗卡已升过星
-	if err := HeroUpgradeStar(role, hero); !errors.Is(err, ErrHeroNoConsumeCard) {
+	if err := HeroUpgradeStar(role, hero); !assertErrorCode(t, err, pb_error_code.ErrorCode_HeroNoConsumeCard) {
 		t.Fatalf("err = %v, want ErrHeroNoConsumeCard (card invested)", err)
 	}
 }

@@ -3,7 +3,7 @@
 > 生成日期: 2026-07-28  
 > 更新日期: 2026-08-04  
 > ldl 路径: `C:\workspace\ldl\server\services\game` (1251 文件, 成熟产品)  
-> ai4slg 路径: `C:\workspace\a4s\slg_server\services\game` (78 文件, 快速建设中)
+> ai4slg 路径: `C:\workspace\a4s\slg_server\services\game` (85 文件, 快速建设中)
 
 ---
 
@@ -11,13 +11,13 @@
 
 | 维度 | ldl | ai4slg (07-28) | ai4slg (07-30) | ai4slg (08-04) | 进展 |
 |------|-----|----------------|----------------|----------------|------|
-| Go 源文件数 | 1251 | 40 | 47 | **78** | +31 |
-| 实体子模块 | 24 个 | 4 个 | 5 个 | **7 个** (+Buildings/Formations) | +2 🟢 |
-| 内部业务逻辑模块 | 50+ | 0 (逻辑在 cores 层) | 2 个 | **6 个** (hero/hero.troop/item/formation/building/march) | +4 🟢 |
-| Stream 协议处理器 | ~44 个 | 0 (空骨架) | 2 个 | **16 个** | +14 🟢 |
+| Go 源文件数 | 1251 | 40 | 47 | **85** | +45 |
+| 实体子模块 | 24 个 | 4 个 | 5 个 | **7 个** (+Buildings/Formations) | +3 🟢 |
+| 内部业务逻辑模块 | 50+ | 0 (逻辑在 cores 层) | 2 个 | **8 个** (hero/troop/skill/star/item/formation/building/march) | +8 🟢 |
+| Stream 协议处理器 | ~44 个 | 0 (空骨架) | 2 个 | **20 个** | +20 🟢 |
 | RPC Unary 处理器 | 16 个 | 2 个 (仅日志) | 2 个 (统一 Do) | 2 个 (统一 Do) | 🟡 |
 | 架构层次 | 6 层完整 | 3 层雏形 | 4 层 | **4 层** (handler→logic→entity→model) | 🟢 |
-| 测试文件 | 大量 | 1 个 | 1 个 | **1 个** (role_test, 5 测试) | ✅ |
+| 测试文件 | 大量 | 1 个 | 1 个 | **4 个** (role/currency/skill/star) | 🟢 |
 
 ---
 
@@ -28,8 +28,8 @@
 ```
 ldl (6 层)                    ai4slg (08-04)
 ─────────                     ────────────
-handler/ (stream+game)  ← →  game_handlers/ + game_servers/  ✅ 16 协议
-logic/ (internal/logics) ← →  game_logics/                   ✅ 6 文件
+handler/ (stream+game)  ← →  game_handlers/ + game_servers/  ✅ 20 协议
+logic/ (internal/logics) ← →  game_logics/                   ✅ 8 文件
 entity/                 ← →  game_entitys/                   ✅ 7个子模块
 model/                  ← →  game_models/                    ✅ 5个model
 query/ (gorm gen)       ← →  game_generates/                  🟡 gen入口已配置多表映射
@@ -52,7 +52,7 @@ rpcclient/              ← →  game_internals/game_rpc_clients/ ✅ 按 instan
 | **`Equips`** | **装备** | ❌ |
 | **`Heroes`** | **英雄** | ✅ **已完成** |
 | `Gift` | 礼包 | ❌ |
-| **`Items`** | **物品(背包)** | ✅ **已完成** |
+| **`Items`** | **物品(背包)** | ✅ **已完成** (含一级/二级货币) |
 | `Privileges` | 特权(月卡/周卡/VIP) | ❌ |
 | `Race` | 军备竞赛 | ❌ |
 | `Recruit` | 招募 | ❌ |
@@ -81,12 +81,12 @@ func (r *Role) New() {
 	r.SkillCollections = hero_skillcollections.NewHeroSkillCollections(roleID) // ✅
 	r.CultivateCosts = cultivate_costs.NewCultivateCosts(roleID) // ✅
 	r.Items = role_items.NewRoleItems(roleID)                  // ✅
-	r.Buildings = role_buildings.NewRoleBuildings(roleID)      // ✅ NEW (08-01)
-	r.Formations = role_formations.NewRoleFormations(roleID)   // ✅ NEW (08-01)
+	r.Buildings = role_buildings.NewRoleBuildings(roleID)      // ✅
+	r.Formations = role_formations.NewRoleFormations(roleID)   // ✅
 }
 ```
 
-**子模块差距: ldl 24 个 vs ai4slg 7 个** (进展: 0→7, Builds/Teams 两个核心战斗前置已补上)
+**子模块差距: ldl 24 个 vs ai4slg 7 个** (Builds/Teams 两个核心战斗前置已补上；Attr/Equips/Recruit 等未开始)
 
 ---
 
@@ -96,7 +96,9 @@ func (r *Role) New() {
 
 | 维度 | ldl | ai4slg (08-04) | 差距 |
 |------|-----|----------------|------|
-| RoleHero 字段数 | 9 | 8 | 设计不同(ai4slg有Cultivates,无战力) |
+| RoleHero 字段数 | 9 | 10 (+StarStage/IsAwakened) | 设计不同(ai4slg有Cultivates,无战力) |
+| RoleHero 技能槽 | 英雄技能列表 | **EquipSkills 长度3** (index0默认/index1,2装配槽) | ✅ |
+| hero_skill 字段 | 无 | **+EquipHeroID/UseCountLimit/UsedCount** | 🆕 装配次数模型 |
 | DAO 层 | query.RoleHero (gorm gen) | **手写 CRUD 完整 (7/7 模块)** | 🟢 |
 | AutoMigrate | 自动 | **5 模块全部注册** | 🟢 |
 
@@ -104,32 +106,31 @@ func (r *Role) New() {
 
 | 维度 | ldl | ai4slg (08-04) | 差距 |
 |------|-----|----------------|------|
-| Heroes | 完整 | **完整** (New/Init/Copy/Format2Pb) | ✅ 接近 |
-| Items | 完整 | **完整** (New/Init/Copy/Format2Pb/Add/Reduce/Check) | ✅ |
-| Skills | 完整 | **完整** (New/Init/Copy/Format2Pb/DB CRUD) | ✅ |
-| SkillCollections | 完整 | **完整** (New/Init/Copy/Format2Pb/DB CRUD) | ✅ |
-| CultivateCosts | 完整 | **完整** (New/Init/Copy/Format2Pb/DB CRUD) | ✅ |
-| Buildings | 完整 | **完整** (New/Init/Copy/Format2Pb/DB CRUD) | ✅ NEW |
-| Formations | 完整 | **完整** (New/Init/Copy/Format2Pb/DB CRUD) | ✅ NEW |
+| Heroes | 完整 | **完整** + RemoveHero/DBDeleteHero | ✅ 接近 |
+| Items | 完整 | **完整** + 货币类型支持 | ✅ |
+| Skills | 完整 | **完整** + GetSkillByConfID/AddSkill/EquipTo/Unequip | ✅ |
+| SkillCollections | 完整 | 完整 (New/Init/Copy/Format2Pb/DB CRUD) | ✅ |
+| CultivateCosts | 完整 | **完整** + AddCost | ✅ |
+| Buildings | 完整 | 完整 | ✅ |
+| Formations | 完整 | **完整** + FormationHasHero | ✅ |
 | 属性缓存/战力 | ✅ | ❌ | 缺失 |
-| 测试 | 完整 | **1 个文件, 5 个测试** | 🟢 待扩展 |
+| 测试 | 完整 | **4 文件** (role/currency/skill/star) | 🟢 待扩展 |
 
 ### 3.3 业务逻辑层 (game_logics)
 
 | 功能 | ldl | ai4slg (08-04) | 差距 |
 |------|-----|----------------|------|
 | 英雄升级 | `heroes.UpgradeLevel()` | **`HeroAddExp()`** — 升级+连升+每10级属性点 | 🟡 配置表/消耗未接 |
-| 英雄升星 | `StreamHeroUpgradeStar` | ❌ | 缺失 |
-| 技能升级 | `StreamHeroUpgradeSkill` | ❌ | 缺失 |
-| 技能解锁 | `UnlockSkill()` | ❌ | 缺失 |
-| 荣誉升级 | `StreamHeroUpgradeHonorLevel` | ❌ | 缺失 |
-| 英雄合成 | `StreamHeroSynthetic` | ❌ | 缺失 |
+| 英雄升星 | `StreamHeroUpgradeStar` | **`HeroUpgradeStar()`** — 消耗同config英雄卡，防误删校验 | ✅ |
+| 技能升级 | `StreamHeroUpgradeSkill` | **`HeroSkillUpgrade()`** — 升级英雄身上槽位技能 | ✅ |
+| 技能槽/装配/拆卸 | — | **`HeroEquipSkill/UnequipSkill`** — 槽位条件+装配次数+返还 | 🆕 |
 | 英雄培养 | 无专门Cultivate | **`HeroCultivate()`** — 5维加点扣属性点 | ✅ ai4slg 特有 |
 | **兵种系统** | — | **`HeroTroopUnlock/Transform`** — 解锁+转换 | 🆕 ai4slg 特有 |
 | 编队 | `Teams` | **`FormationFieldHero/RemoveHero`** | ✅ |
 | 建筑 | `Builds` | **`BuildingBuild`** | ✅ |
-| 道具变更 | 完整 | **完整 `ItemChange()`** 统一入口 | ✅ |
+| 道具变更 | 完整 | **`ItemChange()`** 统一入口 + 货币类型 | ✅ |
 | 出征编队→队伍 | — | **`MarchBuildTeam()`** 英雄快照 | ✅ |
+| 荣誉升级/合成 | `...HonorLevel/Synthetic` | ❌ | 缺失(设计不同:升星替代合成) |
 | 行军回城 | `MarchBackArrive()` | ❌ | 缺失 |
 | 属性刷新 | `refreshattr.Hero()` | ❌ | 缺失 |
 
@@ -137,13 +138,14 @@ func (r *Role) New() {
 
 ## 四、协议层对比
 
-### 4.1 Stream 消息处理器 (16 个)
+### 4.1 Stream 消息处理器 (20 个)
 
 | 协议号 | MsgID | 处理器 | 模块 |
 |--------|-------|--------|------|
 | 1000001 | GameHeroList | HeroList | hero_handler |
 | 1000002 | GameHeroUpgradeLevel | HeroUpgradeLevel | hero_handler |
 | 1000003 | GameHeroCultivate | HeroCultivate | hero_handler |
+| 1000004 | GameHeroSkillUpgrade | HeroSkillUpgrade | hero_handler |
 | 1000005 | GameUseItem | UseItem | item_handler |
 | 1000006 | GameMarchCreate | MarchCreate | march_handler |
 | 1000007 | GameMapData | MapData | map_handler |
@@ -155,8 +157,11 @@ func (r *Role) New() {
 | 1000013 | GameHeroTroopTransform | HeroTroopTransform | hero_handler |
 | 1000014 | GameHeroTroopUnlock | HeroTroopUnlock | hero_handler |
 | 1000015 | GameBattleRecordList | BattleRecordList | battle_record_handler |
+| 1000016 | GameHeroEquipSkill | HeroEquipSkill | hero_handler |
+| 1000017 | GameHeroUnequipSkill | HeroUnequipSkill | hero_handler |
+| 1000018 | GameHeroUpgradeStar | HeroUpgradeStar | hero_handler |
 
-> ⚠️ 注: `game.protocol.gen.go` 中 `HandlerHeroTroopTransform`/`HandlerBattleRecordList` 的注释协议号有误(写成 1000013)，真实值见 `api/protocol/src/protocol.proto`：兵种转换=1000013、兵种扩展=1000014、战报列表=1000015。
+> ⚠️ 注: `game.protocol.gen.go` 中 `HandlerBattleRecordList` 注释协议号有误(写成 1000013)，真实值 1000015。
 
 ### 4.2 架构要点 (08-04)
 
@@ -181,7 +186,7 @@ func (r *Role) New() {
 | 1.3 | **补齐缺失的 DB 操作** | ✅ **已完成** | 7/7 模块完整 DBCreate/DBGet/DBSave/DBDelete |
 | 1.4 | **补充 AutoMigrate** | ✅ **已完成** | 5/5 模块在 Init() 中注册 |
 | 1.5 | **搭建协议路由** | ✅ **已完成** | registry.go + Recv 路由 + 泛型 Wrap |
-| 1.6 | **实现英雄协议** | ✅ **已完成** | HeroList (1000001) 等 16 个协议 |
+| 1.6 | **实现英雄协议** | ✅ **已完成** | HeroList (1000001) 等 20 个协议 |
 | 1.7 | **补齐 CultivateCost DB** | ✅ **已完成** | cost.db.go CRUD 完整 |
 
 **Phase 1 总进度: ~100%** ✅
@@ -191,12 +196,15 @@ func (r *Role) New() {
 | 内容 | 原属于 Phase | 说明 |
 |------|-------------|------|
 | **物品系统 (Items)** | Phase 3 (P0) | 完整 entity+model+DB+handler |
+| **货币类型** | Phase 2 扩展 | ItemType 一级/二级货币，统一走背包 |
 | **建筑系统 (Builds)** | Phase 3 | role_buildings + BuildingBuild/List |
 | **编队系统 (Teams)** | Phase 3 | role_formations + FormationField/Remove/List |
 | **兵种系统** | Phase 2 扩展 | HeroTroopUnlock/Transform |
+| **技能系统** | Phase 2 | 技能槽/装配/拆卸/升级 |
+| **英雄升星** | Phase 2 | HeroUpgradeStar（替代合成设计） |
 | **战报接入** | Phase 4 | BattleRecordList → battle_record 节点 |
 | **gate_stream 连接管理** | 基础设施 | 完整 Init/Join/Close/Push/CallBack/ShutDown |
-| **game_logics 包** | Phase 2 | 6 个逻辑文件（hero/troop/item/formation/building/march） |
+| **game_logics 包** | Phase 2 | 8 个逻辑文件 |
 | **game_role_handler** | 基础设施 | GetRole/Do/GetCopy poller 管理辅助 |
 
 ---
@@ -224,7 +232,7 @@ func (r *Role) New() {
    gate_stream.GateCallBackSuccess/Fail
 ```
 
-**2026-08-04 修复**: 原 `Recv()` 预取 `GetRole` 与 handler 内 `GetRole` 造成同一 poller 二元锁二次获取（死锁 → 1s 超时 → SystemBusy）。已移除 `Recv` 预取，角色加载完全下放到各 handler；并补上 `HandlerUseItem` 缺失的 `poller.Save()`（道具扣减此前不落库）。
+**2026-08-04 修复**: ① 移除 `Recv()` 预取的 `GetRole`（与 handler 内 `GetRole` 造成同一 poller 二元锁二次获取死锁 → 1s 超时 SystemBusy）；② 补 `HandlerUseItem` 缺失的 `poller.Save()`（道具扣减不落库）；③ 实现 `rpc_results.Reset()`（原 panic("implement me")，对象池复用即崩，导致所有 `rpc_results.Error` 调用 panic）；④ `ItemChange` 成功路径返回 nil（原返回非 nil `ErrorCode(NoneErr)` 使成功误报，影响道具/兵种/技能消耗）。
 
 ---
 
@@ -233,24 +241,30 @@ func (r *Role) New() {
 ### ai4slg 已完成优势 (08-04):
 
 1. ✅ **独立地图核心引擎** (cores/) - AOI/行军/战斗
-2. ✅ **全协议路由框架** - 泛型 Wrap + 注册表 + Recv 分发 (16 协议)
+2. ✅ **全协议路由框架** - 泛型 Wrap + 注册表 + Recv 分发 (20 协议)
 3. ✅ **Role Entity 完整生命周期** - Pool/Copy/Init/DB/Poller
 4. ✅ **7 个子模块完整 CRUD** - Hero/Skill/SkillCollection/CultivateCost/Item/Building/Formation
-5. ✅ **物品系统完整实现** - Add/Reduce/Check/Format2Pb + 统一 ItemChange 入口
-6. ✅ **gate_stream 网关连接管理** - Join/Close/Push/CallBack
-7. ✅ **兵种系统** - 解锁/转换 (ai4slg 特有)
-8. ✅ **编队+建筑系统** - 上阵下阵/建造列表
-9. ✅ **战报查询接入** - 直达 battle_record 节点
-10. ✅ **角色加载分工清晰** - 写 GetRole/读 GetCopy，消除双重加锁
+5. ✅ **物品系统完整** - Add/Reduce/Check + 一级/二级货币统一背包 + ItemChange 入口
+6. ✅ **技能系统** - 技能槽/装配/拆卸/升级，装配次数模型 + 拆卸按级返还
+7. ✅ **英雄升星** - 消耗同配置卡，防误删校验（编队/技能/养成）
+8. ✅ **兵种系统** - 解锁/转换 (ai4slg 特有)
+9. ✅ **编队+建筑系统** - 上阵下阵/建造列表
+10. ✅ **战报查询接入** - 直达 battle_record 节点
+11. ✅ **角色加载分工清晰** - 写 GetRole/读 GetCopy，消除双重加锁
 
 ### 主要缺失:
 
-1. ❌ Attr 角色属性系统 (资源/VIP/ServerID)
-2. ❌ 英雄完整养成: 升星/技能升级/合成/解锁
-3. ❌ 战力/属性计算与缓存
-4. ❌ 道具使用效果 (HandlerUseItem 的 TODO)
-5. ❌ 战斗结果回调处理
-6. ❌ 配置表系统 (仅 pb.confs.st.go 占位，needExp 等为硬编码公式)
+1. ❌ Attr 角色属性系统 (资源/VIP/ServerID 硬编码)
+2. ❌ 道具使用效果 (HandlerUseItem 的 TODO: 只扣道具无效果)
+3. ❌ 英雄升级接配置表+消耗 (needExp 占位公式)
+4. ❌ 技能获得途径 (hero_skills 无获得方式; 技能从哪来未定)
+5. ❌ 英雄锁/治疗 (IsLocked 状态管理)
+6. ❌ 技能收藏激活 (SkillCollection 加成未生效)
+7. ❌ 战力/属性计算与缓存
+8. ❌ 战斗结果回调处理
+9. ❌ 配置表系统 (仅占位; needExp/技能/升级消耗等硬编码)
+10. ❌ 货币兑换 (一级→二级, 比例占位)
+11. ❌ 产销日志落库 (ItemChange 收集但未写 DB)
 
 ---
 
@@ -272,18 +286,18 @@ Phase 6 (运营活动)
 
 ### 👉 当前阶段: Phase 2 — 核心养成玩法
 
-Phase 2 的 8 个子任务按推荐实现顺序，标注 **08-04 实际进度**:
+Phase 2 的 8 个子任务（含实际调整），标注 **08-04 实际进度**:
 
-| 顺序 | 内容 | 前置 | 状态 |
-|------|------|------|------|
-| **2.1** | **英雄升级 LevelUp** — 接入配置表 + 消耗道具 | `HeroAddExp` 已实现 | 🟡 needExp 为占位公式 `level*100`，未扣消耗 |
-| **2.2** | **英雄培养 Cultivate** — 5维属性消耗属性点 | 已有 HeroCultivate | ✅ 完成 |
-| **2.3** | **道具使用效果** — 使用道具加经验/加属性 | Items + HandlerUseItem | 🟡 TODO 只扣道具无效果 |
-| **2.4** | **技能解锁** — 按等级/条件自动解锁 | Skills 实体已完成 | ❌ |
-| **2.5** | **技能升级** — 消耗材料升级技能等级 | 2.4 完成后 | ❌ |
-| **2.6** | **英雄合成** — 碎片合成新英雄 | Items 系统(碎片) | ❌ |
-| **2.7** | **英雄锁/治疗** — IsLocked 状态管理 | | ❌ |
-| **2.8** | **技能收藏激活** — 收藏加成生效 | SkillCollection 实体已完成 | ❌ |
+| 顺序 | 内容 | 状态 |
+|------|------|------|
+| **2.1** | **英雄升级** — 接入配置表 + 消耗道具 | 🟡 `HeroAddExp` 已实现，`needExp` 占位公式、未扣消耗 |
+| **2.2** | **英雄培养** — 5维属性消耗属性点 | ✅ 完成 |
+| **2.3** | **道具使用效果** — 使用道具加经验/加属性 | 🟡 HandlerUseItem TODO 只扣道具无效果 |
+| **2.4** | **技能系统** — 技能槽/装配/拆卸/升级 | ✅ 完成 |
+| **2.5** | **英雄升星** — 消耗同配置英雄卡（替代合成） | ✅ 完成 |
+| **2.6** | **英雄锁/治疗** — IsLocked 状态管理 | ❌ |
+| **2.7** | **技能收藏激活** — 收藏加成生效 | ❌ |
+| **2.8** | **货币兑换** — 一级→二级 | ❌ |
 
 ### Phase 3 前置工作状态 (08-04):
 
@@ -292,15 +306,22 @@ Phase 2 的 8 个子任务按推荐实现顺序，标注 **08-04 实际进度**:
 | **Attr 属性系统** | ❌ 未开始 | Role.ServerID/Level/VIPLevel 仍硬编码 TODO |
 | **Teams 队伍编成** | ✅ **已提前完成** | role_formations + 3 协议 |
 | **Builds 城建系统** | ✅ **已提前完成** | role_buildings + 2 协议 |
-| **配置表系统** | ❌ 未开始 | 全项目缺口，needExp/升级消耗等依赖它 |
+| **配置表系统** | ❌ 未开始 | 全项目缺口，needExp/升级消耗/技能数值依赖 |
 
 ---
 
 ## 九、关键结论
 
 1. **Phase 1 完成** (≈100%) — DB→Entity→Role→gRPC 全链路已通
-2. **08-04 新增**: 编队/建筑/兵种/战报 4 个子系统提前完成，协议从 2 → 16
-3. **基础设施修复**: 移除 Recv 双重加锁；补上道具 Save 落库
-4. **当前主线 Phase 2** — 英雄养成核心驱动力，建议从 **2.3 道具使用效果**（接 2.1 升级，同一链路）切入
-5. **配置表是隐藏前置** — 2.1/2.3 的数值（升级经验/消耗）都依赖配置表系统，建议先落一个最小配置表读取
-6. **Attr 属性系统** — 3 个硬编码方法待替换，但优先级可延后到养成链路跑通
+2. **08-04 大爆发**: 技能系统（槽/装配/拆卸/升级）、英雄升星、货币类型 3 大块完成，协议 16 → 20，测试 4 文件
+3. **基础设施修复 4 项**: Recv 双重加锁、道具 Save 遗漏、rpc_results.Reset panic、ItemChange 成功误报
+4. **当前主线 Phase 2** — 剩余项中，**2.3 道具使用效果** 是性价比最高的下一步（位置已留、衔接 ItemChange/货币/技能链路）
+5. **配置表是隐藏前置** — 2.1/2.3 及技能数值最终都依赖配置表系统
+6. **Attr 属性系统** — 硬编码方法待替换，优先级可延后到养成链路跑通
+
+### 👉 下一步建议: 2.3 道具使用效果
+
+| 内容 | 理由 |
+|------|------|
+| **2.3 道具使用效果** | `HandlerUseItem` 挂着 TODO（只扣道具无效果）；使用"经验道具"加英雄经验（`HeroAddExp`）、资源包加货币（`ItemChange` 已支持货币类型），衔接刚完成的链路 |
+| 备选 | 配置表系统（2.1/2.3 数值前置） |

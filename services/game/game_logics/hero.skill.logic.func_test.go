@@ -1,11 +1,11 @@
 package game_logics
 
 import (
-	"errors"
 	"os"
 	"testing"
 	"time"
 
+	"server.slg.com/api/game_conf"
 	"server.slg.com/api/protocol/pb/pb_error_code"
 	"server.slg.com/api/protocol/pb_confs"
 	"server.slg.com/common/common_declarations"
@@ -18,10 +18,11 @@ import (
 	"server.slg.com/services/game/game_models"
 )
 
-// TestMain 初始化雪花 ID（AddSkill/AddItem 生成主键；空配置建节点 0）
+// TestMain 初始化雪花 ID 与 Go 内嵌配置（AddSkill/AddItem 生成主键；空配置建节点 0）
 func TestMain(m *testing.M) {
 	loggers.Init()
 	snowflakes.Init()
+	_ = game_conf.InitDefault()
 	os.Exit(m.Run())
 }
 
@@ -101,7 +102,7 @@ func TestHeroEquipSkill_SlotLocked(t *testing.T) {
 	role, hero := newSkillRole(t, 5, false) // 槽1未解锁（需10级）
 	role.GetSkills().AddSkill(101, 3)
 
-	if _, err := HeroEquipSkill(role, hero, 1, 101); !errors.Is(err, ErrSkillSlotLocked) {
+	if _, err := HeroEquipSkill(role, hero, 1, 101); !assertErrorCode(t, err, pb_error_code.ErrorCode_HeroSkillSlotLocked) {
 		t.Fatalf("err = %v, want ErrSkillSlotLocked", err)
 	}
 }
@@ -110,7 +111,7 @@ func TestHeroEquipSkill_Slot2NeedsAwaken(t *testing.T) {
 	// 槽2：等级达标但未觉醒 → 锁定
 	role, hero := newSkillRole(t, 20, false)
 	role.GetSkills().AddSkill(101, 3)
-	if _, err := HeroEquipSkill(role, hero, 2, 101); !errors.Is(err, ErrSkillSlotLocked) {
+	if _, err := HeroEquipSkill(role, hero, 2, 101); !assertErrorCode(t, err, pb_error_code.ErrorCode_HeroSkillSlotLocked) {
 		t.Fatalf("err = %v, want ErrSkillSlotLocked (awaken required)", err)
 	}
 
@@ -128,14 +129,14 @@ func TestHeroEquipSkill_SlotOccupied(t *testing.T) {
 	if _, err := HeroEquipSkill(role, hero, 1, 101); err != nil {
 		t.Fatalf("first equip failed: %v", err)
 	}
-	if _, err := HeroEquipSkill(role, hero, 1, 102); !errors.Is(err, ErrSkillSlotOccupied) {
+	if _, err := HeroEquipSkill(role, hero, 1, 102); !assertErrorCode(t, err, pb_error_code.ErrorCode_HeroSkillSlotOccupied) {
 		t.Fatalf("err = %v, want ErrSkillSlotOccupied", err)
 	}
 }
 
 func TestHeroEquipSkill_NotOwned(t *testing.T) {
 	role, hero := newSkillRole(t, 15, false) // 技能库无技能
-	if _, err := HeroEquipSkill(role, hero, 1, 101); !errors.Is(err, ErrSkillNotOwned) {
+	if _, err := HeroEquipSkill(role, hero, 1, 101); !assertErrorCode(t, err, pb_error_code.ErrorCode_HeroSkillNotOwned) {
 		t.Fatalf("err = %v, want ErrSkillNotOwned", err)
 	}
 }
@@ -152,7 +153,7 @@ func TestHeroEquipSkill_EquippedOther(t *testing.T) {
 	role.GetHeroes().List = append(role.GetHeroes().List, heroBModel)
 	heroB := role_heroes.NewRoleHero(heroBModel)
 
-	if _, err := HeroEquipSkill(role, heroB, 1, 101); !errors.Is(err, ErrSkillEquippedOther) {
+	if _, err := HeroEquipSkill(role, heroB, 1, 101); !assertErrorCode(t, err, pb_error_code.ErrorCode_HeroSkillEquippedOther) {
 		t.Fatalf("err = %v, want ErrSkillEquippedOther", err)
 	}
 }
@@ -168,7 +169,7 @@ func TestHeroEquipSkill_UseLimitExceed(t *testing.T) {
 		t.Fatalf("unequip failed: %v", err)
 	}
 	// 已装配1次（UsedCount=1=limit），拆卸后次数不还原 → 再装超限
-	if _, err := HeroEquipSkill(role, hero, 1, 101); !errors.Is(err, ErrSkillUseLimitExceed) {
+	if _, err := HeroEquipSkill(role, hero, 1, 101); !assertErrorCode(t, err, pb_error_code.ErrorCode_HeroSkillUseLimitExceed) {
 		t.Fatalf("err = %v, want ErrSkillUseLimitExceed", err)
 	}
 	_ = hs
@@ -212,7 +213,7 @@ func TestHeroUnequipSkill_RefundByLevel(t *testing.T) {
 
 func TestHeroUnequipSkill_Empty(t *testing.T) {
 	role, hero := newSkillRole(t, 15, false)
-	if _, _, err := HeroUnequipSkill(role, hero, 1); !errors.Is(err, ErrSkillSlotEmpty) {
+	if _, _, err := HeroUnequipSkill(role, hero, 1); !assertErrorCode(t, err, pb_error_code.ErrorCode_HeroSkillSlotEmpty) {
 		t.Fatalf("err = %v, want ErrSkillSlotEmpty", err)
 	}
 }
@@ -245,7 +246,7 @@ func TestHeroSkillUpgrade_Success(t *testing.T) {
 
 func TestHeroSkillUpgrade_SlotEmpty(t *testing.T) {
 	role, hero := newSkillRole(t, 15, false)
-	if _, err := HeroSkillUpgrade(role, hero, 1); !errors.Is(err, ErrSkillSlotEmpty) {
+	if _, err := HeroSkillUpgrade(role, hero, 1); !assertErrorCode(t, err, pb_error_code.ErrorCode_HeroSkillSlotEmpty) {
 		t.Fatalf("err = %v, want ErrSkillSlotEmpty", err)
 	}
 }
@@ -259,7 +260,7 @@ func TestHeroSkillUpgrade_MaxLevel(t *testing.T) {
 	}
 	hero.GetEquipSkillBySlot(1).Level = 10 // 直接设满级（MaxLevel=10）
 
-	if _, err := HeroSkillUpgrade(role, hero, 1); !errors.Is(err, ErrSkillMaxLevel) {
+	if _, err := HeroSkillUpgrade(role, hero, 1); !assertErrorCode(t, err, pb_error_code.ErrorCode_HeroSkillMaxLevel) {
 		t.Fatalf("err = %v, want ErrSkillMaxLevel", err)
 	}
 }

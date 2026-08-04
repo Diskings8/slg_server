@@ -4,20 +4,14 @@ import (
 	"errors"
 	"fmt"
 
+	"server.slg.com/api/game_conf"
+	"server.slg.com/api/protocol/pb/pb_common"
+	"server.slg.com/api/protocol/pb/pb_cultivate"
 	"server.slg.com/api/protocol/pb/pb_equip"
 	"server.slg.com/api/protocol/pb_confs"
 	"server.slg.com/common/common_declarations"
 	"server.slg.com/services/game/game_entitys/game_roles"
 	"server.slg.com/services/game/game_entitys/game_roles/role_heroes"
-)
-
-// 配置占位常量
-//
-// TODO: 接入配置表（兵种类型关系、转化等级门槛、转化消耗资源、扩展道具映射）
-const (
-	troopTransformLevel  uint32 = 10  // 转化等级门槛（x 级后可转化派生类型）
-	heroDefaultTroopID   int32  = 100 // 英雄默认基础兵种（由英雄配置决定，TODO）
-	troopUnlockItemConf  int32  = 1001 // 扩展兵种所需道具（由配置表映射，TODO）
 )
 
 // isBaseTroop 判断是否基础兵种（100/200/300 百位整百），否则为派生类型（101/102/103）
@@ -31,9 +25,9 @@ func isBaseTroop(troopTypeID int32) bool {
 func ensureBaseTroop(hero *role_heroes.RoleHero) {
 	if len(hero.Troops) == 0 {
 		hero.Troops = []*pb_equip.Troop{
-			{ConfigId: heroDefaultTroopID, IsActivate: true},
+			{ConfigId: game_conf.Load().Troop.DefaultTroopID, IsActivate: true},
 		}
-		hero.CurTroopTypeID = heroDefaultTroopID
+		hero.CurTroopTypeID = game_conf.Load().Troop.DefaultTroopID
 	}
 	if hero.CurTroopTypeID == 0 {
 		hero.CurTroopTypeID = hero.Troops[0].GetConfigId()
@@ -66,11 +60,16 @@ func HeroTroopUnlock(role *game_roles.Role, hero *role_heroes.RoleHero, troopTyp
 
 	// TODO 配置：兵种 → 所需扩展道具映射，当前占位固定道具
 	cost := []common_declarations.ItemUse{
-		{ItemID: pb_confs.ItemID(troopUnlockItemConf), Count: 1},
+		{ItemID: pb_confs.ItemID(game_conf.Load().Troop.UnlockItemConf), Count: 1},
 	}
 	if err := ItemChange(role, nil, cost, common_declarations.ReasonTroop); err != nil {
 		return err
 	}
+
+	// 记录养成消耗（解锁消耗的道具 config + 数量）
+	role.GetCultivateCosts().AddCost(pb_cultivate.CultivateType_CultivateTroop, []*pb_common.Int32KV{
+		{Key: game_conf.Load().Troop.UnlockItemConf, Val: 1},
+	})
 
 	// 已存在但未激活 → 激活；否则追加
 	for _, t := range hero.Troops {
@@ -91,8 +90,8 @@ func HeroTroopUnlock(role *game_roles.Role, hero *role_heroes.RoleHero, troopTyp
 func HeroTroopTransform(hero *role_heroes.RoleHero, troopTypeID int32) error {
 	ensureBaseTroop(hero)
 
-	if hero.GetLevel() < troopTransformLevel {
-		return fmt.Errorf("level %d below transform requirement %d", hero.GetLevel(), troopTransformLevel)
+	if hero.GetLevel() < game_conf.Load().Troop.TransformLevel {
+		return fmt.Errorf("level %d below transform requirement %d", hero.GetLevel(), game_conf.Load().Troop.TransformLevel)
 	}
 	if isBaseTroop(troopTypeID) {
 		return errors.New("cannot transform to base troop")

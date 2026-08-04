@@ -3,6 +3,10 @@ package game_conf
 import (
 	"sync/atomic"
 
+	"server.slg.com/api/game_conf/hero"
+	"server.slg.com/api/game_conf/item"
+	"server.slg.com/api/game_conf/skill"
+	"server.slg.com/api/game_conf/troop"
 	"server.slg.com/api/protocol/pb_confs"
 	common_configs "server.slg.com/common/configs"
 	"server.slg.com/common/loggers"
@@ -25,11 +29,28 @@ func Init(filePath string) error {
 	return err
 }
 
+// InitDefault 加载 Go 内嵌配置（不走 JSON），供测试/未配置 JSON 环境使用
+func InitDefault() error {
+	gc := &GameConf{
+		configs: &pb_confs.Table{},
+		Hero:    hero.New(),
+		Skill:   skill.New(),
+		Item:    item.New(),
+		Troop:   troop.New(),
+	}
+	defaultConf.Store(gc)
+	return nil
+}
+
 // New 新配置路径加载配置
 func New(filePath string) (*GameConf, error) {
 	gameConfig := &GameConf{
 		configs:  &pb_confs.Table{},
 		filePath: filePath,
+		Hero:     hero.New(),
+		Skill:    skill.New(),
+		Item:     item.New(),
+		Troop:    troop.New(),
 	}
 	if err := gameConfig.init(); err != nil {
 		return nil, err

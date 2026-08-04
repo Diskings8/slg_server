@@ -7,6 +7,7 @@ import (
 	"server.slg.com/api/protocol/pb/pb_item"
 	"server.slg.com/api/protocol/pb/pb_maps_march"
 	"server.slg.com/api/protocol/pb/pb_protocol"
+	"server.slg.com/api/protocol/pb/pb_skill"
 	"server.slg.com/api/protocol/pb/pb_worldmap"
 	"server.slg.com/services/game/game_handlers/game_streams/battle_record_handler"
 	"server.slg.com/services/game/game_handlers/game_streams/building_handler"
@@ -61,6 +62,11 @@ func init() {
 		F:    Wrap(hero_handler.HandlerHeroUpgradeStar),
 		Req:  &pb_hero.HeroUpgradeStarReq{},
 		Resp: &pb_hero.HeroUpgradeStarResp{},
+	})
+	RegisterProto(pb_protocol.MsgID_GameHeroSkillCollectionActivate, &ProtoHandler{
+		F:    Wrap(hero_handler.HandlerHeroSkillCollectionActivate),
+		Req:  &pb_skill.SkillCollectionActivateReq{},
+		Resp: &pb_skill.SkillCollectionActivateResp{},
 	})
 	RegisterProto(pb_protocol.MsgID_GameHeroTroopTransform, &ProtoHandler{
 		F:    Wrap(hero_handler.HandlerHeroTroopTransform),

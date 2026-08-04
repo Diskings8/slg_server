@@ -2,7 +2,6 @@ package hero_handler
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"server.slg.com/api/protocol/pb/pb_error_code"
@@ -86,13 +85,10 @@ func HandlerHeroUpgradeStar(ctx context.Context, roleID uint64, req *pb_hero.Her
 	}
 
 	if logicErr := game_logics.HeroUpgradeStar(role, hero); logicErr != nil {
-		switch {
-		case errors.Is(logicErr, game_logics.ErrHeroStarFull),
-			errors.Is(logicErr, game_logics.ErrHeroNoConsumeCard):
-			return rpc_results.Error(pb_error_code.ErrorCode_ParamError, logicErr.Error())
-		default:
-			return rpc_results.Error(pb_error_code.ErrorCode_Failed, fmt.Sprintf("upgrade star failed: %s", logicErr.Error()))
+		if r, ok := logicErr.(rpc_results.ResultI); ok {
+			return r // 满星/无消耗卡等专属错误码透传
 		}
+		return rpc_results.Error(pb_error_code.ErrorCode_Failed, fmt.Sprintf("upgrade star failed: %s", logicErr.Error()))
 	}
 
 	poller.Save()

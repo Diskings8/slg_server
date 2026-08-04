@@ -2,16 +2,41 @@ package hero_handler
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"server.slg.com/api/protocol/pb/pb_error_code"
 	"server.slg.com/api/protocol/pb/pb_hero"
+	"server.slg.com/api/protocol/pb/pb_skill"
 	"server.slg.com/api/protocol/pb_confs"
 	"server.slg.com/common/conns/rpcconn/rpc_results"
 	"server.slg.com/services/game/game_entitys/game_role_handler"
 	"server.slg.com/services/game/game_logics"
 )
+
+// HandlerHeroSkillCollectionActivate 技能收藏激活 (1000019)
+//
+// 消耗配置指定道具推进收集进度，全部达标解锁对应技能。
+func HandlerHeroSkillCollectionActivate(ctx context.Context, roleID uint64, req *pb_skill.SkillCollectionActivateReq, resp *pb_skill.SkillCollectionActivateResp) rpc_results.ResultI {
+	poller, role, err := game_role_handler.GetRole(roleID)
+	if err != nil {
+		return err
+	}
+	defer poller.Release()
+
+	if req.GetSkillConfId() <= 0 || req.GetItemConfId() <= 0 || req.GetCount() <= 0 {
+		return rpc_results.Error(pb_error_code.ErrorCode_ParamError, "invalid params")
+	}
+
+	if logicErr := game_logics.SkillCollectionActivate(role, req.GetSkillConfId(), req.GetItemConfId(), req.GetCount()); logicErr != nil {
+		return skillLogicError(logicErr)
+	}
+
+	poller.Save()
+	if collection := role.GetSkillCollections().GetBySkillConfID(req.GetSkillConfId()); collection != nil {
+		resp.Collection = collection.Format2Pb()
+	}
+	return nil
+}
 
 // HandlerHeroSkillUpgrade 技能升级 (1000004)
 //
@@ -89,25 +114,12 @@ func HandlerHeroUnequipSkill(ctx context.Context, roleID uint64, req *pb_hero.He
 	return nil
 }
 
-// skillLogicError 技能逻辑错误映射：
+// skillLogicError 技能逻辑错误处理
 //
-//	业务校验类（槽位/技能库状态）→ ParamError；道具消耗不足等 ResultI → 原样透传；兜底 Failed。
+// 逻辑层已统一返回 rpc_results.ResultI（带专属错误码），此处直接透传；非 ResultI（意外错误）用 Failed 兜底。
 func skillLogicError(logicErr error) rpc_results.ResultI {
-	switch {
-	case errors.Is(logicErr, game_logics.ErrSkillConfNotFound),
-		errors.Is(logicErr, game_logics.ErrSkillSlotInvalid),
-		errors.Is(logicErr, game_logics.ErrSkillSlotLocked),
-		errors.Is(logicErr, game_logics.ErrSkillSlotOccupied),
-		errors.Is(logicErr, game_logics.ErrSkillSlotEmpty),
-		errors.Is(logicErr, game_logics.ErrSkillNotOwned),
-		errors.Is(logicErr, game_logics.ErrSkillEquippedOther),
-		errors.Is(logicErr, game_logics.ErrSkillUseLimitExceed),
-		errors.Is(logicErr, game_logics.ErrSkillMaxLevel):
-		return rpc_results.Error(pb_error_code.ErrorCode_ParamError, logicErr.Error())
-	default:
-		if r, ok := logicErr.(rpc_results.ResultI); ok {
-			return r // 道具不足等业务错误原样透传（含 ItemTypeNormalNotEnough）
-		}
-		return rpc_results.Error(pb_error_code.ErrorCode_Failed, fmt.Sprintf("skill logic failed: %s", logicErr.Error()))
+	if r, ok := logicErr.(rpc_results.ResultI); ok {
+		return r
 	}
+	return rpc_results.Error(pb_error_code.ErrorCode_Failed, fmt.Sprintf("skill logic failed: %s", logicErr.Error()))
 }

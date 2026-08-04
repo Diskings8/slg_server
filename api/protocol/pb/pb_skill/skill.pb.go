@@ -105,7 +105,7 @@ type SkillCollection struct {
 	unknownFields protoimpl.UnknownFields
 
 	ConfigId        int32                `protobuf:"varint,1,opt,name=config_id,json=configId,proto3" json:"config_id,omitempty"`                     // 配置id
-	CollectionLevel []*pb_common.Int32KV `protobuf:"bytes,2,rep,name=collection_level,json=collectionLevel,proto3" json:"collection_level,omitempty"` // 收集进度
+	CollectionLevel []*pb_common.Int32KV `protobuf:"bytes,2,rep,name=collection_level,json=collectionLevel,proto3" json:"collection_level,omitempty"` // 收集进度（K=道具配置ID，V=已收集数量）
 	IsUnlock        bool                 `protobuf:"varint,3,opt,name=is_unlock,json=isUnlock,proto3" json:"is_unlock,omitempty"`                     // 是否已解锁
 }
 
@@ -160,6 +160,115 @@ func (x *SkillCollection) GetIsUnlock() bool {
 	return false
 }
 
+// SkillCollectionActivate 技能收藏激活（分次收集）
+//
+// 消耗配置指定道具推进收集进度，全部达标后解锁对应技能。
+type SkillCollectionActivateReq struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	SkillConfId int32 `protobuf:"varint,1,opt,name=skill_conf_id,json=skillConfId,proto3" json:"skill_conf_id,omitempty"` // 收藏对应技能配置ID
+	ItemConfId  int32 `protobuf:"varint,2,opt,name=item_conf_id,json=itemConfId,proto3" json:"item_conf_id,omitempty"`    // 消耗的道具配置ID（须为该收藏配置所需）
+	Count       int64 `protobuf:"varint,3,opt,name=count,proto3" json:"count,omitempty"`                                  // 消耗数量
+}
+
+func (x *SkillCollectionActivateReq) Reset() {
+	*x = SkillCollectionActivateReq{}
+	mi := &file_skill_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SkillCollectionActivateReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SkillCollectionActivateReq) ProtoMessage() {}
+
+func (x *SkillCollectionActivateReq) ProtoReflect() protoreflect.Message {
+	mi := &file_skill_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SkillCollectionActivateReq.ProtoReflect.Descriptor instead.
+func (*SkillCollectionActivateReq) Descriptor() ([]byte, []int) {
+	return file_skill_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *SkillCollectionActivateReq) GetSkillConfId() int32 {
+	if x != nil {
+		return x.SkillConfId
+	}
+	return 0
+}
+
+func (x *SkillCollectionActivateReq) GetItemConfId() int32 {
+	if x != nil {
+		return x.ItemConfId
+	}
+	return 0
+}
+
+func (x *SkillCollectionActivateReq) GetCount() int64 {
+	if x != nil {
+		return x.Count
+	}
+	return 0
+}
+
+type SkillCollectionActivateResp struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Collection *SkillCollection `protobuf:"bytes,1,opt,name=collection,proto3" json:"collection,omitempty"` // 激活后的收藏状态
+}
+
+func (x *SkillCollectionActivateResp) Reset() {
+	*x = SkillCollectionActivateResp{}
+	mi := &file_skill_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SkillCollectionActivateResp) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SkillCollectionActivateResp) ProtoMessage() {}
+
+func (x *SkillCollectionActivateResp) ProtoReflect() protoreflect.Message {
+	mi := &file_skill_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SkillCollectionActivateResp.ProtoReflect.Descriptor instead.
+func (*SkillCollectionActivateResp) Descriptor() ([]byte, []int) {
+	return file_skill_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *SkillCollectionActivateResp) GetCollection() *SkillCollection {
+	if x != nil {
+		return x.Collection
+	}
+	return nil
+}
+
 var File_skill_proto protoreflect.FileDescriptor
 
 var file_skill_proto_rawDesc = []byte{
@@ -183,10 +292,23 @@ var file_skill_proto_rawDesc = []byte{
 	0x2e, 0x49, 0x6e, 0x74, 0x33, 0x32, 0x4b, 0x56, 0x52, 0x0f, 0x63, 0x6f, 0x6c, 0x6c, 0x65, 0x63,
 	0x74, 0x69, 0x6f, 0x6e, 0x4c, 0x65, 0x76, 0x65, 0x6c, 0x12, 0x1b, 0x0a, 0x09, 0x69, 0x73, 0x5f,
 	0x75, 0x6e, 0x6c, 0x6f, 0x63, 0x6b, 0x18, 0x03, 0x20, 0x01, 0x28, 0x08, 0x52, 0x08, 0x69, 0x73,
-	0x55, 0x6e, 0x6c, 0x6f, 0x63, 0x6b, 0x42, 0x29, 0x5a, 0x27, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72,
-	0x2e, 0x73, 0x6c, 0x67, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x63, 0x6f, 0x6c, 0x2f, 0x70, 0x62, 0x2f, 0x70, 0x62, 0x5f, 0x73, 0x6b, 0x69, 0x6c,
-	0x6c, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x55, 0x6e, 0x6c, 0x6f, 0x63, 0x6b, 0x22, 0x78, 0x0a, 0x1a, 0x53, 0x6b, 0x69, 0x6c, 0x6c, 0x43,
+	0x6f, 0x6c, 0x6c, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x41, 0x63, 0x74, 0x69, 0x76, 0x61, 0x74,
+	0x65, 0x52, 0x65, 0x71, 0x12, 0x22, 0x0a, 0x0d, 0x73, 0x6b, 0x69, 0x6c, 0x6c, 0x5f, 0x63, 0x6f,
+	0x6e, 0x66, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x0b, 0x73, 0x6b, 0x69,
+	0x6c, 0x6c, 0x43, 0x6f, 0x6e, 0x66, 0x49, 0x64, 0x12, 0x20, 0x0a, 0x0c, 0x69, 0x74, 0x65, 0x6d,
+	0x5f, 0x63, 0x6f, 0x6e, 0x66, 0x5f, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x0a,
+	0x69, 0x74, 0x65, 0x6d, 0x43, 0x6f, 0x6e, 0x66, 0x49, 0x64, 0x12, 0x14, 0x0a, 0x05, 0x63, 0x6f,
+	0x75, 0x6e, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x03, 0x52, 0x05, 0x63, 0x6f, 0x75, 0x6e, 0x74,
+	0x22, 0x55, 0x0a, 0x1b, 0x53, 0x6b, 0x69, 0x6c, 0x6c, 0x43, 0x6f, 0x6c, 0x6c, 0x65, 0x63, 0x74,
+	0x69, 0x6f, 0x6e, 0x41, 0x63, 0x74, 0x69, 0x76, 0x61, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x12,
+	0x36, 0x0a, 0x0a, 0x63, 0x6f, 0x6c, 0x6c, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x0b, 0x32, 0x16, 0x2e, 0x73, 0x6b, 0x69, 0x6c, 0x6c, 0x2e, 0x53, 0x6b, 0x69, 0x6c,
+	0x6c, 0x43, 0x6f, 0x6c, 0x6c, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x0a, 0x63, 0x6f, 0x6c,
+	0x6c, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x42, 0x29, 0x5a, 0x27, 0x73, 0x65, 0x72, 0x76, 0x65,
+	0x72, 0x2e, 0x73, 0x6c, 0x67, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x70, 0x72,
+	0x6f, 0x74, 0x6f, 0x63, 0x6f, 0x6c, 0x2f, 0x70, 0x62, 0x2f, 0x70, 0x62, 0x5f, 0x73, 0x6b, 0x69,
+	0x6c, 0x6c, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -201,19 +323,22 @@ func file_skill_proto_rawDescGZIP() []byte {
 	return file_skill_proto_rawDescData
 }
 
-var file_skill_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_skill_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_skill_proto_goTypes = []any{
-	(*Skill)(nil),             // 0: skill.Skill
-	(*SkillCollection)(nil),   // 1: skill.SkillCollection
-	(*pb_common.Int32KV)(nil), // 2: common.Int32KV
+	(*Skill)(nil),                       // 0: skill.Skill
+	(*SkillCollection)(nil),             // 1: skill.SkillCollection
+	(*SkillCollectionActivateReq)(nil),  // 2: skill.SkillCollectionActivateReq
+	(*SkillCollectionActivateResp)(nil), // 3: skill.SkillCollectionActivateResp
+	(*pb_common.Int32KV)(nil),           // 4: common.Int32KV
 }
 var file_skill_proto_depIdxs = []int32{
-	2, // 0: skill.SkillCollection.collection_level:type_name -> common.Int32KV
-	1, // [1:1] is the sub-list for method output_type
-	1, // [1:1] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	4, // 0: skill.SkillCollection.collection_level:type_name -> common.Int32KV
+	1, // 1: skill.SkillCollectionActivateResp.collection:type_name -> skill.SkillCollection
+	2, // [2:2] is the sub-list for method output_type
+	2, // [2:2] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_skill_proto_init() }
@@ -227,7 +352,7 @@ func file_skill_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_skill_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

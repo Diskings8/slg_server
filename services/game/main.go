@@ -17,6 +17,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
+	"server.slg.com/api/game_conf"
 	"server.slg.com/api/protocol/pb/pb_game"
 	"server.slg.com/common/common_declarations"
 	"server.slg.com/common/configs"
@@ -104,6 +105,9 @@ func main() {
 				loggers.Logger.Info("数据库初始化完成")
 			},
 			func() {
+				if err := game_conf.InitDefault(); err != nil {
+					loggers.Logger.Error("game config init failed", zap.Error(err))
+				}
 				game_internals.Init(ctx)
 				etcdconn.InitEtcd(common_configs.GetConf().Etcd.Dsn())
 				loggers.Logger.Info("ETCD 初始化完成")

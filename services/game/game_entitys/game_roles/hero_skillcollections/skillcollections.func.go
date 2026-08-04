@@ -1,9 +1,13 @@
 package hero_skillcollections
 
 import (
+	"time"
+
 	"go.uber.org/zap"
 	"server.slg.com/api/protocol/pb/pb_skill"
 	"server.slg.com/common/loggers"
+	"server.slg.com/common/models"
+	"server.slg.com/common/utils/snowflakes"
 	"server.slg.com/common/utils/util_jsons"
 	"server.slg.com/services/game/game_models"
 )
@@ -55,4 +59,37 @@ func (e *HeroSkillCollection) Format2Pb() *pb_skill.SkillCollection {
 		CollectionLevel:  e.CollectionLevel,
 		IsUnlock:         e.IsUnlocked,
 	}
+}
+
+//-------------------------------
+// 收藏业务方法
+
+// GetBySkillConfID 按技能配置ID查询收藏（遍历 List，无 Mem 索引）
+func (hsc *HeroSkillCollections) GetBySkillConfID(skillConfID int32) *HeroSkillCollection {
+	for _, one := range hsc.List {
+		if one.SkillConfID == skillConfID {
+			return NewHeroSkillCollection(one)
+		}
+	}
+	return nil
+}
+
+// AddSkillCollection 新增收藏记录（已存在返回 nil；默认未解锁、无收集进度）
+func (hsc *HeroSkillCollections) AddSkillCollection(skillConfID int32) *HeroSkillCollection {
+	if hsc.GetBySkillConfID(skillConfID) != nil {
+		return nil
+	}
+	now := time.Now().Unix()
+	modelOne := &game_models.HeroSkillCollection{
+		ModelBase: models.ModelBase{
+			ID:        snowflakes.GenUUID(),
+			CreatedAt: now,
+			UpdatedAt: now,
+		},
+		RoleID:      hsc.RoleID,
+		SkillConfID: skillConfID,
+	}
+	one := NewHeroSkillCollection(modelOne)
+	hsc.List = append(hsc.List, modelOne)
+	return one
 }

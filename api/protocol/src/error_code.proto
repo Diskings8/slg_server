@@ -12,4 +12,29 @@ enum ErrorCode {
 
     ItemTypeNormalDontHave  = 10;
     ItemTypeNormalNotEnough = 11;
+
+    // ── 技能 (20~) ──
+    HeroSkillConfNotFound   = 20;  // 技能配置不存在
+    HeroSkillMaxLevel       = 21;  // 技能满级
+    HeroSkillSlotInvalid    = 22;  // 技能槽无效
+    HeroSkillSlotLocked     = 23;  // 技能槽未解锁（等级/觉醒条件不满足）
+    HeroSkillSlotOccupied   = 24;  // 技能槽已占用
+    HeroSkillSlotEmpty      = 25;  // 技能槽为空
+    HeroSkillNotOwned       = 26;  // 未拥有该技能
+    HeroSkillEquippedOther  = 27;  // 技能被其他英雄装配
+    HeroSkillUseLimitExceed = 28;  // 技能装配次数用尽
+
+    // ── 英雄养成 (30~) ──
+    HeroStarFull      = 30;  // 英雄满星
+    HeroNoConsumeCard = 31;  // 无同配置可消耗英雄卡
+
+    // ── 道具效果 (40~) ──
+    ItemEffectConfNotFound = 40;  // 道具效果配置不存在
+    ItemEffectTargetInvalid = 41; // 道具效果目标无效
+
+    // ── 技能收藏 (50~) ──
+    SkillCollectionConfNotFound = 50;  // 收藏配置不存在
+    SkillCollectionUnlocked     = 51;  // 收藏已解锁
+    SkillCollectionItemInvalid  = 52;  // 消耗道具非收藏所需
+    SkillCollectionItemFull     = 53;  // 该道具已收集满
 }

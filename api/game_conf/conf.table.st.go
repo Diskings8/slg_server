@@ -5,6 +5,10 @@ import (
 	"os"
 	"sync"
 
+	"server.slg.com/api/game_conf/hero"
+	"server.slg.com/api/game_conf/item"
+	"server.slg.com/api/game_conf/skill"
+	"server.slg.com/api/game_conf/troop"
 	"server.slg.com/api/protocol/pb_confs"
 	"server.slg.com/common/utils/util_jsons"
 )
@@ -13,6 +17,12 @@ type GameConf struct {
 	mu       sync.RWMutex
 	configs  *pb_confs.Table
 	filePath string
+
+	// ── Go 内嵌配置（功能子目录，InitDefault 加载） ──
+	Hero  *hero.Conf
+	Skill *skill.Conf
+	Item  *item.Conf
+	Troop *troop.Conf
 }
 
 // AllConfigs 全部配置
