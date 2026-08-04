@@ -41,6 +41,7 @@ func HandlerUseItem(ctx context.Context, roleID uint64, req *pb_item.UseItemReq,
 	if err := game_logics.ItemChange(role, nil, useItems, common_declarations.ReasonUse); err != nil {
 		return rpc_results.Error(pb_error_code.ErrorCode_ItemTypeNormalNotEnough, err.Error())
 	}
+	poller.Save() // 打脏标记，异步保存道具变更
 
 	// 返回剩余数量
 	remain := role.GetItems().GetItemCount(int32(item.GetConfId()))
