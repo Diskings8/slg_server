@@ -42,6 +42,21 @@ func init() {
 		Req:  &pb_hero.HeroCultivateReq{},
 		Resp: &pb_hero.HeroCultivateResp{},
 	})
+	RegisterProto(pb_protocol.MsgID_GameHeroSkillUpgrade, &ProtoHandler{
+		F:    Wrap(hero_handler.HandlerHeroSkillUpgrade),
+		Req:  &pb_hero.HeroSkillUpgradeReq{},
+		Resp: &pb_hero.HeroSkillUpgradeResp{},
+	})
+	RegisterProto(pb_protocol.MsgID_GameHeroEquipSkill, &ProtoHandler{
+		F:    Wrap(hero_handler.HandlerHeroEquipSkill),
+		Req:  &pb_hero.HeroEquipSkillReq{},
+		Resp: &pb_hero.HeroEquipSkillResp{},
+	})
+	RegisterProto(pb_protocol.MsgID_GameHeroUnequipSkill, &ProtoHandler{
+		F:    Wrap(hero_handler.HandlerHeroUnequipSkill),
+		Req:  &pb_hero.HeroUnequipSkillReq{},
+		Resp: &pb_hero.HeroUnequipSkillResp{},
+	})
 	RegisterProto(pb_protocol.MsgID_GameHeroTroopTransform, &ProtoHandler{
 		F:    Wrap(hero_handler.HandlerHeroTroopTransform),
 		Req:  &pb_hero.HeroTroopTransformReq{},

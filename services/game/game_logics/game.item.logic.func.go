@@ -31,5 +31,5 @@ func ItemChange(role *game_roles.Role, addItems, useItems []common_declarations.
 		vetLogs = append(vetLogs, role.ReduceItem(useItems, optID, reason.ToString(), optTimeUx)...)
 	}
 	vetLogs = append(vetLogs, role.AddItem(addItems, optID, reason.ToString(), optTimeUx)...)
-	return rpc_results.ErrorCode(pb_error_code.ErrorCode_NoneErr)
+	return nil
 }

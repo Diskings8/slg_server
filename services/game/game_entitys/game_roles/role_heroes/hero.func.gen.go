@@ -12,6 +12,7 @@ func (hr *RoleHero) GetExp() uint32           { return hr.RoleHero.Exp }
 func (hr *RoleHero) GetAttrPoint() uint32     { return hr.RoleHero.AttrPoint }
 func (hr *RoleHero) GetCurTroopTypeID() int32 { return hr.RoleHero.CurTroopTypeID }
 func (hr *RoleHero) GetIsLocked() bool        { return hr.RoleHero.IsLocked }
+func (hr *RoleHero) GetIsAwakened() bool      { return hr.RoleHero.IsAwakened }
 
 //------------------------------- setters -------------------------------
 
@@ -25,3 +26,4 @@ func (hr *RoleHero) SetExp(v uint32)          { hr.RoleHero.Exp = v }
 func (hr *RoleHero) SetAttrPoint(v uint32)    { hr.RoleHero.AttrPoint = v }
 func (hr *RoleHero) SetCurTroopTypeID(v int32) { hr.RoleHero.CurTroopTypeID = v }
 func (hr *RoleHero) SetIsLocked(v bool)       { hr.RoleHero.IsLocked = v }
+func (hr *RoleHero) SetIsAwakened(v bool)     { hr.RoleHero.IsAwakened = v }

@@ -26,7 +26,8 @@ message HeroInfo {
     cultivate.Cultivate attr_movement     = 14;  // 移动属性
     cultivate.Cultivate attr_relocation   = 15;  // 拆迁属性
     uint32 wage_war_city_id               = 21;  // 征战城市id
-    repeated skill.Skill skills           = 22;  // 技能信息
+    repeated skill.Skill skills           = 22;  // 技能信息（英雄技能槽，index0=默认技能，1/2=装配槽）
+    bool is_awakened                      = 23;  // 是否已觉醒（第三技能槽位解锁条件）
     int32 cur_troop_type_id               = 31;  // 当前兵种类型id
     repeated equip.Troop troops           = 32;  // 所有兵种信息
 }
@@ -87,4 +88,43 @@ message HeroTroopUnlockResp {
     int32 hero_id               = 1;
     int32 troop_type_id         = 2;
     repeated equip.Troop troops = 3;  // 解锁后的兵种列表
+}
+
+// HeroSkillUpgrade 技能升级
+//
+// 升级英雄身上（EquipSkills 槽位）的技能等级，消耗道具。不改变技能库(hero_skills)等级。
+message HeroSkillUpgradeReq {
+    int32 hero_id = 1;  // 英雄实例ID
+    int32 slot_id = 2;  // 技能槽位（1/2；0=默认技能不可升级）
+}
+
+message HeroSkillUpgradeResp {
+    skill.Skill skill = 1;  // 升级后的槽位技能（含新 level）
+}
+
+// HeroEquipSkill 装配技能
+//
+// 将角色技能库（hero_skills）的技能放入英雄技能槽。装配前校验槽位可用性
+// （slot1=英雄等级达标；slot2=等级达标+已觉醒）与技能库状态（存在/未装配他处/装配次数未满）。
+message HeroEquipSkillReq {
+    int32 hero_id       = 1;  // 英雄实例ID
+    int32 slot_id       = 2;  // 技能槽位（1/2）
+    int32 skill_conf_id = 3;  // 技能库技能配置ID
+}
+
+message HeroEquipSkillResp {
+    repeated skill.Skill skills = 1;  // 装配后的英雄技能槽
+}
+
+// HeroUnequipSkill 拆卸技能
+//
+// 从英雄技能槽移除技能，清空技能库装配记录，按已升级等级返还部分升级资源。
+message HeroUnequipSkillReq {
+    int32 hero_id = 1;  // 英雄实例ID
+    int32 slot_id = 2;  // 技能槽位（1/2）
+}
+
+message HeroUnequipSkillResp {
+    repeated skill.Skill skills = 1;  // 拆卸后的英雄技能槽
+    int64 refund_count           = 2; // 返还的升级道具数量
 }

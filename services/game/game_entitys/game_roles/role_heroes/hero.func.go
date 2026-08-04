@@ -4,6 +4,7 @@ import (
 	"go.uber.org/zap"
 	"server.slg.com/api/protocol/pb/pb_cultivate"
 	"server.slg.com/api/protocol/pb/pb_hero"
+	"server.slg.com/api/protocol/pb/pb_skill"
 	"server.slg.com/api/protocol/pb_confs"
 	"server.slg.com/common/loggers"
 	"server.slg.com/common/utils/util_jsons"
@@ -116,7 +117,18 @@ func (hr *RoleHero) Format2Pb() *pb_hero.HeroInfo {
 		AttrMovement:     attrMovement,
 		AttrRelocation:   attrRelocation,
 		Skills:           hr.EquipSkills,
+		IsAwakened:       hr.IsAwakened,
 		Troops:           hr.Troops,
 		CurTroopTypeId:   hr.CurTroopTypeID,
 	}
+}
+
+// GetEquipSkillBySlot 获取英雄技能槽指定槽位装配的技能（slot_id 匹配；无则 nil）
+func (hr *RoleHero) GetEquipSkillBySlot(slot int32) *pb_skill.Skill {
+	for _, s := range hr.EquipSkills {
+		if s.GetSlotId() == slot {
+			return s
+		}
+	}
+	return nil
 }

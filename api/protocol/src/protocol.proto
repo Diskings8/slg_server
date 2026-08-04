@@ -27,6 +27,8 @@ enum MsgID {
     GameHeroTroopTransform = 1000013;  // 英雄兵种转化
     GameHeroTroopUnlock    = 1000014;  // 英雄兵种扩展
     GameBattleRecordList   = 1000015;  // 查询战报
+    GameHeroEquipSkill     = 1000016;  // 装配技能到英雄技能槽
+    GameHeroUnequipSkill   = 1000017;  // 拆卸英雄技能槽技能
 
     // ---------------- Camera 相机 (42200~) ----------------//
     GameCameraInit         = 42200;  // 相机初始化

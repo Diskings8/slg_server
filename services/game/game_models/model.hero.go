@@ -23,6 +23,8 @@ type RoleHero struct {
 	Troops       []*pb_equip.Troop      `gorm:"serializer:json;type:json;not null"`
 	CurTroopTypeID int32                `gorm:"column:cur_troop_type_id;type:int(11);not null;default:0"` // 当前兵种类型（基础或已转化派生）
 	IsLocked     bool                   `gorm:"column:is_locked;type:tinyint(1);not null;default:0"`
+	// IsAwakened 英雄是否已觉醒（第三技能槽位解锁条件）
+	IsAwakened   bool                   `gorm:"column:is_awakened;type:tinyint(1);not null;default:0"`
 }
 
 func (RoleHero) TableName() string {

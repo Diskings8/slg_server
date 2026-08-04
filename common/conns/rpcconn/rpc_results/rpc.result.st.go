@@ -34,6 +34,8 @@ func (r *result) Error() string {
 }
 
 func (r *result) Reset() {
-	//TODO implement me
-	panic("implement me")
+	// 对象池复用：清空状态供下次使用
+	r.code = 0
+	r.devMsg = ""
+	r.Status = &status.Status{}
 }
