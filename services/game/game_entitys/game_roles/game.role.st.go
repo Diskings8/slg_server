@@ -15,6 +15,7 @@ import (
 	"server.slg.com/services/game/game_entitys/game_roles/role_formations"
 	"server.slg.com/services/game/game_entitys/game_roles/role_heroes"
 	"server.slg.com/services/game/game_entitys/game_roles/role_items"
+	"server.slg.com/services/game/game_entitys/game_roles/role_recruits"
 )
 
 var _ common_declarations.DataI = new(Role)
@@ -43,6 +44,7 @@ type Role struct {
 	Items            *role_items.RoleItems                          `json:"items,omitempty"`
 	Buildings        *role_buildings.RoleBuildings                  `json:"buildings,omitempty"`
 	Formations       *role_formations.RoleFormations                `json:"formations,omitempty"`
+	Recruits         *role_recruits.RoleRecruits                    `json:"recruits,omitempty"`
 }
 
 // UniqueID 唯一 id
@@ -137,6 +139,7 @@ func (r *Role) New() {
 	r.Items = role_items.NewRoleItems(roleID)
 	r.Buildings = role_buildings.NewRoleBuildings(roleID)
 	r.Formations = role_formations.NewRoleFormations(roleID)
+	r.Recruits = role_recruits.NewRoleRecruits(roleID)
 }
 
 // SetStatus 设置状态
@@ -264,4 +267,21 @@ func (r *Role) GetFormations() *role_formations.RoleFormations {
 		r.Formations.Init()
 	}
 	return r.Formations
+}
+
+// GetRecruits 获取抽卡模块
+func (r *Role) GetRecruits() *role_recruits.RoleRecruits {
+	if !r.IsCopy() {
+		return r.Recruits
+	}
+	if r.Recruits == nil {
+		r.Recruits = role_recruits.NewRoleRecruits(r.ID)
+		if r.src.Recruits != nil {
+			r.copyLock.RLock()
+			r.Recruits.Copy(r.src.Recruits)
+			r.copyLock.RUnlock()
+		}
+		r.Recruits.Init()
+	}
+	return r.Recruits
 }

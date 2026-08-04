@@ -1,0 +1,68 @@
+syntax = "proto3";
+package recruit;
+option go_package = "server.slg.com/api/protocol/pb/pb_recruit";
+
+// RecruitPoolInfo 抽卡池信息（含玩家在该池的状态）
+message RecruitPoolInfo {
+    int32  id                = 1;  // 抽卡池配置ID
+    string name              = 2;  // 池名称
+    uint32 all_times         = 3;  // 总抽卡次数
+    uint32 guard_times       = 4;  // 保底累计次数
+    uint32 wish              = 5;  // 心愿进度
+    int32  choose_hero       = 6;  // 心愿英雄配置ID；0=未设置
+    bool   free_remain       = 7;  // 本窗口（0/12 点切分）免费是否可用
+    bool   half_price_remain = 8;  // 本窗口半价是否可用
+}
+
+// RecruitReward 单次抽卡奖励
+message RecruitReward {
+    int32 nth      = 1;  // 第几次（1..times）
+    int32 drop_id  = 2;  // 命中掉落组ID
+    bool  is_hero  = 3;  // true=英雄卡；false=道具
+    int32 conf_id  = 4;  // 英雄/道具配置ID
+    int32 count    = 5;  // 数量（英雄卡恒 1）
+    bool  is_guard = 6;  // 是否保底命中
+    int32 hero_id  = 7;  // 新英雄实例ID（is_hero=true 时）
+}
+
+// ---- Game RPC 请求/响应 ----
+
+// RecruitPoolsInfo 查询所有抽卡池信息
+message RecruitPoolsInfoReq {
+}
+
+message RecruitPoolsInfoResp {
+    repeated RecruitPoolInfo pools = 1;
+}
+
+// Recruit 单抽/十连
+message RecruitReq {
+    int32 id    = 1;  // 抽卡池配置ID
+    int32 times = 2;  // 抽卡次数（1 或 10）
+}
+
+message RecruitResp {
+    int32 cost_type            = 1;  // 0=免费 1=半价 2=券 3=金币
+    repeated RecruitReward rewards = 2;  // 抽卡奖励
+    repeated RecruitPoolInfo pools  = 3;  // 抽卡后最新池状态
+}
+
+// RecruitSetWish 设置心愿英雄
+message RecruitSetWishReq {
+    int32 id          = 1;  // 抽卡池配置ID
+    int32 choose_hero = 2;  // 心愿英雄配置ID（0=取消心愿）
+}
+
+message RecruitSetWishResp {
+    RecruitPoolInfo pool = 1;  // 设置后的池状态
+}
+
+// RecruitDrawWish 领取心愿英雄卡
+message RecruitDrawWishReq {
+    int32 id = 1;  // 抽卡池配置ID
+}
+
+message RecruitDrawWishResp {
+    int32 hero_id     = 1;  // 新英雄实例ID（用于播动画）
+    RecruitPoolInfo pool = 2;  // 领取后的池状态
+}

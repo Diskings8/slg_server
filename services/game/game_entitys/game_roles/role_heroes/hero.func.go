@@ -1,12 +1,16 @@
 package role_heroes
 
 import (
+	"time"
+
 	"go.uber.org/zap"
 	"server.slg.com/api/protocol/pb/pb_cultivate"
 	"server.slg.com/api/protocol/pb/pb_hero"
 	"server.slg.com/api/protocol/pb/pb_skill"
 	"server.slg.com/api/protocol/pb_confs"
 	"server.slg.com/common/loggers"
+	"server.slg.com/common/models"
+	"server.slg.com/common/utils/snowflakes"
 	"server.slg.com/common/utils/util_jsons"
 	"server.slg.com/services/game/game_models"
 )
@@ -80,6 +84,29 @@ func (hrs *RoleHeroes) RemoveHero(heroID uint64) *RoleHero {
 		}
 	}
 	return nil
+}
+
+// AddHero 新增英雄卡（抽卡产出）
+//
+// 生成雪花ID构造新英雄（默认等级1/星级0/无属性点），同时写入 List 与 Mem 索引。
+// DB 落库由 Role.DBSave 反射 Save 自动 upsert，无需单独调用。
+func (hrs *RoleHeroes) AddHero(heroConfID int32) *RoleHero {
+	now := time.Now().Unix()
+	modelOne := &game_models.RoleHero{
+		ModelBase: models.ModelBase{
+			ID:        snowflakes.GenUUID(),
+			CreatedAt: now,
+			UpdatedAt: now,
+		},
+		RoleID:     hrs.RoleID,
+		HeroConfID: heroConfID,
+		Level:      1,
+		Cultivates: make([]*pb_cultivate.Cultivate, 0),
+	}
+	one := NewRoleHero(modelOne)
+	hrs.List = append(hrs.List, modelOne)
+	hrs.Mem.Store(pb_confs.ItemID(modelOne.ID), one)
+	return one
 }
 
 //-------------------------------

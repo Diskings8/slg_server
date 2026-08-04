@@ -29,12 +29,21 @@ enum ErrorCode {
     HeroNoConsumeCard = 31;  // 无同配置可消耗英雄卡
 
     // ── 道具效果 (40~) ──
-    ItemEffectConfNotFound = 40;  // 道具效果配置不存在
-    ItemEffectTargetInvalid = 41; // 道具效果目标无效
+    ItemEffectConfNotFound  = 40;  // 道具效果配置不存在
+    ItemEffectTargetInvalid = 41;  // 道具效果目标无效
 
     // ── 技能收藏 (50~) ──
     SkillCollectionConfNotFound = 50;  // 收藏配置不存在
     SkillCollectionUnlocked     = 51;  // 收藏已解锁
     SkillCollectionItemInvalid  = 52;  // 消耗道具非收藏所需
     SkillCollectionItemFull     = 53;  // 该道具已收集满
+
+    // ── 抽卡 (60~) ──
+    RecruitPoolNotFound     = 60;  // 抽卡池不存在
+    RecruitTimesInvalid     = 61;  // 抽卡次数非法（非1/10）
+    RecruitCostNotEnough    = 62;  // 券/金币不足
+    RecruitNotFreeReady     = 63;  // 免费CD未到
+    RecruitWishHeroInvalid  = 64;  // 心愿英雄不在可选集合
+    RecruitWishNotReady     = 65;  // 心愿进度未满
+    RecruitDropConfNotFound = 66;  // 掉落配置缺失
 }
