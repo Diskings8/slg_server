@@ -1,12 +1,14 @@
 package game_handlers
 
 import (
+	"server.slg.com/api/protocol/pb/pb_battle_record"
 	"server.slg.com/api/protocol/pb/pb_city"
 	"server.slg.com/api/protocol/pb/pb_hero"
 	"server.slg.com/api/protocol/pb/pb_item"
 	"server.slg.com/api/protocol/pb/pb_maps_march"
 	"server.slg.com/api/protocol/pb/pb_protocol"
 	"server.slg.com/api/protocol/pb/pb_worldmap"
+	"server.slg.com/services/game/game_handlers/game_streams/battle_record_handler"
 	"server.slg.com/services/game/game_handlers/game_streams/building_handler"
 	"server.slg.com/services/game/game_handlers/game_streams/formation_handler"
 	"server.slg.com/services/game/game_handlers/game_streams/hero_handler"
@@ -79,5 +81,12 @@ func init() {
 		F:    Wrap(building_handler.HandlerBuildingList),
 		Req:  &pb_city.BuildingListReq{},
 		Resp: &pb_city.BuildingListResp{},
+	})
+
+	// ===== 战报 (1000013) =====
+	RegisterProto(pb_protocol.MsgID_GameBattleRecordList, &ProtoHandler{
+		F:    Wrap(battle_record_handler.HandlerBattleRecordList),
+		Req:  &pb_battle_record.ListBattleRecordsReq{},
+		Resp: &pb_battle_record.ListBattleRecordsRsp{},
 	})
 }

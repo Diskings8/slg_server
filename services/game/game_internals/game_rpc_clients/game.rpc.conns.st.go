@@ -4,6 +4,7 @@ import (
 	"context"
 	"sync"
 
+	"server.slg.com/services/game/game_internals/game_rpc_clients/battle_record_client"
 	"server.slg.com/services/game/game_internals/game_rpc_clients/worldmap_client"
 )
 
@@ -24,6 +25,7 @@ func ShutDown() {
 type gameRpcClientMap struct {
 	ctx                 context.Context
 	mu                  sync.RWMutex
-	instance            string                             // 默认 instance（本服），RPC 发现用它对齐
-	worldmapsByInstance map[string]*worldmap_client.Client // instance → worldmap 门面（含默认，懒创建）
+	instance            string                                  // 默认 instance（本服），RPC 发现用它对齐
+	worldmapsByInstance map[string]*worldmap_client.Client      // instance → worldmap 门面（含默认，懒创建）
+	battleRecordsByInst map[string]*battle_record_client.Client // instance → battle_record 门面（战报查询）
 }

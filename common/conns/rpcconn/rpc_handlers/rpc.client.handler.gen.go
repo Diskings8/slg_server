@@ -9,6 +9,7 @@ import (
 	"google.golang.org/grpc"
 
 	pb_battle "server.slg.com/api/protocol/pb/pb_battle"
+	pb_battle_record "server.slg.com/api/protocol/pb/pb_battle_record"
 	pb_game "server.slg.com/api/protocol/pb/pb_game"
 	pb_gateway "server.slg.com/api/protocol/pb/pb_gateway"
 	pb_worldmap "server.slg.com/api/protocol/pb/pb_worldmap"
@@ -19,18 +20,19 @@ import (
 // Each client is lazily initialized on first use via GetXxxClient().
 // nil 表示连接失败，调用方自行判断。
 type ClientHandler struct {
-	mu                    sync.Mutex
-	instance              string
-	conns                 map[common_declarations.NodeService]*grpc.ClientConn
-	closers               []io.Closer
-	dialOptions           []grpc.DialOption
-	battleHandlerClient   pb_battle.BattleHandlerClient
-	gameServiceClient     pb_game.GameServiceClient
-	gameHandlerClient     pb_game.GameHandlerClient
-	gatewayServiceClient  pb_gateway.GatewayServiceClient
-	gatewayHandlerClient  pb_gateway.GatewayHandlerClient
-	worldMapServiceClient pb_worldmap.WorldMapServiceClient
-	worldMapHandlerClient pb_worldmap.WorldMapHandlerClient
+	mu                        sync.Mutex
+	instance                  string
+	conns                     map[common_declarations.NodeService]*grpc.ClientConn
+	closers                   []io.Closer
+	dialOptions               []grpc.DialOption
+	battleHandlerClient       pb_battle.BattleHandlerClient
+	battleRecordHandlerClient pb_battle_record.BattleRecordHandlerClient
+	gameServiceClient         pb_game.GameServiceClient
+	gameHandlerClient         pb_game.GameHandlerClient
+	gatewayServiceClient      pb_gateway.GatewayServiceClient
+	gatewayHandlerClient      pb_gateway.GatewayHandlerClient
+	worldMapServiceClient     pb_worldmap.WorldMapServiceClient
+	worldMapHandlerClient     pb_worldmap.WorldMapHandlerClient
 }
 
 // NewClientHandler creates a ClientHandler bound to the given instance.
@@ -73,6 +75,38 @@ func (ch *ClientHandler) GetBattleHandlerClientWait() pb_battle.BattleHandlerCli
 	}
 	ch.battleHandlerClient = pb_battle.NewBattleHandlerClient(conn)
 	return ch.battleHandlerClient
+}
+
+// GetBattleRecordHandlerClient returns the pb_battle_record.BattleRecordHandlerClient, lazily connecting on first call.
+// 拨号使用内置默认超时。
+func (ch *ClientHandler) GetBattleRecordHandlerClient() pb_battle_record.BattleRecordHandlerClient {
+	ch.mu.Lock()
+	defer ch.mu.Unlock()
+	if ch.battleRecordHandlerClient != nil {
+		return ch.battleRecordHandlerClient
+	}
+	conn, err := ch.dialNodeLocked(common_declarations.NodeBattleRecordService, false)
+	if err != nil {
+		return nil
+	}
+	ch.battleRecordHandlerClient = pb_battle_record.NewBattleRecordHandlerClient(conn)
+	return ch.battleRecordHandlerClient
+}
+
+// GetBattleRecordHandlerClientWait returns the pb_battle_record.BattleRecordHandlerClient, waiting indefinitely for the connection on first call.
+// 拨号阻塞等待就绪（无超时），适用于启动期依赖对方节点就绪的场景。
+func (ch *ClientHandler) GetBattleRecordHandlerClientWait() pb_battle_record.BattleRecordHandlerClient {
+	ch.mu.Lock()
+	defer ch.mu.Unlock()
+	if ch.battleRecordHandlerClient != nil {
+		return ch.battleRecordHandlerClient
+	}
+	conn, err := ch.dialNodeLocked(common_declarations.NodeBattleRecordService, true)
+	if err != nil {
+		return nil
+	}
+	ch.battleRecordHandlerClient = pb_battle_record.NewBattleRecordHandlerClient(conn)
+	return ch.battleRecordHandlerClient
 }
 
 // GetGameServiceClient returns the pb_game.GameServiceClient, lazily connecting on first call.

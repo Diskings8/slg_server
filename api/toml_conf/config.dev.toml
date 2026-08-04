@@ -49,6 +49,9 @@ addr = "127.0.0.1:11001"
 [battle]
 addr = "127.0.0.1:12001"
 
+[battle_record]
+addr = "127.0.0.1:12002"
+
 [worldmap]
 addr = ":50060"
 
@@ -71,3 +74,6 @@ address = ":50060"
 
 [battle-1]
 address = ":50070"
+
+[battle_record-1]
+address = ":50090"

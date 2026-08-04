@@ -17,8 +17,10 @@ func buildBattleSettleReq(mgr *map_managers.MapManager, attacker *marchs.MarchIn
 
 	req := &pb_battle.BattleSettleReq{
 		RoleId:       attacker.GetFromRoleID(),
+		UnionId:      attacker.GetUnionID(),
 		MarchId:      attacker.GetMarchID().Uint64(),
 		MarchType:    int32(attacker.MarchType),
+		MapId:        int32(toMapID),
 		AttackerTeam: attacker.GetTeam().Format2Pb(),
 		DefenderGroups: []*pb_battle.DefenderGroup{
 			{
@@ -58,6 +60,7 @@ func buildDefenderMarchList(infos []*marchs.MarchInfo) []*pb_battle.DefenderMarc
 		list = append(list, &pb_battle.DefenderMarch{
 			MarchId: info.GetMarchID().Uint64(),
 			RoleId:  info.GetFromRoleID(),
+			UnionId: info.GetUnionID(),
 			Team:    info.GetTeam().Format2Pb(),
 		})
 	}

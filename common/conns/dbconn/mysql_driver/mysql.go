@@ -122,3 +122,8 @@ func (m *MysqlDriver) session() *gorm.DB {
 	}
 	return sess
 }
+
+// DB 暴露底层 GORM 实例，供需要完整 GORM 能力（分页/排序/计数）的调用方使用
+func (m *MysqlDriver) DB() *gorm.DB {
+	return m.db
+}

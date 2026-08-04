@@ -1,0 +1,85 @@
+syntax = "proto3";
+package battle_record;
+option go_package = "server.slg.com/api/protocol/pb/pb_battle_record";
+
+import "battle.proto";
+
+// BattleRecordHandler 战斗记录 RPC
+//   - SaveBattleRecord：worldmap 战斗结算后落库
+//   - GetBattleRecord：按战报 ID 查询
+//   - ListBattleRecords：按 tag（角色/联盟/地块）分页查询
+service BattleRecordHandler {
+    rpc SaveBattleRecord(SaveBattleRecordReq) returns (SaveBattleRecordRsp);
+    rpc GetBattleRecord(GetBattleRecordReq) returns (GetBattleRecordRsp);
+    rpc ListBattleRecords(ListBattleRecordsReq) returns (ListBattleRecordsRsp);
+}
+
+// TagType 战报查询维度
+enum TagType {
+    TAG_TYPE_UNKNOWN = 0;
+    TAG_TYPE_ROLE    = 1;  // 角色
+    TAG_TYPE_UNION   = 2;  // 联盟
+    TAG_TYPE_TILE    = 3;  // 地块
+}
+
+// SaveBattleRecordReq 保存战报请求
+message SaveBattleRecordReq {
+    uint64 march_id          = 1;
+    uint64 attacker_role_id  = 2;
+    uint64 attacker_union_id = 3;
+    repeated uint64 defender_role_ids  = 4;  // 可多个防守方
+    repeated uint64 defender_union_ids = 5;
+    int32  map_id            = 6;  // 目标地块
+    int32  march_type        = 7;
+    bool   attacker_win      = 8;
+    bool   is_occupied       = 9;
+    uint64 building_damage   = 10;
+    battle.BattleResults results = 11;  // 完整战报
+    int64  battle_time       = 12;  // 战斗发生时间（unix，0=now）
+}
+
+// SaveBattleRecordRsp 保存战报响应
+message SaveBattleRecordRsp {
+    uint64 record_id = 1;
+}
+
+// GetBattleRecordReq 查询战报请求
+message GetBattleRecordReq {
+    uint64 record_id = 1;
+}
+
+// GetBattleRecordRsp 查询战报响应
+message GetBattleRecordRsp {
+    BattleRecordInfo record = 1;
+}
+
+// BattleRecordInfo 战报信息
+message BattleRecordInfo {
+    uint64 record_id          = 1;
+    uint64 march_id           = 2;
+    uint64 attacker_role_id   = 3;
+    uint64 attacker_union_id  = 4;
+    repeated uint64 defender_role_ids  = 5;
+    repeated uint64 defender_union_ids = 6;
+    int32  map_id             = 7;
+    int32  march_type         = 8;
+    bool   attacker_win       = 9;
+    bool   is_occupied        = 10;
+    uint64 building_damage    = 11;
+    battle.BattleResults results = 12;
+    int64  battle_time        = 13;
+}
+
+// ListBattleRecordsReq 按 tag 分页查询请求
+message ListBattleRecordsReq {
+    TagType tag_type  = 1;
+    uint64  tag_id    = 2;
+    int32   page      = 3;  // 从 1 开始
+    int32   page_size = 4;  // 默认 20，上限 100
+}
+
+// ListBattleRecordsRsp 按 tag 分页查询响应
+message ListBattleRecordsRsp {
+    repeated BattleRecordInfo records = 1;
+    int32 total = 2;  // 总条数
+}

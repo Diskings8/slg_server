@@ -43,6 +43,9 @@ game:
 battle:
   addr: "127.0.0.1:12001"
 
+battle_record:
+  addr: "127.0.0.1:12002"
+
 worldmap:
   addr: ":50060"
 

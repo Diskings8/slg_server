@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"server.slg.com/api/protocol/pb/pb_battle"
+	"server.slg.com/api/protocol/pb/pb_battle_record"
 	"server.slg.com/api/protocol/pb/pb_maps_march"
 	"server.slg.com/api/protocol/pb/pb_redis_stream"
 	"server.slg.com/common/conns/rpcconn/rpc_handlers"
@@ -96,7 +97,67 @@ func (e *Engine) settleBattle(req *pb_battle.BattleSettleReq) (*pb_battle.Battle
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	return cli.BattleSettle(ctx, req)
+	rsp, err := cli.BattleSettle(ctx, req)
+	if err == nil && rsp != nil {
+		// 异步保存战报（fire-and-forget，不阻塞战斗 tick）
+		e.saveBattleRecord(req, rsp)
+	}
+	return rsp, err
+}
+
+// saveBattleRecord 异步保存战报到 battle_record 节点（角色/联盟/地块三维索引）
+func (e *Engine) saveBattleRecord(req *pb_battle.BattleSettleReq, rsp *pb_battle.BattleSettleRsp) {
+	cli := e.battleHub.GetBattleRecordHandlerClient()
+	if cli == nil {
+		loggers.Logger.Warn("battle_record node not connected, skip save")
+		return
+	}
+
+	saveReq := &pb_battle_record.SaveBattleRecordReq{
+		MarchId:         req.GetMarchId(),
+		AttackerRoleId:  req.GetRoleId(),
+		AttackerUnionId: req.GetUnionId(),
+		MapId:           req.GetMapId(),
+		MarchType:       req.GetMarchType(),
+		AttackerWin:     rsp.GetAttackerWin(),
+		IsOccupied:      rsp.GetOccupied(),
+		BuildingDamage:  rsp.GetBuildingDamage(),
+		Results:         rsp.GetResults(),
+		BattleTime:      time.Now().Unix(),
+	}
+
+	// 防守方角色/联盟去重
+	roleSeen := make(map[uint64]struct{})
+	unionSeen := make(map[uint64]struct{})
+	for _, g := range req.GetDefenderGroups() {
+		for _, d := range g.GetMarches() {
+			if d == nil {
+				continue
+			}
+			if d.GetRoleId() > 0 {
+				if _, ok := roleSeen[d.GetRoleId()]; !ok {
+					roleSeen[d.GetRoleId()] = struct{}{}
+					saveReq.DefenderRoleIds = append(saveReq.DefenderRoleIds, d.GetRoleId())
+				}
+			}
+			if d.GetUnionId() > 0 {
+				if _, ok := unionSeen[d.GetUnionId()]; !ok {
+					unionSeen[d.GetUnionId()] = struct{}{}
+					saveReq.DefenderUnionIds = append(saveReq.DefenderUnionIds, d.GetUnionId())
+				}
+			}
+		}
+	}
+
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if _, err := cli.SaveBattleRecord(ctx, saveReq); err != nil {
+			loggers.Logger.Warn("save battle record failed",
+				zap.Uint64("march_id", req.GetMarchId()),
+				zap.Error(err))
+		}
+	}()
 }
 
 // Stop 停止引擎

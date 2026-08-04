@@ -8,10 +8,11 @@ import (
 type NodeService int
 
 const (
-	NodeGameService     NodeService = 10
-	NodeGatewayService  NodeService = 20
-	NodeWorldMapService NodeService = 30
-	NodeBattleService   NodeService = 40
+	NodeGameService           NodeService = 10
+	NodeGatewayService        NodeService = 20
+	NodeWorldMapService       NodeService = 30
+	NodeBattleService         NodeService = 40
+	NodeBattleRecordService   NodeService = 50
 )
 
 type LoaderFunc[M DataI] func(id uint64) (M, error)

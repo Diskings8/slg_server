@@ -20,7 +20,8 @@ enum DefenderGroupType {
 message DefenderMarch {
     uint64 march_id = 1;
     uint64 role_id  = 2;
-    TeamInfo team   = 3;  // 复用 battle.proto
+    TeamInfo team   = 3;   // 复用 battle.proto
+    uint64 union_id = 4;   // 防守方联盟（联盟战报）
 }
 
 // DefenderGroup 一层防守方
@@ -39,6 +40,8 @@ message BattleSettleReq {
     bool   has_building    = 6;  // 目标是否有建筑（区分攻城/PvE）
     uint64 building_hp     = 7;  // 目标建筑当前耐久
     uint32 building_level  = 8;  // 目标建筑等级（信息）
+    uint64 union_id        = 9;  // 攻击方联盟（联盟战报）
+    int32  map_id          = 10; // 目标地块（地块战报）
 }
 
 // DefeatedDefender 被击败（回城）的防守方行军及其战后队伍

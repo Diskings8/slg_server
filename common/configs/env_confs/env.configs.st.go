@@ -106,16 +106,17 @@ type GameConfConfig struct {
 //
 // YAML / TOML 文件结构与此结构体完全一致，可直接反序列化，无格式偏见。
 type Config struct {
-	Common    CommonConfig    `yaml:"common" toml:"common"`
-	DB        DBConfig        `yaml:"db" toml:"db"`
-	Cache     CacheConfig     `yaml:"cache" toml:"cache"`
-	Etcd      EtcdConfig      `yaml:"etcd" toml:"etcd"`
-	Snowflake SnowflakeConfig `yaml:"snowflake" toml:"snowflake"`
-	Gateway   GatewayConfig   `yaml:"gateway" toml:"gateway"`
-	Game      NodeConfig      `yaml:"game" toml:"game"`
-	Battle    NodeConfig      `yaml:"battle" toml:"battle"`
-	Worldmap  NodeConfig      `yaml:"worldmap" toml:"worldmap"`
-	GameConf  GameConfConfig  `yaml:"game_conf" toml:"game_conf"`
+	Common       CommonConfig    `yaml:"common" toml:"common"`
+	DB           DBConfig        `yaml:"db" toml:"db"`
+	Cache        CacheConfig     `yaml:"cache" toml:"cache"`
+	Etcd         EtcdConfig      `yaml:"etcd" toml:"etcd"`
+	Snowflake    SnowflakeConfig `yaml:"snowflake" toml:"snowflake"`
+	Gateway      GatewayConfig   `yaml:"gateway" toml:"gateway"`
+	Game         NodeConfig      `yaml:"game" toml:"game"`
+	Battle       NodeConfig      `yaml:"battle" toml:"battle"`
+	BattleRecord NodeConfig      `yaml:"battle_record" toml:"battle_record"`
+	Worldmap     NodeConfig      `yaml:"worldmap" toml:"worldmap"`
+	GameConf     GameConfConfig  `yaml:"game_conf" toml:"game_conf"`
 
 	// 程序运行时设置，不从配置文件读取
 	NodeType string

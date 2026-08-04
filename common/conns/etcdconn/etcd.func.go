@@ -20,6 +20,8 @@ func GetServiceKeyByNodeType(nodeType common_declarations.NodeService) string {
 		return "/node:service:worldmap/"
 	case common_declarations.NodeBattleService:
 		return "/node:service:battle/"
+	case common_declarations.NodeBattleRecordService:
+		return "/node:service:battle_record/"
 	default:
 		return "/node:service:undef/"
 	}
