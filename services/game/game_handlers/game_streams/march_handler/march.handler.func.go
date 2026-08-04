@@ -21,16 +21,16 @@ func HandlerMarchCreate(ctx context.Context, roleID uint64, req *pb_maps_march.M
 		return rpc_results.Error(pb_error_code.ErrorCode_ParamError, "invalid march params")
 	}
 
-	poller, role, err := game_role_handler.GetRole(roleID)
-	if err != nil {
-		return rpc_results.Error(pb_error_code.ErrorCode_RoleNotFound, fmt.Sprintf("get role failed: %s", err.DevMsg()))
-	}
-	defer poller.Release()
-
-	// 构造出征队伍（英雄快照 + 士兵）
-	teamSlots, result := game_logics.MarchBuildTeam(role, req)
+	// 只读（MarchBuildTeam 只取编队+英雄快照，不修改角色）：免锁快照，无需 Release
+	role, result := game_role_handler.GetCopy(roleID)
 	if result != nil {
 		return result
+	}
+
+	// 构造出征队伍（英雄快照 + 士兵）
+	teamSlots, marchResult := game_logics.MarchBuildTeam(role, req)
+	if marchResult != nil {
+		return marchResult
 	}
 
 	// 调用 worldmap 创建行军

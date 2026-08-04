@@ -39,11 +39,11 @@ func HandlerBuildingBuild(ctx context.Context, roleID uint64, req *pb_city.Build
 
 // HandlerBuildingList 查询建筑列表 (1000012)
 func HandlerBuildingList(ctx context.Context, roleID uint64, req *pb_city.BuildingListReq, resp *pb_city.BuildingListResp) rpc_results.ResultI {
-	poller, role, err := game_role_handler.GetRole(roleID)
-	if err != nil {
-		return err
+	// 只读：免锁快照，无需 Release
+	role, result := game_role_handler.GetCopy(roleID)
+	if result != nil {
+		return result
 	}
-	defer poller.Release()
 
 	resp.Buildings = game_logics.BuildingListPb(role)
 	return nil

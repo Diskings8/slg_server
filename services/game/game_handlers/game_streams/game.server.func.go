@@ -9,7 +9,6 @@ import (
 	"server.slg.com/api/protocol/pb/pb_game"
 	"server.slg.com/api/protocol/pb/pb_protocol"
 	"server.slg.com/common/loggers"
-	"server.slg.com/services/game/game_entitys/game_role_handler"
 	"server.slg.com/services/game/game_entitys/game_roles"
 	"server.slg.com/services/game/game_handlers"
 	"server.slg.com/services/game/game_internals/game_rpc_clients"
@@ -53,12 +52,9 @@ func (gs *GameStream) Recv(stream grpc.ServerStream) error {
 		}
 	}
 
-	rolePoller, _, err := game_role_handler.GetRole(roleID)
-	if err != nil {
-		return gate_stream.GateCallBackFail(roleID, msgID, err.Code(), err.DevMsg())
-	}
-	defer rolePoller.Release()
-
+	// 角色加载/锁由各 handler 自行负责：
+	//   - 写 handler 用 GetRole（持锁改数据 + Save 打脏）
+	//   - 只读 handler 用 GetCopy（免锁快照，无需 Release）
 	resp := proto.Clone(handler.Resp)
 	if result := handler.F(stream.Context(), roleID, reqPB, resp); result != nil {
 		return gate_stream.GateCallBackFail(roleID, msgID, result.Code(), result.DevMsg())

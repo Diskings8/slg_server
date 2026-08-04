@@ -54,11 +54,11 @@ func HandlerFormationRemove(ctx context.Context, roleID uint64, req *pb_maps_mar
 
 // HandlerFormationList 查询编队 (1000010)；city_id 可选，0 = 全部建筑
 func HandlerFormationList(ctx context.Context, roleID uint64, req *pb_maps_march.FormationListReq, resp *pb_maps_march.FormationListResp) rpc_results.ResultI {
-	poller, role, err := game_role_handler.GetRole(roleID)
-	if err != nil {
-		return err
+	// 只读：免锁快照，无需 Release
+	role, result := game_role_handler.GetCopy(roleID)
+	if result != nil {
+		return result
 	}
-	defer poller.Release()
 
 	resp.Formations = game_logics.FormationListPb(role, req.GetCityId())
 	return nil
