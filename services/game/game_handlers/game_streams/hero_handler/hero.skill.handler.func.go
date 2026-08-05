@@ -14,7 +14,7 @@ import (
 
 // HandlerHeroSkillCollectionActivate 技能收藏激活 (1000019)
 //
-// 消耗配置指定道具推进收集进度，全部达标解锁对应技能。
+// 消耗客户端选定的一张英雄卡推进收集进度，全部达标解锁对应技能并发放到技能库。
 func HandlerHeroSkillCollectionActivate(ctx context.Context, roleID uint64, req *pb_skill.SkillCollectionActivateReq, resp *pb_skill.SkillCollectionActivateResp) rpc_results.ResultI {
 	poller, role, err := game_role_handler.GetRole(roleID)
 	if err != nil {
@@ -22,11 +22,11 @@ func HandlerHeroSkillCollectionActivate(ctx context.Context, roleID uint64, req 
 	}
 	defer poller.Release()
 
-	if req.GetSkillConfId() <= 0 || req.GetItemConfId() <= 0 || req.GetCount() <= 0 {
+	if req.GetSkillConfId() <= 0 || req.GetHeroId() <= 0 {
 		return rpc_results.Error(pb_error_code.ErrorCode_ParamError, "invalid params")
 	}
 
-	if logicErr := game_logics.SkillCollectionActivate(role, req.GetSkillConfId(), req.GetItemConfId(), req.GetCount()); logicErr != nil {
+	if logicErr := game_logics.SkillCollectionActivate(role, req.GetSkillConfId(), req.GetHeroId()); logicErr != nil {
 		return skillLogicError(logicErr)
 	}
 

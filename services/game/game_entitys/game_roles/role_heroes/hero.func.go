@@ -104,7 +104,7 @@ func (hrs *RoleHeroes) AddHero(heroConfID int32) *RoleHero {
 	}
 	one := NewRoleHero(modelOne)
 	hrs.List = append(hrs.List, modelOne)
-	hrs.Mem.Store(pb_confs.ItemID(modelOne.ID), one)
+	hrs.Mem.Store(modelOne.ID, one) // Mem 键为 uint64（雪花ID），与 Init/GetHero/RemoveHero 一致，勿转 int32
 	return one
 }
 

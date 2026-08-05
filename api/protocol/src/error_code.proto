@@ -35,8 +35,8 @@ enum ErrorCode {
     // ── 技能收藏 (50~) ──
     SkillCollectionConfNotFound = 50;  // 收藏配置不存在
     SkillCollectionUnlocked     = 51;  // 收藏已解锁
-    SkillCollectionItemInvalid  = 52;  // 消耗道具非收藏所需
-    SkillCollectionItemFull     = 53;  // 该道具已收集满
+    SkillCollectionHeroInvalid  = 52;  // 消耗英雄非收藏所需
+    SkillCollectionHeroFull     = 53;  // 该英雄已收集满
 
     // ── 抽卡 (60~) ──
     RecruitPoolNotFound     = 60;  // 抽卡池不存在

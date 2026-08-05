@@ -9,21 +9,18 @@ enum MsgID {
     Common_Auth = 11;
 
     // ---------------- Game 业务协议 (1000001~) ----------------//
-    GameHeroList         = 1000001;  // 获取英雄列表
-    GameHeroUpgradeLevel = 1000002;  // 英雄升级
-    GameHeroCultivate    = 1000003;  // 英雄培养(5维属性)
-    GameHeroSkillUpgrade = 1000004;  // 英雄技能升级
-
-    GameUseItem     = 1000005;  // 使用道具
-    GameMarchCreate = 1000006;  // 出征创建行军
-    GameMapData     = 1000007;  // 查询视野地图数据
-
-    GameFormationField  = 1000008;  // 上阵英雄到编队
-    GameFormationRemove = 1000009;  // 下阵英雄
-    GameFormationList   = 1000010;  // 查询编队
-    GameBuildingBuild   = 1000011;  // 建造建筑
-    GameBuildingList    = 1000012;  // 查询建筑
-
+    GameHeroList                    = 1000001;  // 获取英雄列表
+    GameHeroUpgradeLevel            = 1000002;  // 英雄升级
+    GameHeroCultivate               = 1000003;  // 英雄培养(5维属性)
+    GameHeroSkillUpgrade            = 1000004;  // 英雄技能升级
+    GameUseItem                     = 1000005;  // 使用道具
+    GameMarchCreate                 = 1000006;  // 出征创建行军
+    GameMapData                     = 1000007;  // 查询视野地图数据
+    GameFormationField              = 1000008;  // 上阵英雄到编队
+    GameFormationRemove             = 1000009;  // 下阵英雄
+    GameFormationList               = 1000010;  // 查询编队
+    GameBuildingBuild               = 1000011;  // 建造建筑
+    GameBuildingList                = 1000012;  // 查询建筑
     GameHeroTroopTransform          = 1000013;  // 英雄兵种转化
     GameHeroTroopUnlock             = 1000014;  // 英雄兵种扩展
     GameBattleRecordList            = 1000015;  // 查询战报

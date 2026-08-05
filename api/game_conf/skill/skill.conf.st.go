@@ -11,10 +11,13 @@ type SkillConf struct {
 	UpgradeCost common_declarations.ItemUse // 单次升级消耗（ItemType 默认 0=Normal）
 }
 
-// SkillCollectionConf 技能收藏配置（分次收集，所需道具列表）
+// SkillCollectionConf 技能收藏配置（分次收集，所需英雄卡列表）
+//
+// 消耗英雄卡推进收集进度，全部达标解锁对应技能。
+// NeedHeroes 的 ItemID = 英雄配置ID（与 gacha 掉落/升星消耗同源）。
 type SkillCollectionConf struct {
 	SkillConfID int32
-	NeedItems   []common_declarations.ItemUse // 所需道具（ItemID + 所需数量）
+	NeedHeroes  []common_declarations.ItemUse // 所需英雄卡（ItemID=英雄配置ID + 所需数量）
 }
 
 // Conf 技能配置聚合
@@ -41,12 +44,12 @@ func New() *Conf {
 			{ConfID: 103, MaxLevel: 5, UseLimit: 1, UpgradeCost: common_declarations.ItemUse{ItemID: 2002, Count: 1}},
 		},
 		collectionConfs: map[int32]SkillCollectionConf{
-			101: {SkillConfID: 101, NeedItems: []common_declarations.ItemUse{
-				{ItemID: 2001, Count: 5},
-				{ItemID: 2002, Count: 3},
+			101: {SkillConfID: 101, NeedHeroes: []common_declarations.ItemUse{
+				{ItemID: 1, Count: 5},
+				{ItemID: 2, Count: 3},
 			}},
-			102: {SkillConfID: 102, NeedItems: []common_declarations.ItemUse{
-				{ItemID: 2001, Count: 10},
+			102: {SkillConfID: 102, NeedHeroes: []common_declarations.ItemUse{
+				{ItemID: 1, Count: 10},
 			}},
 		},
 		SlotDefault:   0,

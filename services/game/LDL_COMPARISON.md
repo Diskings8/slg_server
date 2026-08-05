@@ -1,7 +1,7 @@
 # Game 服务对标分析: ldl vs ai4slg
 
 > 生成日期: 2026-07-28  
-> 更新日期: 2026-08-04  
+> 更新日期: 2026-08-05  
 > ldl 路径: `C:\workspace\ldl\server\services\game` (1251 文件, 成熟产品)  
 > ai4slg 路径: `C:\workspace\a4s\slg_server\services\game` (85 文件, 快速建设中)
 
@@ -55,7 +55,7 @@ rpcclient/              ← →  game_internals/game_rpc_clients/ ✅ 按 instan
 | **`Items`** | **物品(背包)** | ✅ **已完成** (含一级/二级货币) |
 | `Privileges` | 特权(月卡/周卡/VIP) | ❌ |
 | `Race` | 军备竞赛 | ❌ |
-| `Recruit` | 招募 | ❌ |
+| **`Recruit`** | **招募** | ✅ **已完成** (role_recruits + 抽卡池/单抽十连/心愿 3 协议) |
 | `RoleUnion` | 联盟信息 | ❌ |
 | `ShopDailyDeal` | 商城:每日特惠 | ❌ |
 | `ShopDailyMustHave` | 商城:每日必买 | ❌ |
@@ -83,10 +83,11 @@ func (r *Role) New() {
 	r.Items = role_items.NewRoleItems(roleID)                  // ✅
 	r.Buildings = role_buildings.NewRoleBuildings(roleID)      // ✅
 	r.Formations = role_formations.NewRoleFormations(roleID)   // ✅
+	r.Recruits = role_recruits.NewRoleRecruits(roleID)          // ✅
 }
 ```
 
-**子模块差距: ldl 24 个 vs ai4slg 7 个** (Builds/Teams 两个核心战斗前置已补上；Attr/Equips/Recruit 等未开始)
+**子模块差距: ldl 24 个 vs ai4slg 8 个** (Builds/Teams/Recruit 已补上；Attr/Equips 等未开始)
 
 ---
 
@@ -255,11 +256,11 @@ func (r *Role) New() {
 ### 主要缺失:
 
 1. ❌ Attr 角色属性系统 (资源/VIP/ServerID 硬编码)
-2. ❌ 道具使用效果 (HandlerUseItem 的 TODO: 只扣道具无效果)
+2. ✅ 道具使用效果 (ApplyItemEffect 已实现: 经验/货币/道具三类效果 + 前置校验)
 3. ❌ 英雄升级接配置表+消耗 (needExp 占位公式)
-4. ❌ 技能获得途径 (hero_skills 无获得方式; 技能从哪来未定)
-5. ❌ 英雄锁/治疗 (IsLocked 状态管理)
-6. ❌ 技能收藏激活 (SkillCollection 加成未生效)
+4. ✅ 技能获得途径 (收藏兑换: 消耗英雄卡 → 收集进度 → 达标发放技能到技能库)
+5. 🟡 英雄锁/治疗 (HeroLock/Unlock 已实现，治疗未做)
+6. ✅ 技能收藏激活 (收藏兑换消耗客户端选定英雄卡，解锁即发放技能，可装配)
 7. ❌ 战力/属性计算与缓存
 8. ❌ 战斗结果回调处理
 9. ❌ 配置表系统 (仅占位; needExp/技能/升级消耗等硬编码)
@@ -292,11 +293,11 @@ Phase 2 的 8 个子任务（含实际调整），标注 **08-04 实际进度**:
 |------|------|------|
 | **2.1** | **英雄升级** — 接入配置表 + 消耗道具 | 🟡 `HeroAddExp` 已实现，`needExp` 占位公式、未扣消耗 |
 | **2.2** | **英雄培养** — 5维属性消耗属性点 | ✅ 完成 |
-| **2.3** | **道具使用效果** — 使用道具加经验/加属性 | 🟡 HandlerUseItem TODO 只扣道具无效果 |
+| **2.3** | **道具使用效果** — 使用道具加经验/加属性 | ✅ ApplyItemEffect 已实现（经验/货币/道具三类效果） |
 | **2.4** | **技能系统** — 技能槽/装配/拆卸/升级 | ✅ 完成 |
 | **2.5** | **英雄升星** — 消耗同配置英雄卡（替代合成） | ✅ 完成 |
-| **2.6** | **英雄锁/治疗** — IsLocked 状态管理 | ❌ |
-| **2.7** | **技能收藏激活** — 收藏加成生效 | ❌ |
+| **2.6** | **英雄锁/治疗** — IsLocked 状态管理 | 🟡 英雄锁已实现（HeroLock/Unlock），治疗未做 |
+| **2.7** | **技能收藏激活** — 收藏兑换消耗英雄卡 | ✅ 消耗客户端选定英雄卡 → 达标解锁并发放技能（08-05） |
 | **2.8** | **货币兑换** — 一级→二级 | ❌ |
 
 ### Phase 3 前置工作状态 (08-04):
@@ -315,13 +316,13 @@ Phase 2 的 8 个子任务（含实际调整），标注 **08-04 实际进度**:
 1. **Phase 1 完成** (≈100%) — DB→Entity→Role→gRPC 全链路已通
 2. **08-04 大爆发**: 技能系统（槽/装配/拆卸/升级）、英雄升星、货币类型 3 大块完成，协议 16 → 20，测试 4 文件
 3. **基础设施修复 4 项**: Recv 双重加锁、道具 Save 遗漏、rpc_results.Reset panic、ItemChange 成功误报
-4. **当前主线 Phase 2** — 剩余项中，**2.3 道具使用效果** 是性价比最高的下一步（位置已留、衔接 ItemChange/货币/技能链路）
+4. **当前主线 Phase 2** — 2.3 道具使用效果、2.6 英雄锁、2.7 技能收藏兑换（消耗英雄卡→发放技能）均已完成；剩余 **2.8 货币兑换** / **2.1 接配置表**
 5. **配置表是隐藏前置** — 2.1/2.3 及技能数值最终都依赖配置表系统
 6. **Attr 属性系统** — 硬编码方法待替换，优先级可延后到养成链路跑通
 
-### 👉 下一步建议: 2.3 道具使用效果
+### 👉 下一步建议: 2.8 货币兑换
 
 | 内容 | 理由 |
 |------|------|
-| **2.3 道具使用效果** | `HandlerUseItem` 挂着 TODO（只扣道具无效果）；使用"经验道具"加英雄经验（`HeroAddExp`）、资源包加货币（`ItemChange` 已支持货币类型），衔接刚完成的链路 |
-| 备选 | 配置表系统（2.1/2.3 数值前置） |
+| **2.8 货币兑换** | 一级→二级兑换未做；`ItemChange` 已支持货币类型，链路就绪 |
+| 备选 | **2.1 英雄升级接配置表**（配置表系统是隐藏前置，2.1/技能数值依赖） |
