@@ -243,13 +243,14 @@ func (e *Engine) OnMarchArrived(marchInfo *marchs.MarchInfo) {
 	}
 
 	publishMarchEvent(e.ctx, &pb_redis_stream.MarchEvent{
-		Type:      eventType,
-		MarchId:   marchInfo.GetMarchID().Uint64(),
-		RoleId:    marchInfo.GetFromRoleID(),
-		ToMapId:   toMapID.Int32(),
-		MarchType: int32(marchInfo.MarchType),
-		State:     int32(marchInfo.MarchState),
-		Ts:        time.Now().Unix(),
+		Type:         eventType,
+		MarchId:      marchInfo.GetMarchID().Uint64(),
+		RoleId:       marchInfo.GetFromRoleID(),
+		ToMapId:      toMapID.Int32(),
+		MarchType:    int32(marchInfo.MarchType),
+		State:        int32(marchInfo.MarchState),
+		Ts:           time.Now().Unix(),
+		BattleResult: marchInfo.BattleResult, // 攻击行军携带战果（英雄经验）回传 game
 	})
 }
 

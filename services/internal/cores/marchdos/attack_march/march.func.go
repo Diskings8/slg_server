@@ -87,6 +87,9 @@ func New(mm *map_managers.MapManager, marchInfo *marchs.MarchInfo) cores_declara
 			return
 		}
 
+		// 战果挂到行军信息，到达事件发布时随 MarchEvent 回传 game（发放英雄经验）
+		info.BattleResult = buildMarchBattleResult(battleRsp)
+
 		pushBattleResult(mgr, info, battleRsp.GetAttackerWin())
 		triggerBattleEvents(mgr, info)
 	})

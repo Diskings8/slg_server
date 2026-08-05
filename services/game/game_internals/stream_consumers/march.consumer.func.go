@@ -6,6 +6,8 @@ import (
 	"server.slg.com/api/protocol/pb/pb_redis_stream"
 	"server.slg.com/common/loggers"
 	"server.slg.com/common/redisstream"
+	"server.slg.com/services/game/game_entitys/game_roles"
+	"server.slg.com/services/game/game_logics"
 
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
@@ -32,7 +34,8 @@ func handleMessage(_ context.Context, msg redisstream.Message) error {
 			zap.Uint64("role_id", ev.RoleId),
 			zap.Int32("to_map_id", ev.ToMapId),
 			zap.Int32("march_type", ev.MarchType))
-		// TODO: 处理行军到达（战斗结算、采集开始等）
+		// 战斗经验发放：攻击行军 ARRIVED 携带 battle_result（每英雄总经验）
+		handleBattleExp(&ev)
 
 	case pb_redis_stream.MarchEventType_MARCH_EVENT_BACKARRIVED:
 		loggers.Logger.Info("march back arrived event",
@@ -53,4 +56,34 @@ func handleMessage(_ context.Context, msg redisstream.Message) error {
 	}
 
 	return nil
+}
+
+// handleBattleExp 战斗经验发放：消费 MarchEvent.battle_result，给参战英雄累加经验（HeroAddExp 内部判升级）。
+//
+// 英雄不存在（非本服/已删除）跳过；至少发放成功一个才 Save 打脏。
+func handleBattleExp(ev *pb_redis_stream.MarchEvent) {
+	result := ev.GetBattleResult()
+	if result == nil || len(result.GetHeroExp()) == 0 {
+		return
+	}
+
+	poller, role, err := game_roles.GetRole(ev.GetRoleId())
+	if err != nil {
+		return
+	}
+	defer poller.Release()
+
+	granted := false
+	for _, item := range result.GetHeroExp() {
+		hero := role.GetHeroes().GetHero(item.GetHeroId())
+		if hero == nil {
+			continue
+		}
+		if _, lerr := game_logics.HeroAddExp(hero, item.GetExp()); lerr == nil {
+			granted = true
+		}
+	}
+	if granted {
+		poller.Save()
+	}
 }

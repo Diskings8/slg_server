@@ -456,7 +456,7 @@ type FormationFieldReq struct {
 
 	CityId      uint64 `protobuf:"varint,1,opt,name=city_id,json=cityId,proto3" json:"city_id,omitempty"`                // 上阵所在城市ID
 	FormationId uint64 `protobuf:"varint,2,opt,name=formation_id,json=formationId,proto3" json:"formation_id,omitempty"` // 队列ID（引用已分配队列）
-	SlotPos     uint32 `protobuf:"varint,3,opt,name=slot_pos,json=slotPos,proto3" json:"slot_pos,omitempty"`             // 队列内位置（第几槽位，1 起）
+	SlotPos     uint32 `protobuf:"varint,3,opt,name=slot_pos,json=slotPos,proto3" json:"slot_pos,omitempty"`             // 队列内位置（0 起：0=大营，1=1号位，2=2号位，上限 3）
 	HeroId      uint64 `protobuf:"varint,4,opt,name=hero_id,json=heroId,proto3" json:"hero_id,omitempty"`                // 英雄ID
 	SoldierNum  uint32 `protobuf:"varint,5,opt,name=soldier_num,json=soldierNum,proto3" json:"soldier_num,omitempty"`    // 携带士兵数
 }
@@ -579,7 +579,7 @@ type FormationRemoveReq struct {
 
 	CityId      uint64 `protobuf:"varint,1,opt,name=city_id,json=cityId,proto3" json:"city_id,omitempty"`                // 所属城市ID
 	FormationId uint64 `protobuf:"varint,2,opt,name=formation_id,json=formationId,proto3" json:"formation_id,omitempty"` // 队列ID
-	SlotPos     uint32 `protobuf:"varint,3,opt,name=slot_pos,json=slotPos,proto3" json:"slot_pos,omitempty"`             // 队列内位置（1 起）
+	SlotPos     uint32 `protobuf:"varint,3,opt,name=slot_pos,json=slotPos,proto3" json:"slot_pos,omitempty"`             // 队列内位置（0 起：0=大营，1=1号位，2=2号位）
 }
 
 func (x *FormationRemoveReq) Reset() {

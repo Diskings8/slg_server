@@ -56,6 +56,29 @@ func TestHeroAddExp_AttrPointAt10(t *testing.T) {
 	}
 }
 
+// TestHeroAddExp_RefreshCurVal 升级后 cur_val 按新等级刷新（battle 快照用）
+func TestHeroAddExp_RefreshCurVal(t *testing.T) {
+	hero := game_roles.NewTest(50001).GetHeroes().AddHero(1)
+	// 创建即初始化：lv1 → cur_val = 基础属性（攻100 拆20）
+	if got := hero.Cultivates[0].GetCurVal(); got != 100 {
+		t.Errorf("lv1 attack cur_val = %d, want 100", got)
+	}
+	if got := hero.Cultivates[4].GetCurVal(); got != 20 {
+		t.Errorf("lv1 relocation cur_val = %d, want 20", got)
+	}
+
+	if _, err := HeroAddExp(hero, 300); err != nil { // level1→3
+		t.Fatalf("HeroAddExp failed: %v", err)
+	}
+	// level3 → base + growth×2：攻120 拆24
+	if got := hero.Cultivates[0].GetCurVal(); got != 120 {
+		t.Errorf("lv3 attack cur_val = %d, want 120", got)
+	}
+	if got := hero.Cultivates[4].GetCurVal(); got != 24 {
+		t.Errorf("lv3 relocation cur_val = %d, want 24", got)
+	}
+}
+
 // TestHeroAddExp_MaxLevel 满级后多余经验不触发升级（经验累计但不升级）
 func TestHeroAddExp_MaxLevel(t *testing.T) {
 	hero := game_roles.NewTest(50001).GetHeroes().AddHero(1)

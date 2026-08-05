@@ -7,7 +7,7 @@ import (
 	"server.slg.com/api/protocol/pb/pb_error_code"
 	"server.slg.com/api/protocol/pb/pb_recruit"
 	"server.slg.com/common/conns/rpcconn/rpc_results"
-	"server.slg.com/services/game/game_entitys/game_role_handler"
+	"server.slg.com/services/game/game_entitys/game_roles"
 	"server.slg.com/services/game/game_logics"
 )
 
@@ -15,7 +15,7 @@ import (
 //
 // 只读：免锁快照，无需 Release。
 func HandlerRecruitPoolsInfo(ctx context.Context, roleID uint64, req *pb_recruit.RecruitPoolsInfoReq, resp *pb_recruit.RecruitPoolsInfoResp) rpc_results.ResultI {
-	role, result := game_role_handler.GetCopy(roleID)
+	role, result := game_roles.GetCopy(roleID)
 	if result != nil {
 		return result
 	}
@@ -28,7 +28,7 @@ func HandlerRecruitPoolsInfo(ctx context.Context, roleID uint64, req *pb_recruit
 //
 // 消耗顺序：每日免费 → 抽卡券 → 金币。产出英雄卡/道具，返回最新池状态。
 func HandlerRecruit(ctx context.Context, roleID uint64, req *pb_recruit.RecruitReq, resp *pb_recruit.RecruitResp) rpc_results.ResultI {
-	poller, role, err := game_role_handler.GetRole(roleID)
+	poller, role, err := game_roles.GetRole(roleID)
 	if err != nil {
 		return err
 	}
@@ -52,7 +52,7 @@ func HandlerRecruit(ctx context.Context, roleID uint64, req *pb_recruit.RecruitR
 
 // HandlerRecruitSetWish 设置心愿英雄 (1000022)
 func HandlerRecruitSetWish(ctx context.Context, roleID uint64, req *pb_recruit.RecruitSetWishReq, resp *pb_recruit.RecruitSetWishResp) rpc_results.ResultI {
-	poller, role, err := game_role_handler.GetRole(roleID)
+	poller, role, err := game_roles.GetRole(roleID)
 	if err != nil {
 		return err
 	}
@@ -78,7 +78,7 @@ func HandlerRecruitSetWish(ctx context.Context, roleID uint64, req *pb_recruit.R
 
 // HandlerRecruitDrawWish 领取心愿英雄卡 (1000023)
 func HandlerRecruitDrawWish(ctx context.Context, roleID uint64, req *pb_recruit.RecruitDrawWishReq, resp *pb_recruit.RecruitDrawWishResp) rpc_results.ResultI {
-	poller, role, err := game_role_handler.GetRole(roleID)
+	poller, role, err := game_roles.GetRole(roleID)
 	if err != nil {
 		return err
 	}

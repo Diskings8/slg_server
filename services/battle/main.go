@@ -19,6 +19,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
+	"server.slg.com/api/game_conf"
 	"server.slg.com/api/protocol/pb/pb_battle"
 	"server.slg.com/common/common_declarations"
 	"server.slg.com/common/configs"
@@ -48,6 +49,11 @@ func main() {
 	// 通用配置（DB/Redis/Etcd）统一加载
 	common_configs.LoadByFormat(cfgFormat, vgc.GetEnvPath())
 	loggers.Init()
+
+	// 战斗配置（战斗规则 + 技能表）加载，供战斗结算使用；不加载英雄属性表/道具等通用配置
+	if err := game_conf.InitBattle(); err != nil {
+		loggers.Logger.Error("battle config init failed", zap.Error(err))
+	}
 
 	// 节点地址优先取命令行，否则从配置读取（slg.dev.yaml 的 battle.addr）
 	if rpcAddr == "" {

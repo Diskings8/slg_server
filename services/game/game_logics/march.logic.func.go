@@ -1,6 +1,7 @@
 package game_logics
 
 import (
+	"server.slg.com/api/game_conf"
 	"server.slg.com/api/protocol/pb/pb_battle"
 	"server.slg.com/api/protocol/pb/pb_error_code"
 	"server.slg.com/api/protocol/pb/pb_maps_march"
@@ -31,11 +32,13 @@ func MarchBuildTeam(role *game_roles.Role, req *pb_maps_march.MarchCreateReq) ([
 
 		soldierNum := hs.GetSoldierNum()
 		teamSlots = append(teamSlots, &pb_battle.TeamSlotInfo{
-			SlotId:        int32(i + 1),
+			SlotId:        int32(i), // 0 基：0=大营，1=1号位，2=2号位
+			HeroId:        hs.GetHeroId(),
 			HeroInfo:      hero.Format2Pb(),
 			MaxSoldierNum: soldierNum,
 			CurAliveNum:   soldierNum,
 			CurInjuredNum: 0,
+			AttackRange:   attackRangeOf(hero.GetHeroConfID()),
 		})
 	}
 
@@ -43,4 +46,12 @@ func MarchBuildTeam(role *game_roles.Role, req *pb_maps_march.MarchCreateReq) ([
 		return nil, rpc_results.Error(pb_error_code.ErrorCode_ParamError, "no valid hero slot")
 	}
 	return teamSlots, nil
+}
+
+// attackRangeOf 英雄攻击距离（读 hero 配置；未配置按 0 = 无法攻击到目标，由配置保证填写）
+func attackRangeOf(confID int32) uint32 {
+	if hc, ok := game_conf.Load().Hero.HeroConf(confID); ok {
+		return hc.AttackRange
+	}
+	return 0
 }

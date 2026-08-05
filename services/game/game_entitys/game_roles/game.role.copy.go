@@ -8,7 +8,7 @@ import (
 
 // Copy 拷贝角色数据，返回副本
 func (r *Role) Copy(rw *sync.RWMutex) common_declarations.DataI {
-	v := Get()
+	v := get()
 	v.ID = r.ID
 	v.src = r
 	v.copyLock = rw

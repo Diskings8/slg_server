@@ -5,6 +5,7 @@ import (
 	"os"
 	"sync"
 
+	"server.slg.com/api/game_conf/battle"
 	"server.slg.com/api/game_conf/gacha"
 	"server.slg.com/api/game_conf/hero"
 	"server.slg.com/api/game_conf/item"
@@ -20,11 +21,12 @@ type GameConf struct {
 	filePath string
 
 	// ── Go 内嵌配置（功能子目录，InitDefault 加载） ──
-	Hero  *hero.Conf
-	Skill *skill.Conf
-	Item  *item.Conf
-	Troop *troop.Conf
-	Gacha *gacha.Conf
+	Battle *battle.Conf // 战斗规则（battle 节点加载）
+	Hero   *hero.Conf
+	Skill  *skill.Conf
+	Item   *item.Conf
+	Troop  *troop.Conf
+	Gacha  *gacha.Conf
 }
 
 // AllConfigs 全部配置

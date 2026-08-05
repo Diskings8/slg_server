@@ -77,10 +77,10 @@ func FormationListPb(role *game_roles.Role, cityID uint64) []*pb_maps_march.Form
 
 //-------------------------------
 
-// setHeroSlot 在 slotPos(1起) 位置设置英雄；越界（超过 maxFormationSlots）返回 nil。
-// 槽位是固定位置模型：中间空位用 nil 占位，位置不位移。
+// setHeroSlot 在 slotPos(0起) 位置设置英雄；越界（>= maxFormationSlots）返回 nil。
+// 0=大营，1=1号位，2=2号位。槽位是固定位置模型：中间空位用 nil 占位，位置不位移。
 func setHeroSlot(slots []*pb_maps_march.HeroSlot, slotPos int, heroID uint64, soldierNum uint32) []*pb_maps_march.HeroSlot {
-	pos := slotPos - 1
+	pos := slotPos
 	if pos < 0 || pos >= maxFormationSlots {
 		return nil
 	}
@@ -91,9 +91,9 @@ func setHeroSlot(slots []*pb_maps_march.HeroSlot, slotPos int, heroID uint64, so
 	return slots
 }
 
-// removeHeroSlotAt 清空 slotPos(1起) 位置的英雄（保持位置不变）
+// removeHeroSlotAt 清空 slotPos(0起) 位置的英雄（保持位置不变）
 func removeHeroSlotAt(slots []*pb_maps_march.HeroSlot, slotPos int) []*pb_maps_march.HeroSlot {
-	pos := slotPos - 1
+	pos := slotPos
 	if pos >= 0 && pos < len(slots) {
 		slots[pos] = nil
 	}

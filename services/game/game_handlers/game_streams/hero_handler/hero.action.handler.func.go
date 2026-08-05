@@ -7,7 +7,7 @@ import (
 	"server.slg.com/api/protocol/pb/pb_error_code"
 	"server.slg.com/api/protocol/pb/pb_hero"
 	"server.slg.com/common/conns/rpcconn/rpc_results"
-	"server.slg.com/services/game/game_entitys/game_role_handler"
+	"server.slg.com/services/game/game_entitys/game_roles"
 	"server.slg.com/services/game/game_logics"
 )
 
@@ -15,7 +15,7 @@ import (
 //
 // 消耗 1 点自由属性点，给指定属性（除拆迁值外）加 1 点。
 func HandlerHeroCultivate(ctx context.Context, roleID uint64, req *pb_hero.HeroCultivateReq, resp *pb_hero.HeroCultivateResp) rpc_results.ResultI {
-	poller, role, err := game_role_handler.GetRole(roleID)
+	poller, role, err := game_roles.GetRole(roleID)
 	if err != nil {
 		return err
 	}
@@ -44,7 +44,7 @@ func HandlerHeroCultivate(ctx context.Context, roleID uint64, req *pb_hero.HeroC
 //
 // 消耗一张同配置英雄卡升 1 星，星级上限常量配置，被消耗卡配置记录进养成消耗记录。
 func HandlerHeroUpgradeStar(ctx context.Context, roleID uint64, req *pb_hero.HeroUpgradeStarReq, resp *pb_hero.HeroUpgradeStarResp) rpc_results.ResultI {
-	poller, role, err := game_role_handler.GetRole(roleID)
+	poller, role, err := game_roles.GetRole(roleID)
 	if err != nil {
 		return err
 	}
@@ -72,7 +72,7 @@ func HandlerHeroUpgradeStar(ctx context.Context, roleID uint64, req *pb_hero.Her
 //
 // 锁定后英雄不可被消耗（如作为升星消耗卡）。
 func HandlerHeroLock(ctx context.Context, roleID uint64, req *pb_hero.HeroLockReq, resp *pb_hero.HeroLockResp) rpc_results.ResultI {
-	poller, role, err := game_role_handler.GetRole(roleID)
+	poller, role, err := game_roles.GetRole(roleID)
 	if err != nil {
 		return err
 	}
@@ -92,7 +92,7 @@ func HandlerHeroLock(ctx context.Context, roleID uint64, req *pb_hero.HeroLockRe
 
 // HandlerHeroUnlock 解锁英雄 (1000021)
 func HandlerHeroUnlock(ctx context.Context, roleID uint64, req *pb_hero.HeroUnlockReq, resp *pb_hero.HeroUnlockResp) rpc_results.ResultI {
-	poller, role, err := game_role_handler.GetRole(roleID)
+	poller, role, err := game_roles.GetRole(roleID)
 	if err != nil {
 		return err
 	}

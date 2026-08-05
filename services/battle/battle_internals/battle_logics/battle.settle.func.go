@@ -15,13 +15,13 @@ func Settle(req *pb_battle.BattleSettleReq) *pb_battle.BattleSettleRsp {
 	attackerSlots := cloneSlots(req.GetAttackerTeam().GetSlotInfo())
 	results := &pb_battle.BattleResults{}
 
-	// 1. PvP 分层（assist → stay/idle）
-	defeated, attackerDefeated := resolveDefendersLayers(req, attackerSlots, results)
+	// 1. 车轮战 PvP（assist → stay/idle，逐场）
+	defeated, attackerStopped := resolveDefendersLayers(req, attackerSlots, results)
 
-	// 2. 攻城 / PvE（攻方未被击败才进入）
+	// 2. 攻城 / PvE（攻方突破全部防守才进入）
 	var occupied bool
 	var buildingDamage uint64
-	if !attackerDefeated {
+	if !attackerStopped {
 		layer, occ, dmg := settleTarget(req, attackerSlots)
 		results.Results = append(results.Results, layer)
 		occupied = occ
@@ -32,7 +32,7 @@ func Settle(req *pb_battle.BattleSettleReq) *pb_battle.BattleSettleRsp {
 
 	return &pb_battle.BattleSettleRsp{
 		Results:           results,
-		AttackerWin:       !attackerDefeated,
+		AttackerWin:       !attackerStopped,
 		Occupied:          occupied,
 		DefeatedDefenders: defeated,
 		BuildingDamage:    buildingDamage,

@@ -3,6 +3,7 @@ package game_conf
 import (
 	"sync/atomic"
 
+	"server.slg.com/api/game_conf/battle"
 	"server.slg.com/api/game_conf/gacha"
 	"server.slg.com/api/game_conf/hero"
 	"server.slg.com/api/game_conf/item"
@@ -14,6 +15,11 @@ import (
 )
 
 var defaultConf atomic.Pointer[GameConf]
+
+// init 兜底：确保默认配置可用（Load 永不返回 nil），供 battle 等纯计算服务使用
+func init() {
+	_ = InitDefault()
+}
 
 // InitFromConf 使用EnvConf配置初始化配置
 func InitFromConf() error {
@@ -34,11 +40,24 @@ func Init(filePath string) error {
 func InitDefault() error {
 	gc := &GameConf{
 		configs: &pb_confs.Table{},
+		Battle:  battle.New(),
 		Hero:    hero.New(),
 		Skill:   skill.New(),
 		Item:    item.New(),
 		Troop:   troop.New(),
 		Gacha:   gacha.New(),
+	}
+	defaultConf.Store(gc)
+	return nil
+}
+
+// InitBattle 轻量初始化战斗配置子集（battle 节点专用）：
+// 只加载战斗规则 + 技能表，不加载英雄属性表/道具/建筑等通用配置。
+func InitBattle() error {
+	gc := &GameConf{
+		configs: &pb_confs.Table{},
+		Battle:  battle.New(),
+		Skill:   skill.New(),
 	}
 	defaultConf.Store(gc)
 	return nil

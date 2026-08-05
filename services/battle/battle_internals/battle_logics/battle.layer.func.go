@@ -1,123 +1,82 @@
 package battle_logics
 
-// 分层战斗 — 迁移自 cores/marchdos/attack_march/march.battle.func.go 的
-// fightLayer / resolveDefendersLayer，操作对象改为 pb_battle 快照。
-// 战斗升级为多轮：攻守双方每轮互相承伤，直到一方全灭 / 僵持 / 轮次上限。
+// 分层战斗 — 8 回合回合制引擎（battle.framework.func.go）的调度层。
+// 车轮战：攻方依次与各防守行军各打一场，战损累积，全胜后进入攻城/PvE。
 
 import (
 	"server.slg.com/api/protocol/pb/pb_battle"
 )
 
-// maxBattleRounds 单层战斗轮次上限
-const maxBattleRounds = 50
-
-// fightLayer 攻击方与某一层防守方多轮交战。
+// fightOneMarch 攻方 vs 单个守方行军的一场 8 回合战斗。
 //
-// 每轮攻守双方按对方战力占比互相造成伤亡，直到一方全灭 / 僵持无进展 / 达到轮次上限。
-// 每轮产出一条 OneBattleResult 追加到 result.Results。
-//
-// 返回：
-//   - attackerDefeated: 攻击方是否溃败（true 时后续层/攻城不再结算）
-//   - defenderTeams: 各防守方战后队伍快照（与 defenders 中的非 nil 项一一对应；nil 表示该层未交战）
-func fightLayer(attackerSlots []*pb_battle.TeamSlotInfo, defenders []*pb_battle.DefenderMarch,
-	result *pb_battle.BattleResults) (attackerDefeated bool, defenderTeams [][]*pb_battle.TeamSlotInfo) {
-
-	defTeams := make([][]*pb_battle.TeamSlotInfo, 0, len(defenders))
-	for _, d := range defenders {
-		if d == nil {
-			continue
-		}
-		defTeams = append(defTeams, cloneSlots(d.GetTeam().GetSlotInfo()))
+// 攻方队伍快照被原地更新（战损累积），供下一场车轮战使用；防守方克隆后结算。
+// 返回 nil 表示守方无队伍（无交战）。
+func fightOneMarch(attackerSlots []*pb_battle.TeamSlotInfo, defender *pb_battle.DefenderMarch) *pb_battle.OneBattleResult {
+	if defender == nil || len(defender.GetTeam().GetSlotInfo()) == 0 {
+		return nil
 	}
-	if len(defTeams) == 0 {
-		return false, nil
-	}
-
-	attPower := aliveSoldierCount(attackerSlots)
-	if attPower == 0 {
-		return true, nil
-	}
-	if aliveSoldierCountTeams(defTeams) == 0 {
-		return false, nil
-	}
-
-	for round := 1; round <= maxBattleRounds; round++ {
-		attPower := aliveSoldierCount(attackerSlots)
-		defPower := aliveSoldierCountTeams(defTeams)
-		if attPower == 0 {
-			return true, defTeams
-		}
-		if defPower == 0 {
-			return false, defTeams
-		}
-
-		// 本轮互损：按对方战力占比
-		attLoss := uint64(float64(attPower) * (float64(defPower) / float64(attPower+defPower)))
-		defLoss := uint64(float64(defPower) * (float64(attPower) / float64(attPower+defPower)))
-		if attLoss > attPower {
-			attLoss = attPower
-		}
-		if defLoss > defPower {
-			defLoss = defPower
-		}
-
-		if attLoss == 0 && defLoss == 0 {
-			break // 无进展（士兵已减到下限 / 战力悬殊到无法造成伤害）
-		}
-
-		applyLossesToSlots(attackerSlots, attPower, attPower-attLoss)
-		applyDefenderLosses(defTeams, defPower, defPower-defLoss)
-
-		result.Results = append(result.Results, &pb_battle.OneBattleResult{
-			Attacker: &pb_battle.BattleSide{
-				KilledSoldiers: defLoss,
-				TeamInfo:       &pb_battle.TeamInfo{SlotInfo: cloneSlots(attackerSlots)},
-			},
-			Defender: &pb_battle.BattleSide{
-				KilledSoldiers: attLoss,
-				TeamInfo:       &pb_battle.TeamInfo{SlotInfo: cloneSlotsTeams(defTeams)},
-			},
-		})
-	}
-
-	// 轮次上限 / 僵持：剩余战力高者胜，平局攻方胜（对齐单轮 attPower >= defPower 攻胜）
-	attPower = aliveSoldierCount(attackerSlots)
-	defPower := aliveSoldierCountTeams(defTeams)
-	return attPower < defPower, defTeams
+	return runBattle(attackerSlots, cloneSlots(defender.GetTeam().GetSlotInfo()))
 }
 
-// resolveDefendersLayers 逐层攻克防守方（assist → stay/idle），每层多轮。
+// resolveDefendersLayers 车轮战：攻方依次与各防守行军各打一场。
 //
-// 返回被击败的防守方（实际交战层全部防守方，对齐原 DefeatedMarches 语义，
-// 含战后队伍快照供 cores 写回伤亡），以及攻击方是否已溃败（溃败则后续层不再结算）。
+//   - 攻方赢一场 → 防守方被击败（TeamAfter 写回伤亡），继续下一场
+//   - 攻方大营败 → 攻方溃败，停止后续
+//   - 平局（8回合双方大营均有兵）→ 攻方未能突破，停止（不溃败但也不占领）
+//   - 同归于尽 → 攻方溃败
+//
+// 返回被击败的防守方，以及攻方是否已停止（未突破全部防守）。
 func resolveDefendersLayers(req *pb_battle.BattleSettleReq, attackerSlots []*pb_battle.TeamSlotInfo,
-	result *pb_battle.BattleResults) (defeated []*pb_battle.DefeatedDefender, attackerDefeated bool) {
+	result *pb_battle.BattleResults) (defeated []*pb_battle.DefeatedDefender, attackerStopped bool) {
 
 	for _, group := range req.GetDefenderGroups() {
 		if group == nil || len(group.GetMarches()) == 0 {
 			continue
 		}
-
-		layerDefeated, defTeams := fightLayer(attackerSlots, group.GetMarches(), result)
-		if defTeams != nil {
-			// 该层实际交战：全部防守方按战后队伍快照召回
-			j := 0
-			for _, d := range group.GetMarches() {
-				if d == nil {
-					continue
-				}
-				dd := &pb_battle.DefeatedDefender{MarchId: d.GetMarchId()}
-				if j < len(defTeams) && defTeams[j] != nil {
-					dd.TeamAfter = &pb_battle.TeamInfo{SlotInfo: defTeams[j]}
-				}
-				defeated = append(defeated, dd)
-				j++
+		for _, d := range group.GetMarches() {
+			if d == nil {
+				continue
 			}
-		}
-		if layerDefeated {
-			// 攻方已败，后续层不再结算
+			one := fightOneMarch(attackerSlots, d)
+			if one == nil {
+				continue
+			}
+			result.Results = append(result.Results, one)
+
+			// 本场经验：敌方平均等级 × 击杀(死亡兵) × 系数 ÷ 参战英雄
+			grantBattleExp(attackerSlots, one.GetDefender().GetTeamInfo().GetSlotInfo(),
+				one.GetAttacker().GetKilledSoldiers(), one)
+
+			attDead := baseDeadAfter(one.GetAttacker())
+			defDead := baseDeadAfter(one.GetDefender())
+
+			if defDead {
+				// 防守方大营败 → 被击败（回城）
+				defeated = append(defeated, &pb_battle.DefeatedDefender{
+					MarchId:   d.GetMarchId(),
+					TeamAfter: one.GetDefender().GetTeamInfo(),
+				})
+				if attDead {
+					return defeated, true // 同归于尽
+				}
+				continue // 攻方获胜，进入下一场
+			}
+			// 防守方未败：攻方败或平局 → 攻方停止
 			return defeated, true
 		}
 	}
 	return defeated, false
+}
+
+// baseDeadAfter 战后队伍快照中攻/守方大营(slot0)有效兵力是否归零
+func baseDeadAfter(side *pb_battle.BattleSide) bool {
+	if side == nil || side.GetTeamInfo() == nil {
+		return true
+	}
+	for _, s := range side.GetTeamInfo().GetSlotInfo() {
+		if s.GetSlotId() == 0 {
+			return s.GetCurAliveNum() == 0
+		}
+	}
+	return true // 无大营视为败
 }

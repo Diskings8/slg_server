@@ -34,13 +34,13 @@ var (
 	jsonCache = cache.New(time.Minute*10, time.Minute*5)
 )
 
-// Get 从对象池获取角色
-func Get() *Role {
+// get 从对象池获取角色
+func get() *Role {
 	return rolePool.Get()
 }
 
-// Release 释放到对象池中
-func Release(r *Role) {
+// release 释放到对象池中
+func release(r *Role) {
 	rolePool.Put(r)
 }
 
@@ -49,8 +49,8 @@ func GetPollerMgr() *pollers.PollerManager[*Role] {
 	return pollerManager
 }
 
-// GetPoller 获取角色数据轮询器
-func GetPoller(id uint64) (*pollers.Poller[*Role], error) {
+// getPoller 获取角色数据轮询器
+func getPoller(id uint64) (*pollers.Poller[*Role], error) {
 	return pollerManager.Get(id)
 }
 

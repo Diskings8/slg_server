@@ -3,6 +3,7 @@ package game_logics
 import (
 	"testing"
 
+	"server.slg.com/api/game_conf"
 	"server.slg.com/api/protocol/pb/pb_cultivate"
 	"server.slg.com/api/protocol/pb/pb_error_code"
 	"server.slg.com/api/protocol/pb/pb_maps_march"
@@ -48,6 +49,10 @@ func TestHeroUpgradeStar_Success(t *testing.T) {
 	}
 	if hero.GetStarStage() != 1 {
 		t.Errorf("star_stage = %d, want 1", hero.GetStarStage())
+	}
+	// 升星发放自由属性点（星级不直接乘属性）
+	if got := hero.GetAttrPoint(); got != game_conf.Load().Hero.StarPointPer {
+		t.Errorf("attr_point = %d, want %d (StarPointPer)", got, game_conf.Load().Hero.StarPointPer)
 	}
 	// 消耗卡已从内存移除（只剩目标英雄）
 	if len(role.GetHeroes().List) != 1 {

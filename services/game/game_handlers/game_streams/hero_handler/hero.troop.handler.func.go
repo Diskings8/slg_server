@@ -7,7 +7,7 @@ import (
 	"server.slg.com/api/protocol/pb/pb_error_code"
 	"server.slg.com/api/protocol/pb/pb_hero"
 	"server.slg.com/common/conns/rpcconn/rpc_results"
-	"server.slg.com/services/game/game_entitys/game_role_handler"
+	"server.slg.com/services/game/game_entitys/game_roles"
 	"server.slg.com/services/game/game_logics"
 )
 
@@ -15,7 +15,7 @@ import (
 //
 // x 等级后选择已解锁的派生兵种类型转化（消耗资源）。
 func HandlerHeroTroopTransform(ctx context.Context, roleID uint64, req *pb_hero.HeroTroopTransformReq, resp *pb_hero.HeroTroopTransformResp) rpc_results.ResultI {
-	poller, role, err := game_role_handler.GetRole(roleID)
+	poller, role, err := game_roles.GetRole(roleID)
 	if err != nil {
 		return err
 	}
@@ -42,7 +42,7 @@ func HandlerHeroTroopTransform(ctx context.Context, roleID uint64, req *pb_hero.
 //
 // 使用道具解锁当前英雄的新可选派生兵种类型。
 func HandlerHeroTroopUnlock(ctx context.Context, roleID uint64, req *pb_hero.HeroTroopUnlockReq, resp *pb_hero.HeroTroopUnlockResp) rpc_results.ResultI {
-	poller, role, err := game_role_handler.GetRole(roleID)
+	poller, role, err := game_roles.GetRole(roleID)
 	if err != nil {
 		return err
 	}

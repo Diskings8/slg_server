@@ -4,7 +4,6 @@ import (
 	"go.uber.org/zap"
 	"server.slg.com/api/protocol/pb/pb_game"
 	"server.slg.com/common/loggers"
-	"server.slg.com/services/game/game_entitys/game_role_handler"
 	"server.slg.com/services/game/game_entitys/game_roles"
 	"server.slg.com/services/game/game_internals/game_rpc_clients"
 	"server.slg.com/services/game/game_internals/gate_stream"
@@ -39,7 +38,7 @@ func (gs *GameStream) gateConnectDo(roleID uint64, stream pb_game.GameService_St
 	}
 
 	// 记录登录统计（跨日登录天数/最后登录时间）
-	if poller, role, err := game_role_handler.GetRole(roleID); err == nil {
+	if poller, role, err := game_roles.GetRole(roleID); err == nil {
 		role.Login()
 		poller.Save()
 		poller.Release()
@@ -59,18 +58,13 @@ func (gs *GameStream) gateConnectDo(roleID uint64, stream pb_game.GameService_St
 	gate_stream.GateClose(roleID)
 	game_rpc_clients.WorldMap().CloseRoleStream(roleID)
 
-	poller, err := game_roles.GetPoller(roleID)
+	poller, roleTmp, err := game_roles.GetRole(roleID)
 	if err != nil {
-		return err
-	}
-	roleTmp, err := poller.Get()
-	if err != nil {
-		poller.Release()
 		return err
 	}
 	roleTmp.Offline()
+	poller.Save()
 	poller.Release()
-	poller.SaveSync()
-
+	
 	return nil
 }

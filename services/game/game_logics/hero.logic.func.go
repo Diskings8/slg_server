@@ -11,14 +11,16 @@ import (
 // HeroAddExp 英雄获得经验 → 升级判断（服务端内部共用入口，不对前端直接开放）
 //
 // exp 来源仅两个：
+//
 //  1. 道具 effect（经验书）→ ApplyItemEffect 已扣道具后调用
+//
 //  2. 战斗结算经验 → 战斗回调接入后由服务端调用
 //
-//   - 累加经验后循环判断：满足当前等级所需经验（配置 hero.NeedExp）即升级（可能连升多级）
-//   - 每升 10 级发放自由属性点（配置 hero.FreePointPer10L）
-//   - 达到等级上限后多余经验不再触发升级
+//     - 累加经验后循环判断：满足当前等级所需经验（配置 hero.NeedExp）即升级（可能连升多级）
+//     - 每升 10 级发放自由属性点（配置 hero.FreePointPer10L）
+//     - 达到等级上限后多余经验不再触发升级
 //
-//   - 返回: 升级后的等级
+//     - 返回: 升级后的等级
 func HeroAddExp(hero *role_heroes.RoleHero, exp uint32) (uint32, error) {
 	if exp == 0 {
 		return hero.GetLevel(), nil
@@ -44,6 +46,7 @@ func HeroAddExp(hero *role_heroes.RoleHero, exp uint32) (uint32, error) {
 
 	hero.SetLevel(level)
 	hero.SetExp(uint32(newExp))
+	hero.RefreshCurVal() // 升级后按新等级重算 cur_val（battle 快照用）
 
 	return level, nil
 }

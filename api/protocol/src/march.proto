@@ -64,7 +64,7 @@ message Formation {
 message FormationFieldReq {
     uint64 city_id      = 1;  // 上阵所在城市ID
     uint64 formation_id = 2;  // 队列ID（引用已分配队列）
-    uint32 slot_pos     = 3;  // 队列内位置（第几槽位，1 起）
+    uint32 slot_pos     = 3;  // 队列内位置（0 起：0=大营，1=1号位，2=2号位，上限 3）
     uint64 hero_id      = 4;  // 英雄ID
     uint32 soldier_num  = 5;  // 携带士兵数
 }
@@ -77,7 +77,7 @@ message FormationFieldResp {
 message FormationRemoveReq {
     uint64 city_id      = 1;  // 所属城市ID
     uint64 formation_id = 2;  // 队列ID
-    uint32 slot_pos     = 3;  // 队列内位置（1 起）
+    uint32 slot_pos     = 3;  // 队列内位置（0 起：0=大营，1=1号位，2=2号位）
 }
 
 message FormationRemoveResp {

@@ -8,7 +8,7 @@ import (
 	"server.slg.com/api/protocol/pb/pb_maps_march"
 	"server.slg.com/api/protocol/pb/pb_worldmap"
 	"server.slg.com/common/conns/rpcconn/rpc_results"
-	"server.slg.com/services/game/game_entitys/game_role_handler"
+	"server.slg.com/services/game/game_entitys/game_roles"
 	"server.slg.com/services/game/game_internals/game_rpc_clients"
 	"server.slg.com/services/game/game_logics"
 )
@@ -22,7 +22,7 @@ func HandlerMarchCreate(ctx context.Context, roleID uint64, req *pb_maps_march.M
 	}
 
 	// 只读（MarchBuildTeam 只取编队+英雄快照，不修改角色）：免锁快照，无需 Release
-	role, result := game_role_handler.GetCopy(roleID)
+	role, result := game_roles.GetCopy(roleID)
 	if result != nil {
 		return result
 	}

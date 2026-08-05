@@ -21,6 +21,19 @@ message MarchEvent {
     int32 march_type    = 5;  // 仅 ARRIVED 有效
     int64 ts            = 6;  // unix 时间戳
     int32 state         = 7;  // 结算后行军状态 (pb_maps_march.MarchState): 驻留=6, 回城=5
+    MarchBattleResult battle_result = 8;  // 战斗结果（仅攻击行军 ARRIVED 携带）
+}
+
+// MarchBattleResult 战斗结果（worldmap → game，供经验发放）
+message MarchBattleResult {
+    bool attacker_win = 1;  // 攻击方是否获胜
+    repeated HeroExpItem hero_exp = 2;  // 参战英雄总经验
+}
+
+// HeroExpItem 参战英雄经验
+message HeroExpItem {
+    uint64 hero_id = 1;  // 英雄实例ID
+    uint32 exp     = 2;  // 本次获得总经验
 }
 
 // ========== 通用 Stream 信封（后续扩展用） ==========

@@ -6,7 +6,7 @@ import (
 	"server.slg.com/api/protocol/pb/pb_error_code"
 	"server.slg.com/api/protocol/pb/pb_maps_march"
 	"server.slg.com/common/conns/rpcconn/rpc_results"
-	"server.slg.com/services/game/game_entitys/game_role_handler"
+	"server.slg.com/services/game/game_entitys/game_roles"
 	"server.slg.com/services/game/game_logics"
 )
 
@@ -17,7 +17,7 @@ func HandlerFormationField(ctx context.Context, roleID uint64, req *pb_maps_marc
 		return rpc_results.Error(pb_error_code.ErrorCode_ParamError, "invalid params")
 	}
 
-	poller, role, err := game_role_handler.GetRole(roleID)
+	poller, role, err := game_roles.GetRole(roleID)
 	if err != nil {
 		return err
 	}
@@ -38,7 +38,7 @@ func HandlerFormationRemove(ctx context.Context, roleID uint64, req *pb_maps_mar
 		return rpc_results.Error(pb_error_code.ErrorCode_ParamError, "invalid params")
 	}
 
-	poller, role, err := game_role_handler.GetRole(roleID)
+	poller, role, err := game_roles.GetRole(roleID)
 	if err != nil {
 		return err
 	}
@@ -55,7 +55,7 @@ func HandlerFormationRemove(ctx context.Context, roleID uint64, req *pb_maps_mar
 // HandlerFormationList 查询编队 (1000010)；city_id 可选，0 = 全部建筑
 func HandlerFormationList(ctx context.Context, roleID uint64, req *pb_maps_march.FormationListReq, resp *pb_maps_march.FormationListResp) rpc_results.ResultI {
 	// 只读：免锁快照，无需 Release
-	role, result := game_role_handler.GetCopy(roleID)
+	role, result := game_roles.GetCopy(roleID)
 	if result != nil {
 		return result
 	}

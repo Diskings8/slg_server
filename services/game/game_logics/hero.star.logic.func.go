@@ -30,11 +30,12 @@ func heroCardConsumable(role *game_roles.Role, card *role_heroes.RoleHero) bool 
 	return true
 }
 
-// HeroUpgradeStar 英雄升星：消耗一张同配置英雄卡，升 1 星
+// HeroUpgradeStar 英雄升星：消耗一张同配置英雄卡，升 1 星，发放自由属性点
 //
 //   - 满星 → HeroStarFull
 //   - 无同配置其他卡 → HeroNoConsumeCard
 //   - 消耗卡从内存与 DB 移除，被消耗卡的配置记录进养成消耗记录（CultivateStar）
+//   - 星级不直接乘属性：每升 1 星发放自由属性点（hero.StarPointPer），由玩家分配进 add_val_camp
 func HeroUpgradeStar(role *game_roles.Role, hero *role_heroes.RoleHero) error {
 	if hero.GetStarStage() >= game_conf.Load().Hero.MaxStarStage {
 		return rpc_results.Error(pb_error_code.ErrorCode_HeroStarFull, "hero already max star stage")
@@ -63,8 +64,9 @@ func HeroUpgradeStar(role *game_roles.Role, hero *role_heroes.RoleHero) error {
 		}
 	}
 
-	// 升星
+	// 升星 + 发放自由属性点（星级不直接乘属性，改发点）
 	hero.SetStarStage(hero.GetStarStage() + 1)
+	hero.SetAttrPoint(hero.GetAttrPoint() + game_conf.Load().Hero.StarPointPer)
 
 	// 记录养成消耗：被消耗英雄卡配置
 	role.GetCultivateCosts().AddCost(pb_cultivate.CultivateType_CultivateStar, []*pb_common.Int32KV{

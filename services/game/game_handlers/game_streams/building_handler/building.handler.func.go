@@ -6,7 +6,7 @@ import (
 	"server.slg.com/api/protocol/pb/pb_city"
 	"server.slg.com/api/protocol/pb/pb_error_code"
 	"server.slg.com/common/conns/rpcconn/rpc_results"
-	"server.slg.com/services/game/game_entitys/game_role_handler"
+	"server.slg.com/services/game/game_entitys/game_roles"
 	"server.slg.com/services/game/game_logics"
 )
 
@@ -20,7 +20,7 @@ func HandlerBuildingBuild(ctx context.Context, roleID uint64, req *pb_city.Build
 		return rpc_results.Error(pb_error_code.ErrorCode_ParamError, "invalid map_id")
 	}
 
-	poller, role, err := game_role_handler.GetRole(roleID)
+	poller, role, err := game_roles.GetRole(roleID)
 	if err != nil {
 		return err
 	}
@@ -40,7 +40,7 @@ func HandlerBuildingBuild(ctx context.Context, roleID uint64, req *pb_city.Build
 // HandlerBuildingList 查询建筑列表 (1000012)
 func HandlerBuildingList(ctx context.Context, roleID uint64, req *pb_city.BuildingListReq, resp *pb_city.BuildingListResp) rpc_results.ResultI {
 	// 只读：免锁快照，无需 Release
-	role, result := game_role_handler.GetCopy(roleID)
+	role, result := game_roles.GetCopy(roleID)
 	if result != nil {
 		return result
 	}

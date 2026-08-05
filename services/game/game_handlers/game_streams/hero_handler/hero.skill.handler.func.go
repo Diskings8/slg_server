@@ -8,7 +8,7 @@ import (
 	"server.slg.com/api/protocol/pb/pb_hero"
 	"server.slg.com/api/protocol/pb/pb_skill"
 	"server.slg.com/common/conns/rpcconn/rpc_results"
-	"server.slg.com/services/game/game_entitys/game_role_handler"
+	"server.slg.com/services/game/game_entitys/game_roles"
 	"server.slg.com/services/game/game_logics"
 )
 
@@ -16,7 +16,7 @@ import (
 //
 // 消耗客户端选定的一张英雄卡推进收集进度，全部达标解锁对应技能并发放到技能库。
 func HandlerHeroSkillCollectionActivate(ctx context.Context, roleID uint64, req *pb_skill.SkillCollectionActivateReq, resp *pb_skill.SkillCollectionActivateResp) rpc_results.ResultI {
-	poller, role, err := game_role_handler.GetRole(roleID)
+	poller, role, err := game_roles.GetRole(roleID)
 	if err != nil {
 		return err
 	}
@@ -41,7 +41,7 @@ func HandlerHeroSkillCollectionActivate(ctx context.Context, roleID uint64, req 
 //
 // 升级英雄身上（EquipSkills 槽位）技能等级，消耗道具。
 func HandlerHeroSkillUpgrade(ctx context.Context, roleID uint64, req *pb_hero.HeroSkillUpgradeReq, resp *pb_hero.HeroSkillUpgradeResp) rpc_results.ResultI {
-	poller, role, err := game_role_handler.GetRole(roleID)
+	poller, role, err := game_roles.GetRole(roleID)
 	if err != nil {
 		return err
 	}
@@ -66,7 +66,7 @@ func HandlerHeroSkillUpgrade(ctx context.Context, roleID uint64, req *pb_hero.He
 //
 // 将角色技能库技能放入英雄技能槽（校验槽位可用性/技能库状态）。
 func HandlerHeroEquipSkill(ctx context.Context, roleID uint64, req *pb_hero.HeroEquipSkillReq, resp *pb_hero.HeroEquipSkillResp) rpc_results.ResultI {
-	poller, role, err := game_role_handler.GetRole(roleID)
+	poller, role, err := game_roles.GetRole(roleID)
 	if err != nil {
 		return err
 	}
@@ -91,7 +91,7 @@ func HandlerHeroEquipSkill(ctx context.Context, roleID uint64, req *pb_hero.Hero
 //
 // 从英雄技能槽移除技能，清空装配记录，按等级返还部分升级资源。
 func HandlerHeroUnequipSkill(ctx context.Context, roleID uint64, req *pb_hero.HeroUnequipSkillReq, resp *pb_hero.HeroUnequipSkillResp) rpc_results.ResultI {
-	poller, role, err := game_role_handler.GetRole(roleID)
+	poller, role, err := game_roles.GetRole(roleID)
 	if err != nil {
 		return err
 	}

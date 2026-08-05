@@ -71,17 +71,17 @@ func TestRoleMarshalJSON(t *testing.T) {
 }
 
 func TestRolePool(t *testing.T) {
-	r := Get()
+	r := get()
 	if r == nil {
 		t.Fatal("Get() returned nil")
 	}
 	r.ID = 2001
 
 	// 放回池中后 Reset 会被调用
-	Release(r)
+	release(r)
 
 	// 重新获取，应已 Reset
-	r2 := Get()
+	r2 := get()
 	if r2.ID != 0 {
 		t.Fatal("pool Get should return Reset object")
 	}

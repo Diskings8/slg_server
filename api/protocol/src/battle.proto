@@ -12,6 +12,8 @@ message TeamSlotInfo {
   uint32 max_soldier_num        = 3;  // 士兵数量
   uint32 cur_alive_num          = 4;  // 当前可用数量
   uint32 cur_injured_num        = 5;  // 当前伤兵数量
+  uint64 hero_id                = 6;  // 英雄实例ID（经验归属）
+  uint32 attack_range           = 7;  // 攻击距离：能打到"距离对方大营 ≤ D"的敌方目标
 }
 
 // TeamInfo 布阵队伍时信息
@@ -26,11 +28,48 @@ message BattleSide {
   TeamInfo team_info                                = 3;   // 战后队伍状态
 }
 
+// BattleActionType 战斗行动类型
+enum BattleActionType {
+  BATTLE_ACTION_NONE         = 0;
+  BATTLE_ACTION_ACTIVE_SKILL = 1;  // 主动技能
+  BATTLE_ACTION_NORMAL_ATTACK = 2;  // 普通攻击
+  BATTLE_ACTION_PURSUIT      = 3;  // 追击技能
+  BATTLE_ACTION_SETTLEMENT   = 4;  // 回合结算（伤兵转死亡）
+  BATTLE_ACTION_RECOVER      = 5;  // 技能恢复伤兵
+}
+
+// BattleAction 单次行动记录（战报行动日志）
+message BattleAction {
+  int32 actor_slot      = 1;  // 行动方槽位
+  BattleActionType action_type = 2;  // 行动类型
+  int32 skill_conf_id   = 3;  // 技能配置ID（普攻=0）
+  int32 target_slot     = 4;  // 目标槽位（结算类=0）
+  uint32 damage         = 5;  // 造成的有效兵力损失
+  uint32 injured        = 6;  // 其中转伤兵
+  uint32 killed         = 7;  // 其中死亡兵
+  uint32 heal           = 8;  // 恢复的伤兵（恢复类）
+}
+
+// BattleRound 单个战斗回合日志
+message BattleRound {
+  int32 round                     = 1;  // 回合号（1 起）
+  repeated BattleAction actions   = 2;  // 该回合行动序列
+}
+
 // OneBattleResult 一场战斗结果
 message OneBattleResult {
   BattleSide attacker                               = 1;   // 攻击方
   BattleSide defender                               = 2;   // 防御方
   bool is_occupied                                  = 3;   // 是否占领
+  repeated HeroExpGain hero_exp                     = 4;   // 本场英雄获得经验
+  repeated BattleRound rounds                       = 5;   // 8 回合行动日志
+}
+
+// HeroExpGain 本场英雄经验（记录在战报上）
+message HeroExpGain {
+  uint64 hero_id     = 1;  // 英雄实例ID
+  uint32 exp         = 2;  // 本场获得经验
+  uint32 level_after = 3;  // 本场结算后等级
 }
 
 // BattleResult 战斗结果

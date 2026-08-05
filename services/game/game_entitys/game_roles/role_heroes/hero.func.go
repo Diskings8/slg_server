@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+	"server.slg.com/api/game_conf"
 	"server.slg.com/api/protocol/pb/pb_cultivate"
 	"server.slg.com/api/protocol/pb/pb_hero"
 	"server.slg.com/api/protocol/pb/pb_skill"
@@ -103,6 +104,7 @@ func (hrs *RoleHeroes) AddHero(heroConfID int32) *RoleHero {
 		Cultivates: make([]*pb_cultivate.Cultivate, 0),
 	}
 	one := NewRoleHero(modelOne)
+	one.RefreshCurVal() // 初始化 cur_val（lv1 → 基础属性）
 	hrs.List = append(hrs.List, modelOne)
 	hrs.Mem.Store(modelOne.ID, one) // Mem 键为 uint64（雪花ID），与 Init/GetHero/RemoveHero 一致，勿转 int32
 	return one
@@ -116,9 +118,50 @@ func NewRoleHero(one *game_models.RoleHero) *RoleHero {
 	}
 }
 
+// ensureCultivates 补齐 5 维 Cultivate（攻/防/智/移/拆），不足补空项
+func ensureCultivates(list []*pb_cultivate.Cultivate, n int) []*pb_cultivate.Cultivate {
+	for len(list) < n {
+		list = append(list, &pb_cultivate.Cultivate{})
+	}
+	return list
+}
+
+// RefreshCurVal 按当前等级重算 5 维 cur_val（等级派生基础属性 = base + growth×(level-1)）。
+//
+// 由 game 侧在升级/创建时调用；只写 CurVal，不动 add_val_camp 等加点/来源组件。
+// battle 节点只读快照里的这些组件求和，不再读英雄配置表。
+func (hr *RoleHero) RefreshCurVal() {
+	if hr == nil || hr.RoleHero == nil {
+		return
+	}
+	attr := game_conf.Load().Hero.CalcCurVal(hr.HeroConfID, hr.Level)
+	hr.Cultivates = ensureCultivates(hr.Cultivates, 5)
+	hr.Cultivates[0].CurVal = attr.Attack
+	hr.Cultivates[1].CurVal = attr.Defense
+	hr.Cultivates[2].CurVal = attr.Intelligence
+	hr.Cultivates[3].CurVal = attr.Movement
+	hr.Cultivates[4].CurVal = attr.Relocation
+}
+
+// curValReady 是否已具备 5 维 cur_val（battle 快照前需要；遗留数据缺 cur_val 会补算）
+func (hr *RoleHero) curValReady() bool {
+	if hr == nil || hr.RoleHero == nil {
+		return false
+	}
+	if len(hr.Cultivates) < 5 {
+		return false
+	}
+	return hr.Cultivates[0].GetCurVal() != 0
+}
+
 func (hr *RoleHero) Format2Pb() *pb_hero.HeroInfo {
 	if hr.RoleHero == nil {
 		return nil
+	}
+
+	// 兜底：遗留英雄未维护 cur_val → 补算，保证快照到 battle 时属性正确
+	if !hr.curValReady() {
+		hr.RefreshCurVal()
 	}
 
 	// Cultivates 按索引映射到具体属性字段:

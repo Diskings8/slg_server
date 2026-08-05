@@ -8,7 +8,7 @@ import (
 	"server.slg.com/api/protocol/pb/pb_item"
 	"server.slg.com/api/protocol/pb_confs"
 	"server.slg.com/common/conns/rpcconn/rpc_results"
-	"server.slg.com/services/game/game_entitys/game_role_handler"
+	"server.slg.com/services/game/game_entitys/game_roles"
 	"server.slg.com/services/game/game_logics"
 )
 
@@ -18,7 +18,7 @@ import (
 //   - 对英雄使用（target.hero_id）→ 加英雄经验等
 //   - 无目标 → 资源包/货币礼包直接发放
 func HandlerUseItem(ctx context.Context, roleID uint64, req *pb_item.UseItemReq, resp *pb_item.UseItemResp) rpc_results.ResultI {
-	poller, role, err := game_role_handler.GetRole(roleID)
+	poller, role, err := game_roles.GetRole(roleID)
 	if err != nil {
 		return rpc_results.Error(pb_error_code.ErrorCode_RoleNotFound, fmt.Sprintf("get role failed: %s", err.DevMsg()))
 	}

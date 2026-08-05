@@ -6,6 +6,7 @@ import (
 
 	"server.slg.com/api/protocol/pb/pb_hero"
 	"server.slg.com/api/protocol/pb/pb_maps_march"
+	"server.slg.com/api/protocol/pb/pb_redis_stream"
 	"server.slg.com/services/internal/cores/cores_declarations"
 )
 
@@ -47,6 +48,7 @@ type MarchInfo struct {
 	marchDoLocker   sync.Mutex                       `gorm:"-"`
 	AoiBlock        []cores_declarations.AoiScreenI  `gorm:"-"`
 	PassingAoiBlock []cores_declarations.AoiScreenI  `gorm:"-"`
+	BattleResult    *pb_redis_stream.MarchBattleResult `gorm:"-" json:"-"` // 瞬态战斗结果（到达后经事件回传 game）
 }
 
 func (mi *MarchInfo) GetRelocationVal() uint64 {
