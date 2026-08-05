@@ -1,0 +1,66 @@
+{
+  "pools": [
+    {
+      "pool_id": 1001,
+      "name": "新手池",
+      "ticket_conf_id": 2004,
+      "single_ticket": 1,
+      "single_gold": 100,
+      "ten_ticket": 10,
+      "ten_gold": 900,
+      "free_daily": true,
+      "half_price": true,
+      "guarantee_times": 10,
+      "guarantee_group_id": 3,
+      "first_drop_group_id": 2,
+      "wish_heros": [2, 3],
+      "wish_times": 20,
+      "drop_groups": [
+        {"group_id": 1, "weight": 70, "items": [
+          {"reward_conf_id": 1, "is_hero": true, "count": 1, "weight": 40},
+          {"reward_conf_id": 2001, "is_hero": false, "count": 5, "weight": 30},
+          {"reward_conf_id": 2002, "is_hero": false, "count": 1, "weight": 30}
+        ]},
+        {"group_id": 2, "weight": 25, "items": [
+          {"reward_conf_id": 2, "is_hero": true, "count": 1, "weight": 60},
+          {"reward_conf_id": 3, "is_hero": true, "count": 1, "weight": 40}
+        ]},
+        {"group_id": 3, "weight": 5, "items": [
+          {"reward_conf_id": 4, "is_hero": true, "count": 1, "weight": 50, "guarantee_reset": true},
+          {"reward_conf_id": 5, "is_hero": true, "count": 1, "weight": 50, "guarantee_reset": true}
+        ]}
+      ]
+    },
+    {
+      "pool_id": 1002,
+      "name": "英雄池",
+      "ticket_conf_id": 2004,
+      "single_ticket": 1,
+      "single_gold": 200,
+      "ten_ticket": 10,
+      "ten_gold": 1800,
+      "free_daily": false,
+      "half_price": true,
+      "guarantee_times": 20,
+      "guarantee_group_id": 3,
+      "first_drop_group_id": 0,
+      "wish_heros": [1, 2, 3, 4, 5],
+      "wish_times": 50,
+      "drop_groups": [
+        {"group_id": 1, "weight": 60, "items": [
+          {"reward_conf_id": 1, "is_hero": true, "count": 1, "weight": 40},
+          {"reward_conf_id": 2001, "is_hero": false, "count": 5, "weight": 30},
+          {"reward_conf_id": 2002, "is_hero": false, "count": 1, "weight": 30}
+        ]},
+        {"group_id": 2, "weight": 30, "items": [
+          {"reward_conf_id": 2, "is_hero": true, "count": 1, "weight": 60},
+          {"reward_conf_id": 3, "is_hero": true, "count": 1, "weight": 40}
+        ]},
+        {"group_id": 3, "weight": 10, "items": [
+          {"reward_conf_id": 4, "is_hero": true, "count": 1, "weight": 50, "guarantee_reset": true},
+          {"reward_conf_id": 5, "is_hero": true, "count": 1, "weight": 50, "guarantee_reset": true}
+        ]}
+      ]
+    }
+  ]
+}

@@ -19,20 +19,22 @@ const (
 
 // ItemEffect 道具效果定义
 type ItemEffect struct {
-	Type   ItemEffectType
-	Target int32 // 目标配置ID（货币/道具）
-	Value  int64 // 单个道具的效果数值
+	Type   ItemEffectType `json:"type"`
+	Target int32          `json:"target"` // 目标配置ID（货币/道具）
+	Value  int64          `json:"value"`  // 单个道具的效果数值
 }
 
 // ItemConfig 道具配置
 type ItemConfig struct {
-	ConfID pb_confs.ItemID
-	Effect ItemEffect
+	ConfID pb_confs.ItemID `json:"conf_id"`
+	Effect ItemEffect      `json:"effect"`
 }
 
 // Conf 道具配置聚合
 type Conf struct {
 	configs map[pb_confs.ItemID]ItemConfig
+
+	version string // 内容版本（JSON 加载后为内容 hash；内嵌为 ""）
 }
 
 // New 构造道具配置（内置占位数据）
@@ -51,4 +53,10 @@ func New() *Conf {
 func (c *Conf) Get(configID pb_confs.ItemID) (ItemConfig, bool) {
 	ic, ok := c.configs[configID]
 	return ic, ok
+}
+
+// Has 判断道具配置是否存在（供跨表引用校验）。
+func (c *Conf) Has(configID pb_confs.ItemID) bool {
+	_, ok := c.configs[configID]
+	return ok
 }

@@ -1,0 +1,9 @@
+{
+  "rounds": 8,
+  "injury_rate_start": 85,
+  "injury_rate_decay": 10,
+  "settlement_dead_rate": 10,
+  "phys_converge": 100,
+  "magic_converge": 100,
+  "battle_exp_coeff": 5
+}

@@ -9,46 +9,47 @@ import "sort"
 
 // DropItemConfig 掉落条目：命中后产出英雄卡或道具
 type DropItemConfig struct {
-	RewardConfID   int32 // 英雄配置ID（IsHero=true）或道具配置ID（IsHero=false）
-	IsHero         bool  // true=英雄卡；false=道具
-	Count          int32 // 产出数量（英雄卡恒 1）
-	Weight         int32 // 组内权重
-	GuaranteeReset bool  // 命中后保底计数归零（保底组的奖励项置 true）
+	RewardConfID   int32 `json:"reward_conf_id"` // 英雄配置ID（IsHero=true）或道具配置ID（IsHero=false）
+	IsHero         bool  `json:"is_hero"`        // true=英雄卡；false=道具
+	Count          int32 `json:"count"`          // 产出数量（英雄卡恒 1）
+	Weight         int32 `json:"weight"`         // 组内权重
+	GuaranteeReset bool  `json:"guarantee_reset"` // 命中后保底计数归零（保底组的奖励项置 true）
 }
 
 // DropGroupConfig 掉落组（稀有度档位）
 type DropGroupConfig struct {
-	GroupID int32            // 组ID（档位）
-	Weight  int32            // 非保底抽取时的组权重
-	Items   []DropItemConfig // 组内条目（按 Weight 随机一条）
+	GroupID int32            `json:"group_id"` // 组ID（档位）
+	Weight  int32            `json:"weight"`   // 非保底抽取时的组权重
+	Items   []DropItemConfig `json:"items"`    // 组内条目（按 Weight 随机一条）
 }
 
-// RecruitPoolConfig 抽卡池配置
+// RecruitPoolConfig 抽卡池配置（亦为 JSON 表行结构）
 type RecruitPoolConfig struct {
-	PoolID int32
-	Name   string
+	PoolID       int32  `json:"pool_id"`
+	Name         string `json:"name"`
+	TicketConfID int32  `json:"ticket_conf_id"` // 抽卡券道具配置ID（0=无券模式）
+	SingleTicket int64  `json:"single_ticket"`  // 单抽消耗券数
+	SingleGold   int64  `json:"single_gold"`    // 单抽消耗金币数（二级货币）
+	TenTicket    int64  `json:"ten_ticket"`     // 十连消耗券数
+	TenGold      int64  `json:"ten_gold"`       // 十连消耗金币数
 
-	TicketConfID int32 // 抽卡券道具配置ID（0=无券模式）
-	SingleTicket int64 // 单抽消耗券数
-	SingleGold   int64 // 单抽消耗金币数（二级货币）
-	TenTicket    int64 // 十连消耗券数
-	TenGold      int64 // 十连消耗金币数
+	FreeDaily bool `json:"free_daily"` // 是否开启免费（每天 0/12 点窗口各 1 次）
+	HalfPrice bool `json:"half_price"` // 是否开启半价（每天 0/12 点窗口各 1 次，金币减半）
 
-	FreeDaily bool // 是否开启免费（每天 0/12 点窗口各 1 次）
-	HalfPrice bool // 是否开启半价（每天 0/12 点窗口各 1 次，金币减半）
+	DropGroups       []DropGroupConfig `json:"drop_groups"`
+	GuaranteeTimes   int32             `json:"guarantee_times"`   // 累抽 N 次必出高稀有度
+	GuaranteeGroupID int32             `json:"guarantee_group_id"` // 保底命中时走的掉落组
+	FirstDropGroupID int32             `json:"first_drop_group_id"` // 首抽保底组（0=无）
 
-	DropGroups       []DropGroupConfig
-	GuaranteeTimes   int32 // 累抽 N 次必出高稀有度
-	GuaranteeGroupID int32 // 保底命中时走的掉落组
-	FirstDropGroupID int32 // 首抽保底组（0=无）
-
-	WishHeros []int32 // 心愿可选英雄配置ID集合
-	WishTimes int32   // 心愿进度阈值
+	WishHeros []int32 `json:"wish_heros"` // 心愿可选英雄配置ID集合
+	WishTimes int32   `json:"wish_times"` // 心愿进度阈值
 }
 
 // Conf 抽卡配置聚合
 type Conf struct {
 	pools map[int32]*RecruitPoolConfig
+
+	version string // 内容版本（JSON 加载后为内容 hash；内嵌为 ""）
 }
 
 // New 构造抽卡配置（内置占位数据）

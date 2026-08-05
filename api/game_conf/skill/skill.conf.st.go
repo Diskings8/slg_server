@@ -71,6 +71,8 @@ type Conf struct {
 	Slot1UnlockLv uint32 // 槽位1（index1）解锁所需英雄等级
 	Slot2UnlockLv uint32 // 槽位2（index2）解锁所需英雄等级
 	UnequipRefund int32  // 拆卸返还比例：每升级 1 级返还 1/2 升级道具
+
+	version string // 内容版本（JSON 加载后为内容 hash；内嵌为 ""）
 }
 
 // New 构造技能配置（内置占位数据）

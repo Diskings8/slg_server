@@ -105,9 +105,11 @@ func main() {
 				loggers.Logger.Info("数据库初始化完成")
 			},
 			func() {
-				if err := game_conf.InitDefault(); err != nil {
+				// 游戏配置：config_path 非空走 JSON 配置表，为空走 Go 内嵌占位
+				if err := game_conf.InitFromConf(); err != nil {
 					loggers.Logger.Error("game config init failed", zap.Error(err))
 				}
+				game_conf.StartWatch(ctx, 2*time.Second) // 配置热更：mtime 轮询
 				game_internals.Init(ctx)
 				etcdconn.InitEtcd(common_configs.GetConf().Etcd.Dsn())
 				loggers.Logger.Info("ETCD 初始化完成")

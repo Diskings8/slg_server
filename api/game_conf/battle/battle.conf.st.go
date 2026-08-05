@@ -7,15 +7,17 @@ package battle
 // 站位几何（站位 [0 1 2 2 1 0]：攻大营/攻1号/攻2号/守2号/守1号/守大营）由引擎侧
 // stanceIndex/stanceDistance 计算（攻方槽位 0,1,2 → 索引 0,1,2；守方 → 5,4,3）。
 
-// Conf 战斗规则配置（占位数据，后续迁 JSON/配置表）
+// Conf 战斗规则配置
 type Conf struct {
-	Rounds             uint32 // 战斗回合数（默认 8）
-	InjuryRateStart    uint32 // 第1回合受伤比例（%）：伤害中转为伤兵的比例
-	InjuryRateDecay    uint32 // 每回合受伤比例递减（%）
-	SettlementDeadRate uint32 // 结算阶段：每回合当前伤兵转死亡兵比例（%）
-	PhysConverge       uint32 // 物理伤害收敛系数（%）：攻击²/(攻击 + 防御×系数)
-	MagicConverge      uint32 // 法术伤害收敛系数（%）：智力²/(智力 + 智力×系数)
-	BattleExpCoeff     uint32 // 战斗经验系数：每场总经验 = 敌方平均等级 × 击杀敌兵 × 系数
+	Rounds             uint32 `json:"rounds"`               // 战斗回合数（默认 8）
+	InjuryRateStart    uint32 `json:"injury_rate_start"`    // 第1回合受伤比例（%）：伤害中转为伤兵的比例
+	InjuryRateDecay    uint32 `json:"injury_rate_decay"`    // 每回合受伤比例递减（%）
+	SettlementDeadRate uint32 `json:"settlement_dead_rate"` // 结算阶段：每回合当前伤兵转死亡兵比例（%）
+	PhysConverge       uint32 `json:"phys_converge"`        // 物理伤害收敛系数（%）：攻击²/(攻击 + 防御×系数)
+	MagicConverge      uint32 `json:"magic_converge"`       // 法术伤害收敛系数（%）：智力²/(智力 + 智力×系数)
+	BattleExpCoeff     uint32 `json:"battle_exp_coeff"`     // 战斗经验系数：每场总经验 = 敌方平均等级 × 击杀敌兵 × 系数
+
+	version string // 内容版本（JSON 加载后为内容 hash；内嵌为 ""）
 }
 
 // New 构造战斗规则配置（内置占位数据）

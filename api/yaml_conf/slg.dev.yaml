@@ -50,4 +50,4 @@ worldmap:
   addr: ":50060"
 
 game_conf:
-  config_path: ""
+  config_path: "api/game_conf/json"

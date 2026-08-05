@@ -56,7 +56,7 @@ addr = "127.0.0.1:12002"
 addr = ":50060"
 
 [game_conf]
-config_path = ""
+config_path = "api/game_conf/json"
 
 # ==============================================
 # 节点配置（用于 LoadNodeConfig 按名查询）

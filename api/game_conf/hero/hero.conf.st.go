@@ -3,19 +3,19 @@ package hero
 
 // HeroAttr 英雄战斗属性（无战力聚合，直接使用真实属性参与战斗）
 type HeroAttr struct {
-	Attack       uint32 // 攻击
-	Defense      uint32 // 防御
-	Intelligence uint32 // 智力
-	Movement     uint32 // 移动
-	Relocation   uint32 // 拆迁
+	Attack       uint32 `json:"attack"`       // 攻击
+	Defense      uint32 `json:"defense"`      // 防御
+	Intelligence uint32 `json:"intelligence"` // 智力
+	Movement     uint32 `json:"movement"`     // 移动
+	Relocation   uint32 `json:"relocation"`   // 拆迁
 }
 
 // HeroConf 每英雄属性配置
 type HeroConf struct {
-	ConfID      int32
-	Base        HeroAttr // 基础属性（lv1）
-	Growth      HeroAttr // 每级成长（每升 1 级增加）
-	AttackRange uint32   // 攻击距离（能打到"距离对方大营 ≤ D"的目标，固定值）
+	ConfID      int32    `json:"conf_id"`
+	Base        HeroAttr `json:"base"`        // 基础属性（lv1）
+	Growth      HeroAttr `json:"growth"`      // 每级成长（每升 1 级增加）
+	AttackRange uint32   `json:"attack_range"` // 攻击距离（能打到"距离对方大营 ≤ D"的目标，固定值）
 }
 
 // Conf 英雄配置聚合
@@ -24,9 +24,10 @@ type Conf struct {
 	FreePointPer10L uint32   // 每10级获得的自由属性点
 	MaxStarStage    int32    // 星级上限
 	StarPointPer    uint32   // 每升 1 星发放的自由属性点（星级不直接乘属性，改发点由玩家分配）
-	ExpNeed         []uint32 // 逐级升级经验表（index=level-1，可替换数据，后续迁 JSON）
+	ExpNeed         []uint32 // 逐级升级经验表（index=level-1）
 
-	heroes map[int32]HeroConf // 每英雄属性表（占位，后续迁配置表）
+	heroes  map[int32]HeroConf // 每英雄属性表
+	version string             // 内容版本（JSON 加载后为内容 hash；内嵌为 ""）
 }
 
 // New 构造英雄配置（内置占位数据）

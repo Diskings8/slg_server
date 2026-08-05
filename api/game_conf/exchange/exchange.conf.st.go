@@ -8,17 +8,19 @@ import "server.slg.com/api/protocol/pb_confs"
 
 // RuleConfig 货币兑换规则（一级→二级）
 type RuleConfig struct {
-	FromID    pb_confs.ItemID   // 来源货币配置ID（一级货币，如钻石）
-	FromType  pb_confs.ItemType // 来源货币类型
-	ToID      pb_confs.ItemID   // 目标货币配置ID（二级货币，如金币）
-	ToType    pb_confs.ItemType // 目标货币类型
-	FromCount int64             // 消耗来源货币数量（每组）
-	ToCount   int64             // 获得目标货币数量（每组）
+	FromID    pb_confs.ItemID   `json:"from_id"`    // 来源货币配置ID（一级货币，如钻石）
+	FromType  pb_confs.ItemType `json:"from_type"`  // 来源货币类型
+	ToID      pb_confs.ItemID   `json:"to_id"`      // 目标货币配置ID（二级货币，如金币）
+	ToType    pb_confs.ItemType `json:"to_type"`    // 目标货币类型
+	FromCount int64             `json:"from_count"` // 消耗来源货币数量（每组）
+	ToCount   int64             `json:"to_count"`   // 获得目标货币数量（每组）
 }
 
 // Conf 货币兑换配置聚合（按 FromID 索引，一个来源货币一条规则）
 type Conf struct {
 	rules map[pb_confs.ItemID]*RuleConfig
+
+	version string // 内容版本（JSON 加载后为内容 hash；内嵌为 ""）
 }
 
 // New 构造货币兑换配置（内置占位数据）
