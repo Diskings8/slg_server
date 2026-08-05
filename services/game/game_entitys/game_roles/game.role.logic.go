@@ -1,8 +1,6 @@
 package game_roles
 
 import (
-	"time"
-
 	"server.slg.com/api/protocol/pb/pb_error_code"
 	"server.slg.com/api/protocol/pb/pb_item"
 	"server.slg.com/api/protocol/pb_confs"
@@ -20,9 +18,8 @@ func NewTest(roleID uint64) *Role {
 }
 
 // ServerID 获取角色所在服务器ID
-// 当子模块 attr 存在后，委派给 r.GetAttr().ServerID
 func (r *Role) ServerID() uint32 {
-	return 0 // TODO 接入 attr 子模块后替换为实际实现
+	return r.GetAttr().Ensure().ServerID
 }
 
 // Level 获取角色等级
@@ -37,11 +34,9 @@ func (r *Role) UnionID() uint64 {
 	return 0 // TODO 接入 role_union 子模块后替换
 }
 
-// VIPLevel 获取VIP等级
-// 当子模块 attr 存在后，从 attr 中读取 VIP 信息
+// VIPLevel 获取VIP等级（已过期返回 0）
 func (r *Role) VIPLevel() int32 {
-	// TODO 接入 attr 子模块后读取实际 VIP 等级
-	return 0
+	return r.GetAttr().VipLevelEffective()
 }
 
 // IsOnline 是否在线
@@ -51,11 +46,14 @@ func (r *Role) IsOnline() bool {
 	return false
 }
 
+// Login 角色登录
+func (r *Role) Login() {
+	r.GetAttr().UpdateLogin()
+}
+
 // Offline 角色下线
 func (r *Role) Offline() {
-	_ = time.Now().Unix()
-	// TODO 接入 attr 子模块后记录下线时间:
-	// r.GetAttr().LogoutAt = time.Now().Unix()
+	r.GetAttr().UpdateLogout()
 }
 
 // IsCrossServerMap 是否跨服地图迁城

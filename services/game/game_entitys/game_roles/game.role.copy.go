@@ -48,4 +48,5 @@ func (r *Role) Reset() {
 	r.Buildings = nil
 	r.Formations = nil
 	r.Recruits = nil
+	r.Attr = nil
 }

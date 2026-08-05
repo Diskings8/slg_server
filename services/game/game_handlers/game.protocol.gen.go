@@ -1,6 +1,7 @@
 package game_handlers
 
 import (
+	"server.slg.com/api/protocol/pb/pb_attr"
 	"server.slg.com/api/protocol/pb/pb_battle_record"
 	"server.slg.com/api/protocol/pb/pb_city"
 	"server.slg.com/api/protocol/pb/pb_hero"
@@ -10,6 +11,7 @@ import (
 	"server.slg.com/api/protocol/pb/pb_recruit"
 	"server.slg.com/api/protocol/pb/pb_skill"
 	"server.slg.com/api/protocol/pb/pb_worldmap"
+	"server.slg.com/services/game/game_handlers/game_streams/attr_handler"
 	"server.slg.com/services/game/game_handlers/game_streams/battle_record_handler"
 	"server.slg.com/services/game/game_handlers/game_streams/building_handler"
 	"server.slg.com/services/game/game_handlers/game_streams/formation_handler"
@@ -168,5 +170,12 @@ func init() {
 		F:    Wrap(recruit_handler.HandlerRecruitDrawWish),
 		Req:  &pb_recruit.RecruitDrawWishReq{},
 		Resp: &pb_recruit.RecruitDrawWishResp{},
+	})
+
+	// ===== 角色属性 (1000034) =====
+	RegisterProto(pb_protocol.MsgID_GameAttrList, &ProtoHandler{
+		F:    Wrap(attr_handler.HandlerAttrList),
+		Req:  &pb_attr.AttrListReq{},
+		Resp: &pb_attr.AttrListResp{},
 	})
 }

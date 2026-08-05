@@ -45,7 +45,7 @@ rpcclient/              ← →  game_internals/game_rpc_clients/ ✅ 按 instan
 |------|------|--------|
 | `Activity` | 活动数据(17+活动类型) | ❌ |
 | `ActivityOther` | 活动其他数据 | ❌ |
-| `Attr` | 角色属性(serverID, 资源, VIP等) | ❌ |
+| **`Attr`** | **角色属性(serverID, VIP, 登录统计等)** | ✅ **已完成** (role_attrs + GameAttrList 协议 + 桩替换) |
 | **`Builds`** | **建筑(城建系统)** | ✅ **已完成** (role_buildings + BuildingBuild/List) |
 | `Arena` | 竞技场 | ❌ |
 | `Dungeon` | 关卡 | ❌ |
@@ -71,7 +71,7 @@ rpcclient/              ← →  game_internals/game_rpc_clients/ ✅ 按 instan
 | `WorldBoss` | 世界Boss | ❌ |
 | `Privacy` | 隐蔽指挥所 | ❌ |
 
-#### ai4slg Role 当前挂载了 7 个子模块:
+#### ai4slg Role 当前挂载了 9 个子模块:
 
 ```go
 func (r *Role) New() {
@@ -84,10 +84,11 @@ func (r *Role) New() {
 	r.Buildings = role_buildings.NewRoleBuildings(roleID)      // ✅
 	r.Formations = role_formations.NewRoleFormations(roleID)   // ✅
 	r.Recruits = role_recruits.NewRoleRecruits(roleID)          // ✅
+	r.Attr = role_attrs.NewRoleAttrs(roleID)                    // ✅
 }
 ```
 
-**子模块差距: ldl 24 个 vs ai4slg 8 个** (Builds/Teams/Recruit 已补上；Attr/Equips 等未开始)
+**子模块差距: ldl 24 个 vs ai4slg 9 个** (Builds/Teams/Recruit/Attr 已补上；Equips 等未开始)
 
 ---
 
@@ -255,7 +256,7 @@ func (r *Role) New() {
 
 ### 主要缺失:
 
-1. ❌ Attr 角色属性系统 (资源/VIP/ServerID 硬编码)
+1. ✅ Attr 角色属性系统 (role_attrs: ServerID/VIP/登录统计；ServerID()/VIPLevel()/Offline() 桩已替换)
 2. ✅ 道具使用效果 (ApplyItemEffect 已实现: 经验/货币/道具三类效果 + 前置校验)
 3. ❌ 英雄升级接配置表+消耗 (needExp 占位公式)
 4. ✅ 技能获得途径 (收藏兑换: 消耗英雄卡 → 收集进度 → 达标发放技能到技能库)
@@ -304,7 +305,7 @@ Phase 2 的 8 个子任务（含实际调整），标注 **08-04 实际进度**:
 
 | 内容 | 状态 | 备注 |
 |------|------|------|
-| **Attr 属性系统** | ❌ 未开始 | Role.ServerID/Level/VIPLevel 仍硬编码 TODO |
+| **Attr 属性系统** | ✅ **已提前完成** | role_attrs 子模块 + GameAttrList 协议；ServerID/VIPLevel/Offline 桩已替换；玩家等级仍派生于建筑 |
 | **Teams 队伍编成** | ✅ **已提前完成** | role_formations + 3 协议 |
 | **Builds 城建系统** | ✅ **已提前完成** | role_buildings + 2 协议 |
 | **配置表系统** | ❌ 未开始 | 全项目缺口，needExp/升级消耗/技能数值依赖 |
@@ -318,7 +319,7 @@ Phase 2 的 8 个子任务（含实际调整），标注 **08-04 实际进度**:
 3. **基础设施修复 4 项**: Recv 双重加锁、道具 Save 遗漏、rpc_results.Reset panic、ItemChange 成功误报
 4. **当前主线 Phase 2** — 2.3 道具使用效果、2.6 英雄锁、2.7 技能收藏兑换（消耗英雄卡→发放技能）均已完成；剩余 **2.8 货币兑换** / **2.1 接配置表**
 5. **配置表是隐藏前置** — 2.1/2.3 及技能数值最终都依赖配置表系统
-6. **Attr 属性系统** — 硬编码方法待替换，优先级可延后到养成链路跑通
+6. **Attr 属性系统** — ✅ 已完成 (role_attrs + 桩替换 + 登录统计钩子)；玩家等级未入 Attr，保持派生于建筑
 
 ### 👉 下一步建议: 2.8 货币兑换
 

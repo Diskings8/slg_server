@@ -1,0 +1,25 @@
+syntax = "proto3";
+package attr;
+option go_package = "server.slg.com/api/protocol/pb/pb_attr";
+
+// RoleAttr 角色属性
+message RoleAttr {
+    uint32 server_id    = 1;  // 所在区服
+    int64  create_at    = 2;  // 创建时间戳（首次登录记录）
+    string create_ip    = 3;  // 创建IP
+    int64  login_at     = 4;  // 最后登录时间戳
+    int64  logout_at    = 5;  // 最后登出时间戳
+    uint32 login_days   = 6;  // 累计登录天数
+    uint64 online_time  = 7;  // 累计在线时长(秒)
+    int32  vip_level    = 8;  // VIP等级（已过期则为0）
+    int32  vip_exp      = 9;  // VIP经验
+    int64  vip_end_time = 10; // VIP到期时间戳
+}
+
+// AttrListReq 查询角色属性
+message AttrListReq {}
+
+// AttrListResp 查询角色属性
+message AttrListResp {
+    RoleAttr attr = 1;  // 角色属性
+}

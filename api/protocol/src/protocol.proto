@@ -34,6 +34,7 @@ enum MsgID {
     GameRecruit                     = 1000031;  // 单抽/十连
     GameRecruitSetWish              = 1000032;  // 设置心愿英雄
     GameRecruitDrawWish             = 1000033;  // 领取心愿英雄
+    GameAttrList                    = 1000034;  // 查询角色属性
 
     // ---------------- Camera 相机 (42200~) ----------------//
     GameCameraInit = 42200;  // 相机初始化

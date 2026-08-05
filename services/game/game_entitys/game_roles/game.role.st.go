@@ -11,6 +11,7 @@ import (
 	"server.slg.com/services/game/game_entitys/game_roles/cultivate_costs"
 	"server.slg.com/services/game/game_entitys/game_roles/hero_skillcollections"
 	"server.slg.com/services/game/game_entitys/game_roles/hero_skills"
+	"server.slg.com/services/game/game_entitys/game_roles/role_attrs"
 	"server.slg.com/services/game/game_entitys/game_roles/role_buildings"
 	"server.slg.com/services/game/game_entitys/game_roles/role_formations"
 	"server.slg.com/services/game/game_entitys/game_roles/role_heroes"
@@ -37,14 +38,15 @@ type Role struct {
 	DeviceType    pb_gateway.DeviceType `json:"-"`
 
 	// ── 子模块 ──
-	Heroes           *role_heroes.RoleHeroes                       `json:"heroes,omitempty"`
-	Skills           *hero_skills.HeroSkills                        `json:"skills,omitempty"`
-	SkillCollections *hero_skillcollections.HeroSkillCollections    `json:"skill_collections,omitempty"`
-	CultivateCosts   *cultivate_costs.CultivateCosts                `json:"cultivate_costs,omitempty"`
-	Items            *role_items.RoleItems                          `json:"items,omitempty"`
-	Buildings        *role_buildings.RoleBuildings                  `json:"buildings,omitempty"`
-	Formations       *role_formations.RoleFormations                `json:"formations,omitempty"`
-	Recruits         *role_recruits.RoleRecruits                    `json:"recruits,omitempty"`
+	Heroes           *role_heroes.RoleHeroes                     `json:"heroes,omitempty"`
+	Skills           *hero_skills.HeroSkills                     `json:"skills,omitempty"`
+	SkillCollections *hero_skillcollections.HeroSkillCollections `json:"skill_collections,omitempty"`
+	CultivateCosts   *cultivate_costs.CultivateCosts             `json:"cultivate_costs,omitempty"`
+	Items            *role_items.RoleItems                       `json:"items,omitempty"`
+	Buildings        *role_buildings.RoleBuildings               `json:"buildings,omitempty"`
+	Formations       *role_formations.RoleFormations             `json:"formations,omitempty"`
+	Recruits         *role_recruits.RoleRecruits                 `json:"recruits,omitempty"`
+	Attr             *role_attrs.RoleAttrs                       `json:"attr,omitempty"`
 }
 
 // UniqueID 唯一 id
@@ -140,6 +142,7 @@ func (r *Role) New() {
 	r.Buildings = role_buildings.NewRoleBuildings(roleID)
 	r.Formations = role_formations.NewRoleFormations(roleID)
 	r.Recruits = role_recruits.NewRoleRecruits(roleID)
+	r.Attr = role_attrs.NewRoleAttrs(roleID)
 }
 
 // SetStatus 设置状态
@@ -284,4 +287,21 @@ func (r *Role) GetRecruits() *role_recruits.RoleRecruits {
 		r.Recruits.Init()
 	}
 	return r.Recruits
+}
+
+// GetAttr 获取属性模块
+func (r *Role) GetAttr() *role_attrs.RoleAttrs {
+	if !r.IsCopy() {
+		return r.Attr
+	}
+	if r.Attr == nil {
+		r.Attr = role_attrs.NewRoleAttrs(r.ID)
+		if r.src.Attr != nil {
+			r.copyLock.RLock()
+			r.Attr.Copy(r.src.Attr)
+			r.copyLock.RUnlock()
+		}
+		r.Attr.Init()
+	}
+	return r.Attr
 }
