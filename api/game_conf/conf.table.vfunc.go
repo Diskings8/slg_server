@@ -3,6 +3,7 @@ package game_conf
 import (
 	"sync/atomic"
 
+	"server.slg.com/api/game_conf/gacha"
 	"server.slg.com/api/game_conf/hero"
 	"server.slg.com/api/game_conf/item"
 	"server.slg.com/api/game_conf/skill"
@@ -37,6 +38,7 @@ func InitDefault() error {
 		Skill:   skill.New(),
 		Item:    item.New(),
 		Troop:   troop.New(),
+		Gacha:   gacha.New(),
 	}
 	defaultConf.Store(gc)
 	return nil
@@ -51,6 +53,7 @@ func New(filePath string) (*GameConf, error) {
 		Skill:    skill.New(),
 		Item:     item.New(),
 		Troop:    troop.New(),
+		Gacha:    gacha.New(),
 	}
 	if err := gameConfig.init(); err != nil {
 		return nil, err

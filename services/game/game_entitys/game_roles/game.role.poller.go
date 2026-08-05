@@ -17,6 +17,7 @@ import (
 	"server.slg.com/services/game/game_entitys/game_roles/role_formations"
 	"server.slg.com/services/game/game_entitys/game_roles/role_heroes"
 	"server.slg.com/services/game/game_entitys/game_roles/role_items"
+	"server.slg.com/services/game/game_entitys/game_roles/role_recruits"
 )
 
 var (
@@ -126,6 +127,7 @@ func Init(writeDB common_declarations.DbcI) {
 	role_items.Init(writeDB)
 	role_buildings.Init(writeDB)
 	role_formations.Init(writeDB)
+	role_recruits.Init(writeDB)
 
 	// 初始化轮询管理器
 	initPoller()

@@ -42,6 +42,7 @@ func New() *Conf {
 			2001: {ConfID: 2001, Effect: ItemEffect{Type: EffectAddHeroExp, Value: 100}},                                              // 英雄经验书
 			2002: {ConfID: 2002, Effect: ItemEffect{Type: EffectAddCurrency, Target: int32(pb_confs.Currency2ConfID), Value: 1000}}, // 金币礼包
 			2003: {ConfID: 2003, Effect: ItemEffect{Type: EffectAddItem, Target: 2001, Value: 5}},                                   // 资源包：5 张经验书
+			2004: {ConfID: 2004, Effect: ItemEffect{Type: EffectNone}},                                                              // 抽卡券（无效果，仅消耗）
 		},
 	}
 }

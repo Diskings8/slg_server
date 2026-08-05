@@ -35,6 +35,7 @@ const (
 	ReasonSplit    ItemChangeReason = "split"    // 拆分
 	ReasonTroop    ItemChangeReason = "troop"    // 兵种（转化/扩展消耗）
 	ReasonSkill    ItemChangeReason = "skill"    // 技能（升级消耗）
+	ReasonGacha    ItemChangeReason = "gacha"    // 抽卡（消耗券/金币 / 产出道具）
 )
 
 type ItemUse struct {

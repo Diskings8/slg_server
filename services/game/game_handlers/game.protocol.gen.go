@@ -7,6 +7,7 @@ import (
 	"server.slg.com/api/protocol/pb/pb_item"
 	"server.slg.com/api/protocol/pb/pb_maps_march"
 	"server.slg.com/api/protocol/pb/pb_protocol"
+	"server.slg.com/api/protocol/pb/pb_recruit"
 	"server.slg.com/api/protocol/pb/pb_skill"
 	"server.slg.com/api/protocol/pb/pb_worldmap"
 	"server.slg.com/services/game/game_handlers/game_streams/battle_record_handler"
@@ -16,6 +17,7 @@ import (
 	"server.slg.com/services/game/game_handlers/game_streams/item_handler"
 	"server.slg.com/services/game/game_handlers/game_streams/map_handler"
 	"server.slg.com/services/game/game_handlers/game_streams/march_handler"
+	"server.slg.com/services/game/game_handlers/game_streams/recruit_handler"
 )
 
 // 协议注册 — 手工维护，后续可由 game_generates 自动生成
@@ -144,5 +146,27 @@ func init() {
 		F:    Wrap(battle_record_handler.HandlerBattleRecordList),
 		Req:  &pb_battle_record.ListBattleRecordsReq{},
 		Resp: &pb_battle_record.ListBattleRecordsRsp{},
+	})
+
+	// ===== 抽卡 (1000020~) =====
+	RegisterProto(pb_protocol.MsgID_GameRecruitPoolsInfo, &ProtoHandler{
+		F:    Wrap(recruit_handler.HandlerRecruitPoolsInfo),
+		Req:  &pb_recruit.RecruitPoolsInfoReq{},
+		Resp: &pb_recruit.RecruitPoolsInfoResp{},
+	})
+	RegisterProto(pb_protocol.MsgID_GameRecruit, &ProtoHandler{
+		F:    Wrap(recruit_handler.HandlerRecruit),
+		Req:  &pb_recruit.RecruitReq{},
+		Resp: &pb_recruit.RecruitResp{},
+	})
+	RegisterProto(pb_protocol.MsgID_GameRecruitSetWish, &ProtoHandler{
+		F:    Wrap(recruit_handler.HandlerRecruitSetWish),
+		Req:  &pb_recruit.RecruitSetWishReq{},
+		Resp: &pb_recruit.RecruitSetWishResp{},
+	})
+	RegisterProto(pb_protocol.MsgID_GameRecruitDrawWish, &ProtoHandler{
+		F:    Wrap(recruit_handler.HandlerRecruitDrawWish),
+		Req:  &pb_recruit.RecruitDrawWishReq{},
+		Resp: &pb_recruit.RecruitDrawWishResp{},
 	})
 }

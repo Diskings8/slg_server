@@ -5,6 +5,7 @@ import (
 	"os"
 	"sync"
 
+	"server.slg.com/api/game_conf/gacha"
 	"server.slg.com/api/game_conf/hero"
 	"server.slg.com/api/game_conf/item"
 	"server.slg.com/api/game_conf/skill"
@@ -23,6 +24,7 @@ type GameConf struct {
 	Skill *skill.Conf
 	Item  *item.Conf
 	Troop *troop.Conf
+	Gacha *gacha.Conf
 }
 
 // AllConfigs 全部配置

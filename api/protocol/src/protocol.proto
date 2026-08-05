@@ -14,32 +14,36 @@ enum MsgID {
     GameHeroCultivate    = 1000003;  // 英雄培养(5维属性)
     GameHeroSkillUpgrade = 1000004;  // 英雄技能升级
 
-    GameUseItem            = 1000005;  // 使用道具
-    GameMarchCreate        = 1000006;  // 出征创建行军
-    GameMapData            = 1000007;  // 查询视野地图数据
+    GameUseItem     = 1000005;  // 使用道具
+    GameMarchCreate = 1000006;  // 出征创建行军
+    GameMapData     = 1000007;  // 查询视野地图数据
 
-    GameFormationField     = 1000008;  // 上阵英雄到编队
-    GameFormationRemove    = 1000009;  // 下阵英雄
-    GameFormationList      = 1000010;  // 查询编队
-    GameBuildingBuild      = 1000011;  // 建造建筑
-    GameBuildingList       = 1000012;  // 查询建筑
+    GameFormationField  = 1000008;  // 上阵英雄到编队
+    GameFormationRemove = 1000009;  // 下阵英雄
+    GameFormationList   = 1000010;  // 查询编队
+    GameBuildingBuild   = 1000011;  // 建造建筑
+    GameBuildingList    = 1000012;  // 查询建筑
 
-    GameHeroTroopTransform = 1000013;  // 英雄兵种转化
-    GameHeroTroopUnlock    = 1000014;  // 英雄兵种扩展
-    GameBattleRecordList   = 1000015;  // 查询战报
-    GameHeroEquipSkill     = 1000016;  // 装配技能到英雄技能槽
-    GameHeroUnequipSkill   = 1000017;  // 拆卸英雄技能槽技能
-    GameHeroUpgradeStar    = 1000018;  // 英雄升星（消耗同配置英雄卡）
+    GameHeroTroopTransform          = 1000013;  // 英雄兵种转化
+    GameHeroTroopUnlock             = 1000014;  // 英雄兵种扩展
+    GameBattleRecordList            = 1000015;  // 查询战报
+    GameHeroEquipSkill              = 1000016;  // 装配技能到英雄技能槽
+    GameHeroUnequipSkill            = 1000017;  // 拆卸英雄技能槽技能
+    GameHeroUpgradeStar             = 1000018;  // 英雄升星（消耗同配置英雄卡）
     GameHeroSkillCollectionActivate = 1000019;  // 技能收藏激活（消耗道具收集）
     GameHeroLock                    = 1000020;  // 锁定英雄（防止被消耗）
     GameHeroUnlock                  = 1000021;  // 解锁英雄
+    GameRecruitPoolsInfo            = 1000030;  // 查询抽卡池
+    GameRecruit                     = 1000031;  // 单抽/十连
+    GameRecruitSetWish              = 1000032;  // 设置心愿英雄
+    GameRecruitDrawWish             = 1000033;  // 领取心愿英雄
 
     // ---------------- Camera 相机 (42200~) ----------------//
-    GameCameraInit         = 42200;  // 相机初始化
-    GameCameraMove         = 42202;  // 相机移动
+    GameCameraInit = 42200;  // 相机初始化
+    GameCameraMove = 42202;  // 相机移动
 
     // ---------------- worldmap 内部服务协议 (5000001~) ----------------//
-    WorldMapConnect        = 5000001;  // game→worldmap 流握手
+    WorldMapConnect = 5000001;  // game→worldmap 流握手
 
     // ---------------- 推送下推的信息-----------------//
     PushServerMainTain = 10000001;  // 服务器维护
