@@ -33,3 +33,16 @@ message UseItemReq {
 message UseItemResp {
     ItemUse remain = 1;  // 使用后剩余
 }
+
+// CurrencyExchangeReq 货币兑换请求（一级→二级）
+message CurrencyExchangeReq {
+    int32 from_id = 1;  // 来源货币配置ID（一级货币）
+    int32 to_id   = 2;  // 目标货币配置ID（二级货币）
+    int64 count   = 3;  // 兑换的来源货币数量（需为配置整组倍数的正整数）
+}
+
+// CurrencyExchangeResp 货币兑换响应
+message CurrencyExchangeResp {
+    ItemUse remain = 1;  // 兑换后来源货币剩余
+    ItemUse obtain = 2;  // 本次获得的目标货币
+}

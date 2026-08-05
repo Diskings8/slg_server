@@ -95,6 +95,13 @@ func init() {
 		Resp: &pb_item.UseItemResp{},
 	})
 
+	// ===== 货币兑换 (1000035) =====
+	RegisterProto(pb_protocol.MsgID_GameCurrencyExchange, &ProtoHandler{
+		F:    Wrap(item_handler.HandlerCurrencyExchange),
+		Req:  &pb_item.CurrencyExchangeReq{},
+		Resp: &pb_item.CurrencyExchangeResp{},
+	})
+
 	// ===== 出征 (1000006) =====
 	RegisterProto(pb_protocol.MsgID_GameMarchCreate, &ProtoHandler{
 		F:    Wrap(march_handler.HandlerMarchCreate),

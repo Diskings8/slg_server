@@ -4,6 +4,7 @@ import (
 	"sync/atomic"
 
 	"server.slg.com/api/game_conf/battle"
+	"server.slg.com/api/game_conf/exchange"
 	"server.slg.com/api/game_conf/gacha"
 	"server.slg.com/api/game_conf/hero"
 	"server.slg.com/api/game_conf/item"
@@ -39,13 +40,14 @@ func Init(filePath string) error {
 // InitDefault 加载 Go 内嵌配置（不走 JSON），供测试/未配置 JSON 环境使用
 func InitDefault() error {
 	gc := &GameConf{
-		configs: &pb_confs.Table{},
-		Battle:  battle.New(),
-		Hero:    hero.New(),
-		Skill:   skill.New(),
-		Item:    item.New(),
-		Troop:   troop.New(),
-		Gacha:   gacha.New(),
+		configs:  &pb_confs.Table{},
+		Battle:   battle.New(),
+		Hero:     hero.New(),
+		Skill:    skill.New(),
+		Item:     item.New(),
+		Troop:    troop.New(),
+		Gacha:    gacha.New(),
+		Exchange: exchange.New(),
 	}
 	defaultConf.Store(gc)
 	return nil
@@ -73,6 +75,7 @@ func New(filePath string) (*GameConf, error) {
 		Item:     item.New(),
 		Troop:    troop.New(),
 		Gacha:    gacha.New(),
+		Exchange: exchange.New(),
 	}
 	if err := gameConfig.init(); err != nil {
 		return nil, err

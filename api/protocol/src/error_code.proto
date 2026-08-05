@@ -46,4 +46,8 @@ enum ErrorCode {
     RecruitWishHeroInvalid  = 64;  // 心愿英雄不在可选集合
     RecruitWishNotReady     = 65;  // 心愿进度未满
     RecruitDropConfNotFound = 66;  // 掉落配置缺失
+
+    // ── 货币兑换 (70~) ──
+    CurrencyExchangeConfNotFound = 70;  // 兑换规则不存在
+    CurrencyExchangeCountInvalid = 71;  // 兑换数量非法（非整组）
 }
