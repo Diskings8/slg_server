@@ -10,7 +10,6 @@ enum MsgID {
 
     // ---------------- Game 业务协议 (1000001~) ----------------//
     GameHeroList                    = 1000001;  // 获取英雄列表
-    GameHeroUpgradeLevel            = 1000002;  // 英雄升级
     GameHeroCultivate               = 1000003;  // 英雄培养(5维属性)
     GameHeroSkillUpgrade            = 1000004;  // 英雄技能升级
     GameUseItem                     = 1000005;  // 使用道具

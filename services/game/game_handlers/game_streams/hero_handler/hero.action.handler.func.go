@@ -11,34 +11,6 @@ import (
 	"server.slg.com/services/game/game_logics"
 )
 
-// HandlerHeroUpgradeLevel 英雄获得经验并升级 (1000002)
-//
-// 给英雄累加经验，满足升级所需经验则升级（每10级发自由属性点）。
-func HandlerHeroUpgradeLevel(ctx context.Context, roleID uint64, req *pb_hero.HeroUpgradeLevelReq, resp *pb_hero.HeroUpgradeLevelResp) rpc_results.ResultI {
-	poller, role, err := game_role_handler.GetRole(roleID)
-	if err != nil {
-		return err
-	}
-	defer poller.Release()
-
-	hero := role.GetHeroes().GetHero(req.GetHeroId())
-	if hero == nil {
-		return rpc_results.Error(pb_error_code.ErrorCode_ParamError, "hero not found")
-	}
-
-	newLevel, logicErr := game_logics.HeroAddExp(hero, req.GetExp())
-	if logicErr != nil {
-		return rpc_results.Error(pb_error_code.ErrorCode_Failed, logicErr.Error())
-	}
-
-	poller.Save()
-
-	resp.HeroId = req.GetHeroId()
-	resp.Level = newLevel
-	resp.AttrPoint = hero.GetAttrPoint()
-	return nil
-}
-
 // HandlerHeroCultivate 英雄加点 (1000003)
 //
 // 消耗 1 点自由属性点，给指定属性（除拆迁值外）加 1 点。

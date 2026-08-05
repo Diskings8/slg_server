@@ -37,11 +37,6 @@ func init() {
 		Req:  &pb_hero.HeroListReq{},
 		Resp: &pb_hero.HeroListResp{},
 	})
-	RegisterProto(pb_protocol.MsgID_GameHeroUpgradeLevel, &ProtoHandler{
-		F:    Wrap(hero_handler.HandlerHeroUpgradeLevel),
-		Req:  &pb_hero.HeroUpgradeLevelReq{},
-		Resp: &pb_hero.HeroUpgradeLevelResp{},
-	})
 	RegisterProto(pb_protocol.MsgID_GameHeroCultivate, &ProtoHandler{
 		F:    Wrap(hero_handler.HandlerHeroCultivate),
 		Req:  &pb_hero.HeroCultivateReq{},

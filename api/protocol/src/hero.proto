@@ -43,18 +43,6 @@ message HeroListResp {
     repeated HeroInfo heroes = 1;
 }
 
-// HeroUpgradeLevelReq 英雄升级
-message HeroUpgradeLevelReq {
-    uint64 hero_id = 1;
-    uint32 exp    = 2;  // 本次获得的经验
-}
-
-message HeroUpgradeLevelResp {
-    uint64 hero_id     = 1;
-    uint32 level      = 2;
-    uint32 attr_point = 3;  // 升级后的自由属性点
-}
-
 // HeroCultivate 英雄培养
 message HeroCultivateReq {
     uint64 hero_id         = 1;
