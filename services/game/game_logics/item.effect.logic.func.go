@@ -27,7 +27,7 @@ func ApplyItemEffect(role *game_roles.Role, configID pb_confs.ItemID, count int6
 	// 前置校验（扣道具前，避免扣了道具效果失败丢道具）
 	var targetHero *role_heroes.RoleHero
 	if conf.Effect.Type == item.EffectAddHeroExp {
-		targetHero = role.GetHeroes().GetHero(pb_confs.ItemID(targetHeroID))
+		targetHero = role.GetHeroes().GetHero(uint64(targetHeroID))
 		if targetHero == nil {
 			return rpc_results.Error(pb_error_code.ErrorCode_ItemEffectTargetInvalid, "item effect target hero not found")
 		}

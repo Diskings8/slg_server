@@ -13,8 +13,11 @@ import (
 
 // heroCardConsumable 英雄卡是否可被消耗（升星消耗等）
 //
-// 不可消耗：被编队引用、有技能装配（EquipSkills 非空）、有养成投入（升过星/升过级）。
+// 不可消耗：被锁定、被编队引用、有技能装配（EquipSkills 非空）、有养成投入（升过星/升过级）。
 func heroCardConsumable(role *game_roles.Role, card *role_heroes.RoleHero) bool {
+	if card.GetIsLocked() {
+		return false
+	}
 	if role.GetFormations().FormationHasHero(card.GetID()) {
 		return false
 	}

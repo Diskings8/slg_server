@@ -4,7 +4,6 @@ import (
 	"server.slg.com/api/protocol/pb/pb_city"
 	"server.slg.com/api/protocol/pb/pb_error_code"
 	"server.slg.com/api/protocol/pb/pb_maps_march"
-	pb_confs "server.slg.com/api/protocol/pb_confs"
 	"server.slg.com/common/conns/rpcconn/rpc_results"
 	"server.slg.com/services/game/game_entitys/game_roles"
 	"server.slg.com/services/game/game_models"
@@ -34,7 +33,7 @@ func FormationFieldHero(role *game_roles.Role, req *pb_maps_march.FormationField
 	}
 
 	// 3. 校验英雄存在
-	if hero := role.GetHeroes().GetHero(pb_confs.ItemID(req.GetHeroId())); hero == nil {
+	if hero := role.GetHeroes().GetHero(req.GetHeroId()); hero == nil {
 		return rpc_results.Error(pb_error_code.ErrorCode_ParamError, "hero not found")
 	}
 

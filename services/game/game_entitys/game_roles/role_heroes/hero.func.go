@@ -5,7 +5,6 @@ import (
 	"server.slg.com/api/protocol/pb/pb_cultivate"
 	"server.slg.com/api/protocol/pb/pb_hero"
 	"server.slg.com/api/protocol/pb/pb_skill"
-	"server.slg.com/api/protocol/pb_confs"
 	"server.slg.com/common/loggers"
 	"server.slg.com/common/utils/util_jsons"
 	"server.slg.com/services/game/game_models"
@@ -21,7 +20,7 @@ func NewRoleHeroes(roleID uint64) *RoleHeroes {
 func (hrs *RoleHeroes) Init() {
 	for _, modelOne := range hrs.List {
 		roleHero := NewRoleHero(modelOne)
-		hrs.Mem.Store(pb_confs.ItemID(roleHero.ID), roleHero)
+		hrs.Mem.Store(roleHero.ID, roleHero)
 	}
 }
 
@@ -48,8 +47,8 @@ func (hrs *RoleHeroes) Format2Pb() []*pb_hero.HeroInfo {
 	return list
 }
 
-// GetHero 获取英雄（按英雄实例ID）
-func (hrs *RoleHeroes) GetHero(heroID pb_confs.ItemID) *RoleHero {
+// GetHero 获取英雄（按英雄实例ID，uint64 无截断）
+func (hrs *RoleHeroes) GetHero(heroID uint64) *RoleHero {
 	if v, ok := hrs.Mem.Load(heroID); ok {
 		return v
 	}
@@ -71,7 +70,7 @@ func (hrs *RoleHeroes) GetHeroesByConf(confID int32) []*RoleHero {
 //
 // 仅移除内存，DB 删除需另行调用 DBDeleteHero（DBSave 是 upsert 不会清理 List 外记录）。
 func (hrs *RoleHeroes) RemoveHero(heroID uint64) *RoleHero {
-	hrs.Mem.Delete(pb_confs.ItemID(heroID))
+	hrs.Mem.Delete(heroID)
 	for i, v := range hrs.List {
 		if v.ID == heroID {
 			out := hrs.List[i]
@@ -114,19 +113,13 @@ func (hr *RoleHero) Format2Pb() *pb_hero.HeroInfo {
 		attrRelocation = hr.Cultivates[4]
 	}
 
-	// IsLocked 反映到 cur_status
-	status := pb_hero.Status_Normal
-	if hr.IsLocked {
-		status = pb_hero.Status_Injured
-	}
-
 	return &pb_hero.HeroInfo{
 		ConfigId:         hr.HeroConfID,
 		StarStage:        hr.StarStage,
 		CurLevel:         hr.Level,
 		CurExp:           hr.Exp,
 		AttrPoint:        hr.AttrPoint,
-		CurStatus:        status,
+		CurStatus:        pb_hero.Status_Normal,
 		AttrAttack:       attrAttack,
 		AttrDefense:      attrDefense,
 		AttrIntelligence: attrIntelligence,
@@ -134,6 +127,7 @@ func (hr *RoleHero) Format2Pb() *pb_hero.HeroInfo {
 		AttrRelocation:   attrRelocation,
 		Skills:           hr.EquipSkills,
 		IsAwakened:       hr.IsAwakened,
+		IsLocked:         hr.IsLocked, // 锁定是独立保护标记，不等同于受伤
 		Troops:           hr.Troops,
 		CurTroopTypeId:   hr.CurTroopTypeID,
 	}

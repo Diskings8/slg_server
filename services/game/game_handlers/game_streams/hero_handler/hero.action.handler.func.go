@@ -6,7 +6,6 @@ import (
 
 	"server.slg.com/api/protocol/pb/pb_error_code"
 	"server.slg.com/api/protocol/pb/pb_hero"
-	pb_confs "server.slg.com/api/protocol/pb_confs"
 	"server.slg.com/common/conns/rpcconn/rpc_results"
 	"server.slg.com/services/game/game_entitys/game_role_handler"
 	"server.slg.com/services/game/game_logics"
@@ -22,7 +21,7 @@ func HandlerHeroUpgradeLevel(ctx context.Context, roleID uint64, req *pb_hero.He
 	}
 	defer poller.Release()
 
-	hero := role.GetHeroes().GetHero(pb_confs.ItemID(req.GetHeroId()))
+	hero := role.GetHeroes().GetHero(req.GetHeroId())
 	if hero == nil {
 		return rpc_results.Error(pb_error_code.ErrorCode_ParamError, "hero not found")
 	}
@@ -50,7 +49,7 @@ func HandlerHeroCultivate(ctx context.Context, roleID uint64, req *pb_hero.HeroC
 	}
 	defer poller.Release()
 
-	hero := role.GetHeroes().GetHero(pb_confs.ItemID(req.GetHeroId()))
+	hero := role.GetHeroes().GetHero(req.GetHeroId())
 	if hero == nil {
 		return rpc_results.Error(pb_error_code.ErrorCode_ParamError, "hero not found")
 	}
@@ -79,7 +78,7 @@ func HandlerHeroUpgradeStar(ctx context.Context, roleID uint64, req *pb_hero.Her
 	}
 	defer poller.Release()
 
-	hero := role.GetHeroes().GetHero(pb_confs.ItemID(req.GetHeroId()))
+	hero := role.GetHeroes().GetHero(req.GetHeroId())
 	if hero == nil {
 		return rpc_results.Error(pb_error_code.ErrorCode_ParamError, "hero not found")
 	}
@@ -94,5 +93,47 @@ func HandlerHeroUpgradeStar(ctx context.Context, roleID uint64, req *pb_hero.Her
 	poller.Save()
 	resp.HeroId = req.GetHeroId()
 	resp.StarStage = hero.GetStarStage()
+	return nil
+}
+
+// HandlerHeroLock 锁定英雄 (1000020)
+//
+// 锁定后英雄不可被消耗（如作为升星消耗卡）。
+func HandlerHeroLock(ctx context.Context, roleID uint64, req *pb_hero.HeroLockReq, resp *pb_hero.HeroLockResp) rpc_results.ResultI {
+	poller, role, err := game_role_handler.GetRole(roleID)
+	if err != nil {
+		return err
+	}
+	defer poller.Release()
+
+	hero := role.GetHeroes().GetHero(req.GetHeroId())
+	if hero == nil {
+		return rpc_results.Error(pb_error_code.ErrorCode_ParamError, "hero not found")
+	}
+
+	game_logics.HeroLock(hero)
+	poller.Save()
+	resp.HeroId = req.GetHeroId()
+	resp.IsLocked = true
+	return nil
+}
+
+// HandlerHeroUnlock 解锁英雄 (1000021)
+func HandlerHeroUnlock(ctx context.Context, roleID uint64, req *pb_hero.HeroUnlockReq, resp *pb_hero.HeroUnlockResp) rpc_results.ResultI {
+	poller, role, err := game_role_handler.GetRole(roleID)
+	if err != nil {
+		return err
+	}
+	defer poller.Release()
+
+	hero := role.GetHeroes().GetHero(req.GetHeroId())
+	if hero == nil {
+		return rpc_results.Error(pb_error_code.ErrorCode_ParamError, "hero not found")
+	}
+
+	game_logics.HeroUnlock(hero)
+	poller.Save()
+	resp.HeroId = req.GetHeroId()
+	resp.IsLocked = false
 	return nil
 }

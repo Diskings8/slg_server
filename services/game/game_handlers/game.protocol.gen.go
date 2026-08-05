@@ -68,6 +68,16 @@ func init() {
 		Req:  &pb_skill.SkillCollectionActivateReq{},
 		Resp: &pb_skill.SkillCollectionActivateResp{},
 	})
+	RegisterProto(pb_protocol.MsgID_GameHeroLock, &ProtoHandler{
+		F:    Wrap(hero_handler.HandlerHeroLock),
+		Req:  &pb_hero.HeroLockReq{},
+		Resp: &pb_hero.HeroLockResp{},
+	})
+	RegisterProto(pb_protocol.MsgID_GameHeroUnlock, &ProtoHandler{
+		F:    Wrap(hero_handler.HandlerHeroUnlock),
+		Req:  &pb_hero.HeroUnlockReq{},
+		Resp: &pb_hero.HeroUnlockResp{},
+	})
 	RegisterProto(pb_protocol.MsgID_GameHeroTroopTransform, &ProtoHandler{
 		F:    Wrap(hero_handler.HandlerHeroTroopTransform),
 		Req:  &pb_hero.HeroTroopTransformReq{},

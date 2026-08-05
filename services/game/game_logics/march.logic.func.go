@@ -4,7 +4,6 @@ import (
 	"server.slg.com/api/protocol/pb/pb_battle"
 	"server.slg.com/api/protocol/pb/pb_error_code"
 	"server.slg.com/api/protocol/pb/pb_maps_march"
-	pb_confs "server.slg.com/api/protocol/pb_confs"
 	"server.slg.com/common/conns/rpcconn/rpc_results"
 	"server.slg.com/services/game/game_entitys/game_roles"
 )
@@ -25,7 +24,7 @@ func MarchBuildTeam(role *game_roles.Role, req *pb_maps_march.MarchCreateReq) ([
 		if hs == nil {
 			continue // 空槽位跳过
 		}
-		hero := role.GetHeroes().GetHero(pb_confs.ItemID(hs.GetHeroId()))
+		hero := role.GetHeroes().GetHero(hs.GetHeroId())
 		if hero == nil {
 			continue
 		}

@@ -7,7 +7,6 @@ import (
 	"server.slg.com/api/protocol/pb/pb_error_code"
 	"server.slg.com/api/protocol/pb/pb_hero"
 	"server.slg.com/api/protocol/pb/pb_skill"
-	"server.slg.com/api/protocol/pb_confs"
 	"server.slg.com/common/conns/rpcconn/rpc_results"
 	"server.slg.com/services/game/game_entitys/game_role_handler"
 	"server.slg.com/services/game/game_logics"
@@ -48,7 +47,7 @@ func HandlerHeroSkillUpgrade(ctx context.Context, roleID uint64, req *pb_hero.He
 	}
 	defer poller.Release()
 
-	hero := role.GetHeroes().GetHero(pb_confs.ItemID(req.GetHeroId()))
+	hero := role.GetHeroes().GetHero(req.GetHeroId())
 	if hero == nil {
 		return rpc_results.Error(pb_error_code.ErrorCode_ParamError, "hero not found")
 	}
@@ -73,7 +72,7 @@ func HandlerHeroEquipSkill(ctx context.Context, roleID uint64, req *pb_hero.Hero
 	}
 	defer poller.Release()
 
-	hero := role.GetHeroes().GetHero(pb_confs.ItemID(req.GetHeroId()))
+	hero := role.GetHeroes().GetHero(req.GetHeroId())
 	if hero == nil {
 		return rpc_results.Error(pb_error_code.ErrorCode_ParamError, "hero not found")
 	}
@@ -98,7 +97,7 @@ func HandlerHeroUnequipSkill(ctx context.Context, roleID uint64, req *pb_hero.He
 	}
 	defer poller.Release()
 
-	hero := role.GetHeroes().GetHero(pb_confs.ItemID(req.GetHeroId()))
+	hero := role.GetHeroes().GetHero(req.GetHeroId())
 	if hero == nil {
 		return rpc_results.Error(pb_error_code.ErrorCode_ParamError, "hero not found")
 	}
