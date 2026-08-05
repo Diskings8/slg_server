@@ -63,7 +63,7 @@ func Close() error {
 }
 
 // initPoller 初始化轮询管理器
-func initPoller() {
+func initPoller(ctx context.Context) {
 	var (
 		cacheSpec string
 		dbSpec    string
@@ -89,7 +89,7 @@ func initPoller() {
 	}
 
 	pollerManager = pollers.New[*Role](
-		context.Background(),
+		ctx,
 		loader,
 		func() *Role { return &Role{} },
 		cacheSpec,
@@ -118,8 +118,8 @@ func loader(id uint64) (*Role, error) {
 	return r, nil
 }
 
-// Init 初始化 game_roles 模块
-func Init(writeDB common_declarations.DbcI) {
+// Init 初始化 game_roles 模块（ctx 透传给 PollerManager，供后台协程响应全局退出）
+func Init(ctx context.Context, writeDB common_declarations.DbcI) {
 	//
 	hero_skills.Init(writeDB)
 	hero_skillcollections.Init(writeDB)
@@ -132,5 +132,5 @@ func Init(writeDB common_declarations.DbcI) {
 	role_attrs.Init(writeDB)
 
 	// 初始化轮询管理器
-	initPoller()
+	initPoller(ctx)
 }

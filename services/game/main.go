@@ -26,6 +26,7 @@ import (
 	vgc "server.slg.com/common/globals/common_globals"
 	"server.slg.com/common/loggers"
 	"server.slg.com/common/servers"
+	"server.slg.com/services/game/game_entitys"
 	"server.slg.com/services/game/game_handlers/game_servers"
 	"server.slg.com/services/game/game_handlers/game_streams"
 	"server.slg.com/services/game/game_internals"
@@ -110,6 +111,7 @@ func main() {
 					loggers.Logger.Error("game config init failed", zap.Error(err))
 				}
 				game_conf.StartWatch(ctx, 2*time.Second) // 配置热更：mtime 轮询
+				game_entitys.Init(ctx)
 				game_internals.Init(ctx)
 				etcdconn.InitEtcd(common_configs.GetConf().Etcd.Dsn())
 				loggers.Logger.Info("ETCD 初始化完成")
@@ -126,6 +128,7 @@ func main() {
 
 		servers.WithShutdown(
 			func() {
+				game_entitys.ShutDown()
 				game_internals.ShutDown()
 				loggers.Logger.Info("清理资源...")
 			},
