@@ -5,15 +5,16 @@ import (
 	"time"
 
 	"gorm.io/gorm"
+	"server.slg.com/common/common_declarations"
 	"server.slg.com/services/login/login_models"
 )
 
 // ServerStore 区服列表数据访问（login_server 表，common_db_0）
 type ServerStore struct {
-	db *gorm.DB
+	db common_declarations.DbcI
 }
 
-func NewServerStore(db *gorm.DB) *ServerStore {
+func NewServerStore(db common_declarations.DbcI) *ServerStore {
 	return &ServerStore{db: db}
 }
 
@@ -25,14 +26,14 @@ func (s *ServerStore) Migrate() error {
 // ListServers 全部区服（按 id 正序）
 func (s *ServerStore) ListServers() ([]*login_models.Server, error) {
 	var servers []*login_models.Server
-	err := s.db.Order("id ASC").Find(&servers).Error
+	err := s.db.Order("id ASC").Find(&servers).Error()
 	return servers, err
 }
 
 // GetServer 按 ID 查区服，不存在返回 nil
 func (s *ServerStore) GetServer(serverID uint32) (*login_models.Server, error) {
 	var sv login_models.Server
-	err := s.db.Where("id = ?", serverID).First(&sv).Error
+	err := s.db.Where("id = ?", serverID).First(&sv).Error()
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
@@ -45,7 +46,7 @@ func (s *ServerStore) GetServer(serverID uint32) (*login_models.Server, error) {
 // SeedIfEmpty 表空时插入默认区服（幂等种子，本地起 login 即可用）
 func (s *ServerStore) SeedIfEmpty() error {
 	var count int64
-	if err := s.db.Model(&login_models.Server{}).Count(&count).Error; err != nil {
+	if err := s.db.Model(&login_models.Server{}).Count(&count).Error(); err != nil {
 		return err
 	}
 	if count > 0 {
@@ -59,5 +60,5 @@ func (s *ServerStore) SeedIfEmpty() error {
 		OpenTime:   now,
 		CreatedAt:  now,
 		UpdatedAt:  now,
-	}).Error
+	}).Error()
 }

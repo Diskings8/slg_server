@@ -1,6 +1,9 @@
-package login_servers
+//go:build integration
 
-// login.Do 统一协议入口单测 — 复用 newTestServer（bufconn + sqlite + mock game）。
+package login_servers_test
+
+// login.Do 统一协议入口单测 — 连真实 mysql（common_db_0）+ mock game。
+// 运行：go test -tags integration ./services/login/...
 // 覆盖：4 个协议的路由 / 成功序列化 / 错误码映射（重复注册、错密码、token 无效、未知协议、非法 body）。
 
 import (
@@ -12,6 +15,7 @@ import (
 	"server.slg.com/api/protocol/pb/pb_common"
 	"server.slg.com/api/protocol/pb/pb_error_code"
 	"server.slg.com/api/protocol/pb/pb_protocol"
+	"server.slg.com/services/login/login_testutil"
 )
 
 func TestLoginDo(t *testing.T) {
@@ -20,11 +24,12 @@ func TestLoginDo(t *testing.T) {
 	defer cleanup()
 
 	ctx := context.Background()
+	accName := login_testutil.UniqName("do_tester")
 
 	// 1. 注册（走 Do）
 	regBody, _ := proto.Marshal(&pb_account.CreateAccountReq{
 		ChannelType: pb_account.ChannelType_Mine,
-		AccountName: "do_tester",
+		AccountName: accName,
 		Password:    "123456",
 	})
 	resp, err := cli.Do(ctx, &pb_common.NodePacket{
@@ -42,7 +47,7 @@ func TestLoginDo(t *testing.T) {
 		t.Fatalf("unmarshal create resp: %v", err)
 	}
 	if created.GetAccountId() == 0 || created.GetToken() == "" {
-		t.Fatalf("create resp should have id+token: id=%d token=%q", created.GetAccountId(), created.GetToken())
+		t.Fatalf("create resp should have id+token")
 	}
 	accountID := created.GetAccountId()
 
@@ -58,7 +63,7 @@ func TestLoginDo(t *testing.T) {
 	// 3. 登录错密码 → AccountOrPasswordWrong
 	wrongBody, _ := proto.Marshal(&pb_account.LoginAccountReq{
 		ChannelType: pb_account.ChannelType_Mine,
-		AccountName: "do_tester",
+		AccountName: accName,
 		Password:    "bad",
 	})
 	resp3, _ := cli.Do(ctx, &pb_common.NodePacket{
@@ -72,7 +77,7 @@ func TestLoginDo(t *testing.T) {
 	// 4. 登录成功拿 token
 	loginBody, _ := proto.Marshal(&pb_account.LoginAccountReq{
 		ChannelType: pb_account.ChannelType_Mine,
-		AccountName: "do_tester",
+		AccountName: accName,
 		Password:    "123456",
 	})
 	resp4, _ := cli.Do(ctx, &pb_common.NodePacket{
@@ -89,7 +94,7 @@ func TestLoginDo(t *testing.T) {
 
 	// 5. EnterServer token 无效 → TokenInvalid
 	enterBad, _ := proto.Marshal(&pb_account.EnterServerReq{
-		AccountId: accountID, ServerId: 1, RoleId: 0, RoleName: "HeroA", Token: "bad",
+		AccountId: accountID, ServerId: 1, RoleId: 0, RoleName: login_testutil.UniqName("HeroA"), Token: "bad",
 	})
 	resp5, _ := cli.Do(ctx, &pb_common.NodePacket{
 		MsgId:   pb_protocol.MsgID_LoginEnterServer,
@@ -101,7 +106,7 @@ func TestLoginDo(t *testing.T) {
 
 	// 6. EnterServer 有效 token 新建角 → 成功（game mock 生效）
 	enter, _ := proto.Marshal(&pb_account.EnterServerReq{
-		AccountId: accountID, ServerId: 1, RoleId: 0, RoleName: "HeroA", Token: loginOut.GetToken(),
+		AccountId: accountID, ServerId: 1, RoleId: 0, RoleName: login_testutil.UniqName("HeroA"), Token: loginOut.GetToken(),
 	})
 	resp6, _ := cli.Do(ctx, &pb_common.NodePacket{
 		MsgId:   pb_protocol.MsgID_LoginEnterServer,

@@ -9,7 +9,7 @@
 
 `login` 是 SLG 服务端的**账号登录节点**（跨服全局单例，`instance=0`），提供注册、登录、区服列表、进入区服（建角）RPC。账号/渠道/角色映射/区服数据落 **`common_db_0`**（首个使用该库的服务）。
 
-登录链路（客户端 → gateway → login）中，gateway 的 `switchForward` 已实现 **login 协议段转发**（按 MsgID 分类 → 调 login 节点的 `Do` → 回包客户端）；服务间经 gRPC + etcd 发现。game 协议段（推流下行）仍为后续工作。
+登录链路（客户端 → gateway → login）中，gateway 的 `switchForward` 已实现：**login 协议段**（按 MsgID 分类 → 调 login 节点的 `Do` → 回包客户端）、**game 协议段**（选服进入后打开到 `game[server_id]` 的双向流，上行转发 / 下行回包）；服务间经 gRPC + etcd 发现。
 
 核心设计取向：**账号身份（`account_name`）由游戏自己维护、全局唯一、与渠道无关**；渠道侧原生账号（SDK UID / openid 等）在独立的渠道绑定表中声明关联，多渠道可绑定同一账号 → 角色挂账号下，**跨渠道不丢角色**。
 
@@ -123,8 +123,10 @@ EnterServer(account_id, server_id, role_id, role_name, token)
 ```
 客户端（TCP: msgID + 请求 proto body）
   → gateway.switchForward（按 MsgID 分类）
-      └─ login 协议段 → AccountService.Do → 回包（MessagePacket 信封：err_code + body）
-      └─ game 协议段 → 后续接入
+      └─ login 协议段 → login 节点 AccountService.Do → 回包（MessagePacket 信封）
+      └─ game 协议段 → game[server_id] 双向流 → 上行 GameServiceNodePacketReq / 下行回包
+          （首次 game 请求懒连接；EnterServer 成功时捕获 serverID/roleID）
+          game 侧 gateConnectDo：role.Login() + 连 worldmap 视野流；断开 → Offline
 
 Do 内按 MsgID 路由：
   LoginCreateAccount/LoginAccount/LoginServerList/LoginEnterServer → 对应 handler
@@ -134,11 +136,11 @@ EnterServer 新建角：
            └─ game → worldmap.CreateRole（分配出生点/落主城）→ 建主城 → DBCreate 落库
 
 ETCD 注册：/node:service:login/{instance}/
-发现：gateway → login 通过 rpc_handlers hub（GetAccountServiceClient）；login → game 通过 NewClientHandler(server_id) → GetGameHandlerClient
+发现：gateway → login 通过 GetAccountServiceClient；gateway → game 通过 NewClientHandler(server_id) → GetGameServiceClient；login → game 通过 NewClientHandler(server_id) → GetGameHandlerClient
 ```
 
-- **调用方**：gateway 转发（未实现） / 后续其它节点
-- **被调方**：`game`（建角）、自身 DB（`common_db_0`）
+- **调用方**：gateway（login + game 协议段转发）
+- **被调方**：`game`（建角 / 进服流）、自身 DB（`common_db_0`）
 
 ---
 
@@ -147,8 +149,15 @@ ETCD 注册：/node:service:login/{instance}/
 - `api/protocol/pb/pb_account` — 协议定义（AccountService + ChannelType 枚举）
 - `api/protocol/pb/pb_role` — RoleSimpleInfo（角色列表 / 建角返回）
 - `api/protocol/pb/pb_common` — CreateRoleReq（建角调 game）
-- `common/conns/dbconn` — MySQL（`DB.Common` 库，common_db_0）
+- `common/conns/dbconn` — MySQL（`DB.Common` 库，common_db_0）；store 依赖 `common_declarations.DbcI` 接口（经 `dbconn.GetWriteDbConn()`），不暴露底层 gorm
 - `common/conns/rpcconn/rpc_handlers` — game 客户端发现（按 server_id）
 - `common/conns/etcdconn` — ETCD 服务注册（NodeLoginService=60）
 - `common/utils/snowflakes` — 账号/角色/绑定雪花 ID
 - `common/servers` — 生命周期框架
+
+---
+
+## 测试
+
+DB 相关单测（store + handler 冒烟）**预留为集成测试**，不依赖 sqlite，连真实 mysql（common_db_0）：
+`go test -tags integration ./services/login/...`（docker 环境就绪后统一运行；本地无 mysql 时自动跳过）。

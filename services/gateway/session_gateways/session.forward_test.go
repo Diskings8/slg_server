@@ -76,6 +76,65 @@ func TestIsLoginMsgID(t *testing.T) {
 	}
 }
 
+func TestIsGameMsgID(t *testing.T) {
+	if !isGameMsgID(pb_protocol.MsgID_GameHeroList) || !isGameMsgID(pb_protocol.MsgID_GameCameraMove) {
+		t.Fatal("game business/camera msg should be classified as game")
+	}
+	if isGameMsgID(pb_protocol.MsgID_LoginAccount) {
+		t.Fatal("login msg should not be game")
+	}
+	if isGameMsgID(pb_protocol.MsgID_PushMapInfo) || isGameMsgID(pb_protocol.MsgID_WorldMapConnect) {
+		t.Fatal("push/worldmap-internal msg should not be game")
+	}
+}
+
+func TestSwitchForwardNotEntered(t *testing.T) {
+	conn := &fakeConn{}
+	s := NewSession(conn)
+
+	// 未进服（serverID/roleID 为空）就发 game 协议 → 拒绝
+	s.switchForward(&packets.Packet{Seq: 1, MsgID: uint32(pb_protocol.MsgID_GameHeroList), Body: nil})
+
+	if len(conn.writes) != 1 {
+		t.Fatalf("expected 1 write, got %d", len(conn.writes))
+	}
+	var msg pb_common.MessagePacket
+	if err := proto.Unmarshal(conn.writes[0].p.Body, &msg); err != nil {
+		t.Fatalf("decode error envelope: %v", err)
+	}
+	if msg.GetErrCode() != pb_error_code.ErrorCode_Failed {
+		t.Fatalf("not-entered should be Failed, got %d", msg.GetErrCode())
+	}
+}
+
+func TestSwitchForwardEnterServerCapture(t *testing.T) {
+	// 注入 mock login 客户端：EnterServer 返回 server_id=1, role_id=123
+	enterRespBody, _ := proto.Marshal(&pb_account.EnterServerResp{ServerId: 1, RoleId: 123})
+	cli := &fakeLoginClient{
+		doResp: &pb_common.NodePacket{
+			MsgId:   pb_protocol.MsgID_LoginEnterServer,
+			Message: &pb_common.MessagePacket{Body: enterRespBody},
+		},
+	}
+	gateway_rpc_clients.Client().SetLoginClient(cli)
+
+	conn := &fakeConn{}
+	s := NewSession(conn)
+
+	reqBody, _ := proto.Marshal(&pb_account.EnterServerReq{
+		AccountId: 1, ServerId: 1, RoleId: 0, RoleName: "HeroA", Token: "t",
+	})
+	s.switchForward(&packets.Packet{Seq: 5, MsgID: uint32(pb_protocol.MsgID_LoginEnterServer), Body: reqBody})
+
+	// 进服成功 → session 记录 serverID/roleID（供后续 game 协议路由）
+	if s.serverID != 1 || s.roleID != 123 {
+		t.Fatalf("enter capture failed: serverID=%d roleID=%d", s.serverID, s.roleID)
+	}
+	if len(conn.writes) != 1 {
+		t.Fatalf("expected 1 write, got %d", len(conn.writes))
+	}
+}
+
 func TestSwitchForwardLogin(t *testing.T) {
 	// 注入 mock login 客户端（返回成功响应）
 	cli := &fakeLoginClient{
@@ -123,8 +182,8 @@ func TestSwitchForwardUnsupported(t *testing.T) {
 	conn := &fakeConn{}
 	s := NewSession(conn)
 
-	// 非 login 协议（本轮未支持）→ ProtocolNotFound 错误包
-	s.switchForward(&packets.Packet{Seq: 1, MsgID: uint32(pb_protocol.MsgID_GameHeroList), Body: nil})
+	// 既非 login 也非 game 协议（如下推段，客户端不应上行）→ ProtocolNotFound 错误包
+	s.switchForward(&packets.Packet{Seq: 1, MsgID: uint32(pb_protocol.MsgID_PushMapInfo), Body: nil})
 
 	if len(conn.writes) != 1 {
 		t.Fatalf("expected 1 write, got %d", len(conn.writes))

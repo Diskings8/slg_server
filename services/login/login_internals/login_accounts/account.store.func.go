@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"gorm.io/gorm"
+	"server.slg.com/common/common_declarations"
 	"server.slg.com/common/utils/snowflakes"
 	"server.slg.com/services/login/login_models"
 )
@@ -34,10 +35,10 @@ func isDuplicateKey(err error) bool {
 
 // AccountStore 账户/渠道绑定/角色映射数据访问（login_account + login_channel_account + login_role，均在 common_db_0）
 type AccountStore struct {
-	db *gorm.DB
+	db common_declarations.DbcI
 }
 
-func NewAccountStore(db *gorm.DB) *AccountStore {
+func NewAccountStore(db common_declarations.DbcI) *AccountStore {
 	return &AccountStore{db: db}
 }
 
@@ -57,14 +58,14 @@ func (s *AccountStore) CreateAccountWithChannel(acc *login_models.Account, bindi
 		binding.ID = snowflakes.GenUUID()
 	}
 	binding.AccountID = acc.ID
-	return s.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Create(acc).Error; err != nil {
+	return s.db.Transaction(func(tx common_declarations.DbcI) error {
+		if err := tx.Create(acc).Error(); err != nil {
 			if isDuplicateKey(err) {
 				return ErrAccountExists
 			}
 			return err
 		}
-		if err := tx.Create(binding).Error; err != nil {
+		if err := tx.Create(binding).Error(); err != nil {
 			if isDuplicateKey(err) {
 				return ErrChannelExists
 			}
@@ -77,7 +78,7 @@ func (s *AccountStore) CreateAccountWithChannel(acc *login_models.Account, bindi
 // GetAccountByName 按账号名查询（游戏侧全局唯一），不存在返回 nil
 func (s *AccountStore) GetAccountByName(name string) (*login_models.Account, error) {
 	var acc login_models.Account
-	err := s.db.Where("account_name = ?", name).First(&acc).Error
+	err := s.db.Where("account_name = ?", name).First(&acc).Error()
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
@@ -90,7 +91,7 @@ func (s *AccountStore) GetAccountByName(name string) (*login_models.Account, err
 // GetAccountByID 按账号 ID 查询，不存在返回 nil
 func (s *AccountStore) GetAccountByID(id uint64) (*login_models.Account, error) {
 	var acc login_models.Account
-	err := s.db.Where("id = ?", id).First(&acc).Error
+	err := s.db.Where("id = ?", id).First(&acc).Error()
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
@@ -107,7 +108,7 @@ func (s *AccountStore) UpdateLastLogin(accountID uint64, serverID uint32, roleID
 		Updates(map[string]interface{}{
 			"last_login_server_id": serverID,
 			"last_login_role_id":   roleID,
-		}).Error
+		}).Error()
 }
 
 // CreateChannel 写入渠道绑定；渠道账号已绑定 → ErrChannelExists（自动绑定用）
@@ -115,7 +116,7 @@ func (s *AccountStore) CreateChannel(binding *login_models.ChannelAccount) error
 	if binding.ID == 0 {
 		binding.ID = snowflakes.GenUUID()
 	}
-	if err := s.db.Create(binding).Error; err != nil {
+	if err := s.db.Create(binding).Error(); err != nil {
 		if isDuplicateKey(err) {
 			return ErrChannelExists
 		}
@@ -127,7 +128,7 @@ func (s *AccountStore) CreateChannel(binding *login_models.ChannelAccount) error
 // GetChannel 按渠道 + 渠道账号查绑定，不存在返回 nil
 func (s *AccountStore) GetChannel(channelType int32, channelAccount string) (*login_models.ChannelAccount, error) {
 	var b login_models.ChannelAccount
-	err := s.db.Where("channel_type = ? AND channel_account = ?", channelType, channelAccount).First(&b).Error
+	err := s.db.Where("channel_type = ? AND channel_account = ?", channelType, channelAccount).First(&b).Error()
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
@@ -141,5 +142,5 @@ func (s *AccountStore) GetChannel(channelType int32, channelAccount string) (*lo
 func (s *AccountStore) UpdateChannelAuthInfo(id uint64, authInfo string) error {
 	return s.db.Model(&login_models.ChannelAccount{}).
 		Where("id = ?", id).
-		Update("auth_info", authInfo).Error
+		Update("auth_info", authInfo).Error()
 }

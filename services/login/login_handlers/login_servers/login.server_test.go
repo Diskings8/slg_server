@@ -1,6 +1,9 @@
-package login_servers
+//go:build integration
 
-// 进程内 gRPC 冒烟 — 不依赖 etcd/redis，sqlite 支撑存储，game 建角用 mock。
+package login_servers_test
+
+// 进程内 gRPC 冒烟 — 连真实 mysql（common_db_0），game 建角用 mock。
+// 运行：go test -tags integration ./services/login/...
 // 覆盖 CreateAccount → LoginAccount → ServerList → EnterServer(新建/已有/越权/game失败)
 // → 多渠道绑定（第三渠道登录自动绑定到同一账号、共享角色）全链路。
 
@@ -16,17 +19,13 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
 	"server.slg.com/api/protocol/pb/pb_account"
 	"server.slg.com/api/protocol/pb/pb_common"
 	"server.slg.com/common/loggers"
 	"server.slg.com/common/utils/snowflakes"
-	"server.slg.com/services/login/login_internals/login_accounts"
-	"server.slg.com/services/login/login_internals/login_channels"
-	"server.slg.com/services/login/login_internals/login_servers"
+	"server.slg.com/services/login/login_handlers/login_servers"
 	"server.slg.com/services/login/login_internals/login_tokens"
-	"server.slg.com/services/login/login_models"
+	"server.slg.com/services/login/login_testutil"
 )
 
 // fakeGameClient mock 建角：可注入失败
@@ -46,42 +45,15 @@ func (f *fakeGameClient) CreateRole(_ context.Context, _ uint32, req *pb_common.
 func newTestServer(t *testing.T, game *fakeGameClient) (pb_account.AccountServiceClient, func()) {
 	t.Helper()
 
-	// snowflake 用空配置建节点 0（loggers 不依赖配置）
 	loggers.Init()
 	snowflakes.Init()
 
-	db, err := gorm.Open(sqlite.Open("file:"+t.Name()+"?mode=memory&cache=shared"), &gorm.Config{})
-	if err != nil {
-		t.Fatalf("open sqlite: %v", err)
-	}
-	accountStore := login_accounts.NewAccountStore(db)
-	if err := accountStore.Migrate(); err != nil {
-		t.Fatalf("migrate account: %v", err)
-	}
-	channelStore := login_channels.NewChannelStore(db)
-	if err := channelStore.Migrate(); err != nil {
-		t.Fatalf("migrate channel: %v", err)
-	}
-	if err := channelStore.SeedDefault(); err != nil {
-		t.Fatalf("seed official channel: %v", err)
-	}
-	// 额外声明一个测试第三方渠道（用于跨渠道绑定）
-	if err := db.Create(&login_models.Channel{ChannelType: 1, ChannelName: "测试渠道", Status: 0}).Error; err != nil {
-		t.Fatalf("declare third-party channel: %v", err)
-	}
-	serverStore := login_servers.NewServerStore(db)
-	if err := serverStore.Migrate(); err != nil {
-		t.Fatalf("migrate server: %v", err)
-	}
-	if err := serverStore.SeedIfEmpty(); err != nil {
-		t.Fatalf("seed server: %v", err)
-	}
-
-	LoginServerHandler.SetStore(accountStore, channelStore, serverStore, login_tokens.NewTokenManager(), game)
+	accStore, chStore, svStore := login_testutil.SetupStores(t)
+	login_servers.LoginServerHandler.SetStore(accStore, chStore, svStore, login_tokens.NewTokenManager(), game)
 
 	lis := bufconn.Listen(1024 * 1024)
 	srv := grpc.NewServer()
-	pb_account.RegisterAccountServiceServer(srv, LoginServerHandler)
+	pb_account.RegisterAccountServiceServer(srv, login_servers.LoginServerHandler)
 	go func() { _ = srv.Serve(lis) }()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -110,25 +82,26 @@ func TestLoginFlow(t *testing.T) {
 	defer cleanup()
 
 	ctx := context.Background()
+	accName := login_testutil.UniqName("tester")
 
 	// 1. 注册（官方渠道）
 	create, err := cli.CreateAccount(ctx, &pb_account.CreateAccountReq{
 		ChannelType: pb_account.ChannelType_Mine,
-		AccountName: "tester",
+		AccountName: accName,
 		Password:    "123456",
 	})
 	if err != nil {
 		t.Fatalf("create account: %v", err)
 	}
 	if create.GetAccountId() == 0 || create.GetToken() == "" {
-		t.Fatalf("create account should return id and token: %+v", create)
+		t.Fatalf("create account should return id and token")
 	}
 	accountID := create.GetAccountId()
 
 	// 2. 重复注册（同名任意渠道）→ AlreadyExists
 	if _, err := cli.CreateAccount(ctx, &pb_account.CreateAccountReq{
 		ChannelType: pb_account.ChannelType_ThirdParty,
-		AccountName: "tester",
+		AccountName: accName,
 		Password:    "123456",
 	}); status.Code(err) != codes.AlreadyExists {
 		t.Fatalf("duplicate register should be AlreadyExists, got %v", err)
@@ -137,7 +110,7 @@ func TestLoginFlow(t *testing.T) {
 	// 3. 登录（错密码 → Unauthenticated）
 	if _, err := cli.LoginAccount(ctx, &pb_account.LoginAccountReq{
 		ChannelType: pb_account.ChannelType_Mine,
-		AccountName: "tester",
+		AccountName: accName,
 		Password:    "wrong",
 	}); status.Code(err) != codes.Unauthenticated {
 		t.Fatalf("wrong password should be Unauthenticated, got %v", err)
@@ -145,14 +118,14 @@ func TestLoginFlow(t *testing.T) {
 
 	login, err := cli.LoginAccount(ctx, &pb_account.LoginAccountReq{
 		ChannelType: pb_account.ChannelType_Mine,
-		AccountName: "tester",
+		AccountName: accName,
 		Password:    "123456",
 	})
 	if err != nil {
 		t.Fatalf("login: %v", err)
 	}
 	if login.GetAccountId() != accountID || len(login.GetRoleList().GetSimpleInfo()) != 0 {
-		t.Fatalf("login should return empty role list: %+v", login)
+		t.Fatalf("login should return empty role list")
 	}
 	token := login.GetToken()
 
@@ -161,8 +134,14 @@ func TestLoginFlow(t *testing.T) {
 	if err != nil {
 		t.Fatalf("server list: %v", err)
 	}
-	if len(servers.GetServers()) != 1 || servers.GetServers()[0].GetServerId() != 1 {
-		t.Fatalf("unexpected server list: %+v", servers)
+	foundS1 := false
+	for _, sv := range servers.GetServers() {
+		if sv.GetServerId() == 1 {
+			foundS1 = true
+		}
+	}
+	if !foundS1 {
+		t.Fatalf("server list should contain S1: %+v", servers)
 	}
 
 	// 5. 进入区服 - 新建角（token 无效 → Unauthenticated）
@@ -173,20 +152,20 @@ func TestLoginFlow(t *testing.T) {
 	}
 
 	enter, err := cli.EnterServer(ctx, &pb_account.EnterServerReq{
-		AccountId: accountID, ServerId: 1, RoleId: 0, RoleName: "HeroA", Token: token,
+		AccountId: accountID, ServerId: 1, RoleId: 0, RoleName: login_testutil.UniqName("HeroA"), Token: token,
 	})
 	if err != nil {
 		t.Fatalf("enter server new role: %v", err)
 	}
 	if enter.GetRoleId() == 0 || game.calls != 1 {
-		t.Fatalf("enter server should create role via game: %+v calls=%d", enter, game.calls)
+		t.Fatalf("enter server should create role via game: role=%d calls=%d", enter.GetRoleId(), game.calls)
 	}
 	roleID := enter.GetRoleId()
 
 	// 6. 建角后登录：角色列表含该角色，last_use 已填充
 	login2, err := cli.LoginAccount(ctx, &pb_account.LoginAccountReq{
 		ChannelType: pb_account.ChannelType_Mine,
-		AccountName: "tester",
+		AccountName: accName,
 		Password:    "123456",
 	})
 	if err != nil {
@@ -194,15 +173,14 @@ func TestLoginFlow(t *testing.T) {
 	}
 	rl := login2.GetRoleList()
 	if len(rl.GetSimpleInfo()) != 1 || rl.GetSimpleInfo()[0].GetRoleId() != roleID {
-		t.Fatalf("role list should contain created role: %+v", rl)
+		t.Fatalf("role list should contain created role")
 	}
 	if rl.GetLastUse() == nil || rl.GetLastUse().GetRoleId() != roleID {
-		t.Fatalf("last_use should be the entered role: %+v", rl)
+		t.Fatalf("last_use should be the entered role")
 	}
-	// 登录会重新签发票据，刷新 token 供后续进入区服使用
-	token = login2.GetToken()
+	token = login2.GetToken() // 登录重新签发票据
 
-	// 7. 进入已有角色（正确 roleID → 成功；错误 → PermissionDenied）
+	// 7. 进入已有角色（正确 → 成功；错误 → PermissionDenied）
 	if _, err := cli.EnterServer(ctx, &pb_account.EnterServerReq{
 		AccountId: accountID, ServerId: 1, RoleId: roleID, Token: token,
 	}); err != nil {
@@ -217,23 +195,24 @@ func TestLoginFlow(t *testing.T) {
 	// 8. 多渠道绑定：第三方渠道登录同一账号名+密码 → 自动绑定 → 同一账号、共享角色
 	cross, err := cli.LoginAccount(ctx, &pb_account.LoginAccountReq{
 		ChannelType: pb_account.ChannelType_ThirdParty,
-		AccountName: "tester",
+		AccountName: accName,
 		Password:    "123456",
 	})
 	if err != nil {
 		t.Fatalf("cross channel login: %v", err)
 	}
 	if cross.GetAccountId() != accountID {
-		t.Fatalf("cross channel should resolve to same account: got %d want %d", cross.GetAccountId(), accountID)
+		t.Fatalf("cross channel should resolve to same account")
 	}
 	if len(cross.GetRoleList().GetSimpleInfo()) != 1 || cross.GetRoleList().GetSimpleInfo()[0].GetRoleId() != roleID {
-		t.Fatalf("cross channel should share roles: %+v", cross.GetRoleList())
+		t.Fatalf("cross channel should share roles")
 	}
 
-	// 9. game 建角失败：返回错误且不产生映射（用新账号验证，因 tester 在该服已有角色）
+	// 9. game 建角失败：返回错误且不产生映射（用新账号验证）
+	accName2 := login_testutil.UniqName("tester2")
 	create2, err := cli.CreateAccount(ctx, &pb_account.CreateAccountReq{
 		ChannelType: pb_account.ChannelType_Mine,
-		AccountName: "tester2",
+		AccountName: accName2,
 		Password:    "123456",
 	})
 	if err != nil {
@@ -241,7 +220,7 @@ func TestLoginFlow(t *testing.T) {
 	}
 	login2b, err := cli.LoginAccount(ctx, &pb_account.LoginAccountReq{
 		ChannelType: pb_account.ChannelType_Mine,
-		AccountName: "tester2",
+		AccountName: accName2,
 		Password:    "123456",
 	})
 	if err != nil {
@@ -251,20 +230,19 @@ func TestLoginFlow(t *testing.T) {
 
 	game.failNext = true
 	if _, err := cli.EnterServer(ctx, &pb_account.EnterServerReq{
-		AccountId: create2.GetAccountId(), ServerId: 1, RoleId: 0, RoleName: "HeroB", Token: token2,
+		AccountId: create2.GetAccountId(), ServerId: 1, RoleId: 0, RoleName: login_testutil.UniqName("HeroB"), Token: token2,
 	}); status.Code(err) != codes.Internal {
 		t.Fatalf("game failure should be Internal, got %v", err)
 	}
-	// HeroB 未建角成功，tester2 角色列表应仍为空（无脏映射）
 	login3, err := cli.LoginAccount(ctx, &pb_account.LoginAccountReq{
 		ChannelType: pb_account.ChannelType_Mine,
-		AccountName: "tester2",
+		AccountName: accName2,
 		Password:    "123456",
 	})
 	if err != nil {
 		t.Fatalf("login after failed create: %v", err)
 	}
 	if len(login3.GetRoleList().GetSimpleInfo()) != 0 {
-		t.Fatalf("failed create should leave no mapping: %+v", login3.GetRoleList())
+		t.Fatalf("failed create should leave no mapping")
 	}
 }

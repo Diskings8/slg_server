@@ -12,14 +12,22 @@ type DbModelI interface {
 type DbcI interface {
 	Error() error
 	Table(tableName string) DbcI
-	AutoMigrate(model DbModelI) error
+	AutoMigrate(model ...DbModelI) error
 	Find(any) DbcI
 	Save(any) DbcI
 	Where(query any, args ...any) DbcI
 	Delete(query any, args ...any) DbcI
 	Take(query any, args ...any) DbcI
+	First(query any, args ...any) DbcI
 	Create(any) DbcI
 	CreateInBatches(march any, i int) DbcI
+	Model(model any) DbcI
+	Order(cond string) DbcI
+	Limit(limit int) DbcI
+	Offset(offset int) DbcI
+	Count(count *int64) DbcI
+	Updates(values any) DbcI
+	Update(column string, value any) DbcI
 	Transaction(fn func(tx DbcI) error) error
 	Exec(sql string, values ...any) DbcI
 }

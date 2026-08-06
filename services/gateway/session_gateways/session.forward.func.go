@@ -6,7 +6,7 @@ package session_gateways
 //   - 上行：TCP header(msgID) + body = 序列化的请求 proto（如 LoginAccountReq）
 //   - 下行：TCP header(msgID) + body = 序列化的 common.MessagePacket（err_code + body）
 //
-// 当前支持 login 协议段（转发到 login 节点的 Do）；game 协议段（推流下行）后续接入。
+// login 协议段 → login 节点 Do；game 协议段 → 进服后经双向流到 game（见 session.forward.game.func.go）。
 
 import (
 	"context"
@@ -14,6 +14,7 @@ import (
 
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
+	"server.slg.com/api/protocol/pb/pb_account"
 	"server.slg.com/api/protocol/pb/pb_common"
 	"server.slg.com/api/protocol/pb/pb_error_code"
 	"server.slg.com/api/protocol/pb/pb_protocol"
@@ -28,6 +29,8 @@ func (s *Session) switchForward(packet *packets.Packet) {
 	switch {
 	case isLoginMsgID(msgID):
 		s.forwardToLogin(packet)
+	case isGameMsgID(msgID):
+		s.forwardToGame(packet)
 	default:
 		loggers.Logger.Warn("gateway unsupported protocol", zap.Uint32("msg_id", packet.MsgID))
 		s.writeErrorPacket(packet.Seq, msgID, pb_error_code.ErrorCode_ProtocolNotFound, "protocol not supported")
@@ -46,7 +49,20 @@ func isLoginMsgID(msgID pb_protocol.MsgID) bool {
 	return false
 }
 
+// isGameMsgID 是否 game 协议段（业务 + 相机）
+func isGameMsgID(msgID pb_protocol.MsgID) bool {
+	switch id := int32(msgID); {
+	case id >= 1000001 && id <= 1009999: // Game 业务协议段
+		return true
+	case id >= 42200 && id <= 42299: // Camera 相机段
+		return true
+	}
+	return false
+}
+
 // forwardToLogin 转发 login 协议到 login 节点 Do（同步请求-响应）
+//
+// 进入区服（LoginEnterServer）：转发前捕获 server_id，成功后捕获 role_id，供后续 game 协议路由。
 func (s *Session) forwardToLogin(packet *packets.Packet) {
 	cli := gateway_rpc_clients.Client().Login()
 	if cli == nil {
@@ -55,11 +71,16 @@ func (s *Session) forwardToLogin(packet *packets.Packet) {
 		return
 	}
 
+	msgID := pb_protocol.MsgID(packet.MsgID)
+	if msgID == pb_protocol.MsgID_LoginEnterServer {
+		s.captureEnterServerID(packet)
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	resp, err := cli.Do(ctx, &pb_common.NodePacket{
-		MsgId: pb_protocol.MsgID(packet.MsgID),
+		MsgId: msgID,
 		Message: &pb_common.MessagePacket{
 			Body: packet.Body,
 		},
@@ -67,11 +88,30 @@ func (s *Session) forwardToLogin(packet *packets.Packet) {
 	if err != nil {
 		loggers.Logger.Warn("forward to login failed",
 			zap.Uint32("msg_id", packet.MsgID), zap.Error(err))
-		s.writeErrorPacket(packet.Seq, pb_protocol.MsgID(packet.MsgID), pb_error_code.ErrorCode_SystemBusy, err.Error())
+		s.writeErrorPacket(packet.Seq, msgID, pb_error_code.ErrorCode_SystemBusy, err.Error())
 		return
 	}
 
+	if msgID == pb_protocol.MsgID_LoginEnterServer {
+		s.captureEnterServerRoleID(resp)
+	}
 	s.writeNodePacket(packet.Seq, resp)
+}
+
+// captureEnterServerID 从 EnterServer 请求体捕获 server_id（转发前）
+func (s *Session) captureEnterServerID(packet *packets.Packet) {
+	var req pb_account.EnterServerReq
+	if err := proto.Unmarshal(packet.Body, &req); err == nil && req.GetServerId() > 0 {
+		s.serverID = req.GetServerId()
+	}
+}
+
+// captureEnterServerRoleID 从 EnterServer 响应体捕获 role_id（成功后）
+func (s *Session) captureEnterServerRoleID(resp *pb_common.NodePacket) {
+	var out pb_account.EnterServerResp
+	if err := proto.Unmarshal(resp.GetMessage().GetBody(), &out); err == nil && out.GetRoleId() > 0 {
+		s.roleID = out.GetRoleId()
+	}
 }
 
 // writeNodePacket 把后端 NodePacket 的 Message（即客户端信封 MessagePacket）回写客户端 TCP

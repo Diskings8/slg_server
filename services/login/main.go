@@ -30,11 +30,7 @@ import (
 	"server.slg.com/common/servers"
 	"server.slg.com/common/utils/snowflakes"
 	"server.slg.com/services/login/login_handlers/login_servers"
-	"server.slg.com/services/login/login_internals/login_accounts"
-	"server.slg.com/services/login/login_internals/login_channels"
-	"server.slg.com/services/login/login_internals/login_game_clients"
-	login_servers_store "server.slg.com/services/login/login_internals/login_servers"
-	"server.slg.com/services/login/login_internals/login_tokens"
+	"server.slg.com/services/login/login_internals"
 )
 
 var (
@@ -107,8 +103,6 @@ func main() {
 		loggers.Logger.Fatal("gRPC 监听失败", zap.Error(err))
 	}
 
-	var gameClient *login_game_clients.GameClient
-
 	servers.NewLifecycle(
 		servers.WithAsyncInit(
 			func() {
@@ -120,30 +114,7 @@ func main() {
 					common_configs.GetConf().DB.Common.Dsn(),
 					common_configs.GetConf().DB.Common.Dsn())
 
-				accountStore := login_accounts.NewAccountStore(dbconn.GormDB())
-				if err := accountStore.Migrate(); err != nil {
-					loggers.Logger.Fatal("账号表结构初始化失败", zap.Error(err))
-				}
-
-				channelStore := login_channels.NewChannelStore(dbconn.GormDB())
-				if err := channelStore.Migrate(); err != nil {
-					loggers.Logger.Fatal("渠道表结构初始化失败", zap.Error(err))
-				}
-				if err := channelStore.SeedDefault(); err != nil {
-					loggers.Logger.Fatal("官方渠道种子初始化失败", zap.Error(err))
-				}
-
-				serverStore := login_servers_store.NewServerStore(dbconn.GormDB())
-				if err := serverStore.Migrate(); err != nil {
-					loggers.Logger.Fatal("区服表结构初始化失败", zap.Error(err))
-				}
-				if err := serverStore.SeedIfEmpty(); err != nil {
-					loggers.Logger.Fatal("区服种子初始化失败", zap.Error(err))
-				}
-
-				// 注入 handler 依赖
-				gameClient = login_game_clients.NewGameClient()
-				login_servers.LoginServerHandler.SetStore(accountStore, channelStore, serverStore, login_tokens.NewTokenManager(), gameClient)
+				login_internals.Init()
 
 				// 必须初始化 etcd client，否则 SyncInit 注册时 etcdClient 为 nil
 				etcdconn.InitEtcd(common_configs.GetConf().Etcd.Dsn())
@@ -161,9 +132,7 @@ func main() {
 
 		servers.WithShutdown(
 			func() {
-				if gameClient != nil {
-					gameClient.Close()
-				}
+				login_internals.Shutdown()
 				loggers.Logger.Info("login 关闭...")
 			},
 		),
