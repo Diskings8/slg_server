@@ -55,6 +55,9 @@ addr = "127.0.0.1:12002"
 [worldmap]
 addr = ":50060"
 
+[login]
+addr = "127.0.0.1:14001"
+
 [game_conf]
 config_path = "api/game_conf/json"
 

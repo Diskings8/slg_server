@@ -22,6 +22,8 @@ func GetServiceKeyByNodeType(nodeType common_declarations.NodeService) string {
 		return "/node:service:battle/"
 	case common_declarations.NodeBattleRecordService:
 		return "/node:service:battle_record/"
+	case common_declarations.NodeLoginService:
+		return "/node:service:login/"
 	default:
 		return "/node:service:undef/"
 	}

@@ -116,6 +116,7 @@ type Config struct {
 	Battle       NodeConfig      `yaml:"battle" toml:"battle"`
 	BattleRecord NodeConfig      `yaml:"battle_record" toml:"battle_record"`
 	Worldmap     NodeConfig      `yaml:"worldmap" toml:"worldmap"`
+	Login        NodeConfig      `yaml:"login" toml:"login"`
 	GameConf     GameConfConfig  `yaml:"game_conf" toml:"game_conf"`
 
 	// 程序运行时设置，不从配置文件读取

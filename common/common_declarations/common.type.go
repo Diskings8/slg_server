@@ -13,6 +13,7 @@ const (
 	NodeWorldMapService       NodeService = 30
 	NodeBattleService         NodeService = 40
 	NodeBattleRecordService   NodeService = 50
+	NodeLoginService          NodeService = 60
 )
 
 type LoaderFunc[M DataI] func(id uint64) (M, error)

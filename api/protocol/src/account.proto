@@ -5,7 +5,8 @@ option go_package = "server.slg.com/api/protocol/pb/pb_account";
 import "role.proto";
 
 enum ChannelType {
-    Mine = 0;
+    Mine       = 0;  // 官方渠道（只是渠道的一种，与第三方渠道同构）
+    ThirdParty = 1;  // 示例第三方渠道（更多渠道在 login_channel 表声明）
 }
 
 message RoleSelectList {
@@ -22,6 +23,7 @@ message CreateAccountReq {
 message CreateAccountResp {
     uint64 account_id           = 1;
     RoleSelectList role_list    = 2;
+    string token                = 3;   // 登录票据
 }
 
 message LoginAccountReq {
@@ -33,4 +35,42 @@ message LoginAccountReq {
 message LoginAccountResp {
     uint64 account_id           = 1;
     RoleSelectList role_list    = 2;
+    string token                = 3;   // 登录票据
+}
+
+message ServerSimpleInfo {
+    uint32 server_id   = 1;
+    string server_name = 2;
+    int32  status      = 3;   // 0=开放 1=维护
+    int64  open_time   = 4;   // 开服时间 unix 秒
+}
+
+message ServerListReq {
+}
+
+message ServerListResp {
+    repeated ServerSimpleInfo servers = 1;
+}
+
+message EnterServerReq {
+    uint64 account_id = 1;
+    uint32 server_id  = 2;
+    uint64 role_id    = 3;   // 0=新建；非0=进入已有角色
+    string role_name  = 4;   // 新建时必填
+    string token      = 5;
+}
+
+message EnterServerResp {
+    uint64 account_id           = 1;
+    uint32 server_id            = 2;
+    uint64 role_id              = 3;
+    role.RoleSimpleInfo role_info = 4;
+    string session_token        = 5;   // 进服会话（预留）
+}
+
+service AccountService {
+    rpc CreateAccount(CreateAccountReq) returns (CreateAccountResp);
+    rpc LoginAccount(LoginAccountReq) returns (LoginAccountResp);
+    rpc ServerList(ServerListReq) returns (ServerListResp);
+    rpc EnterServer(EnterServerReq) returns (EnterServerResp);
 }
