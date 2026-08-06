@@ -8,6 +8,7 @@ import (
 
 	"google.golang.org/grpc"
 
+	pb_account "server.slg.com/api/protocol/pb/pb_account"
 	pb_battle "server.slg.com/api/protocol/pb/pb_battle"
 	pb_battle_record "server.slg.com/api/protocol/pb/pb_battle_record"
 	pb_game "server.slg.com/api/protocol/pb/pb_game"
@@ -25,6 +26,7 @@ type ClientHandler struct {
 	conns                     map[common_declarations.NodeService]*grpc.ClientConn
 	closers                   []io.Closer
 	dialOptions               []grpc.DialOption
+	accountServiceClient      pb_account.AccountServiceClient
 	battleHandlerClient       pb_battle.BattleHandlerClient
 	battleRecordHandlerClient pb_battle_record.BattleRecordHandlerClient
 	gameServiceClient         pb_game.GameServiceClient
@@ -43,6 +45,38 @@ func NewClientHandler(instance string, dialOptions ...grpc.DialOption) *ClientHa
 		conns:       make(map[common_declarations.NodeService]*grpc.ClientConn),
 		dialOptions: dialOptions,
 	}
+}
+
+// GetAccountServiceClient returns the pb_account.AccountServiceClient, lazily connecting on first call.
+// 拨号使用内置默认超时。
+func (ch *ClientHandler) GetAccountServiceClient() pb_account.AccountServiceClient {
+	ch.mu.Lock()
+	defer ch.mu.Unlock()
+	if ch.accountServiceClient != nil {
+		return ch.accountServiceClient
+	}
+	conn, err := ch.dialNodeLocked(common_declarations.NodeLoginService, false)
+	if err != nil {
+		return nil
+	}
+	ch.accountServiceClient = pb_account.NewAccountServiceClient(conn)
+	return ch.accountServiceClient
+}
+
+// GetAccountServiceClientWait returns the pb_account.AccountServiceClient, waiting indefinitely for the connection on first call.
+// 拨号阻塞等待就绪（无超时），适用于启动期依赖对方节点就绪的场景。
+func (ch *ClientHandler) GetAccountServiceClientWait() pb_account.AccountServiceClient {
+	ch.mu.Lock()
+	defer ch.mu.Unlock()
+	if ch.accountServiceClient != nil {
+		return ch.accountServiceClient
+	}
+	conn, err := ch.dialNodeLocked(common_declarations.NodeLoginService, true)
+	if err != nil {
+		return nil
+	}
+	ch.accountServiceClient = pb_account.NewAccountServiceClient(conn)
+	return ch.accountServiceClient
 }
 
 // GetBattleHandlerClient returns the pb_battle.BattleHandlerClient, lazily connecting on first call.

@@ -9,7 +9,7 @@
 
 `login` 是 SLG 服务端的**账号登录节点**（跨服全局单例，`instance=0`），提供注册、登录、区服列表、进入区服（建角）RPC。账号/渠道/角色映射/区服数据落 **`common_db_0`**（首个使用该库的服务）。
 
-登录链路（客户端 → gateway → login）中，**gateway 的 `switchForward` 路由尚未实现**（TODO），当前 login 节点的接入方为后续网关路由工作；服务间经 gRPC + etcd 发现。
+登录链路（客户端 → gateway → login）中，gateway 的 `switchForward` 已实现 **login 协议段转发**（按 MsgID 分类 → 调 login 节点的 `Do` → 回包客户端）；服务间经 gRPC + etcd 发现。game 协议段（推流下行）仍为后续工作。
 
 核心设计取向：**账号身份（`account_name`）由游戏自己维护、全局唯一、与渠道无关**；渠道侧原生账号（SDK UID / openid 等）在独立的渠道绑定表中声明关联，多渠道可绑定同一账号 → 角色挂账号下，**跨渠道不丢角色**。
 
@@ -114,20 +114,27 @@ EnterServer(account_id, server_id, role_id, role_name, token)
 | `LoginAccount` | 登录，返回账号 + 角色列表 + 登录票据 |
 | `ServerList` | 区服列表（客户端选服） |
 | `EnterServer` | 进入区服：新建角（调 game.CreateRole）或已有角 |
+| `Do` | 统一协议入口（gateway 转发用），按 MsgID 路由 → 登录错误码映射 |
 
 ---
 
 ## 调用链
 
 ```
-客户端 → gateway（switchForward 路由 TODO）→ login.CreateAccount/LoginAccount/ServerList/EnterServer
+客户端（TCP: msgID + 请求 proto body）
+  → gateway.switchForward（按 MsgID 分类）
+      └─ login 协议段 → AccountService.Do → 回包（MessagePacket 信封：err_code + body）
+      └─ game 协议段 → 后续接入
+
+Do 内按 MsgID 路由：
+  LoginCreateAccount/LoginAccount/LoginServerList/LoginEnterServer → 对应 handler
 
 EnterServer 新建角：
   login → game[server_id].CreateRole（instance 即区服号）
            └─ game → worldmap.CreateRole（分配出生点/落主城）→ 建主城 → DBCreate 落库
 
 ETCD 注册：/node:service:login/{instance}/
-发现：login → game 通过 rpc_handlers hub（NewClientHandler(server_id)）→ GetGameHandlerClient
+发现：gateway → login 通过 rpc_handlers hub（GetAccountServiceClient）；login → game 通过 NewClientHandler(server_id) → GetGameHandlerClient
 ```
 
 - **调用方**：gateway 转发（未实现） / 后续其它节点

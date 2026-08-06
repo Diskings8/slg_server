@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"server.slg.com/common/conns/netconn"
-	"server.slg.com/common/conns/netconn/packets"
 	"server.slg.com/common/loggers"
 )
 
@@ -56,8 +55,4 @@ func (s *Session) RunToSendToConn() {
 		}
 	}()
 	// todo 收到来自game 服务的stream链接信息
-}
-
-func (s *Session) switchForward(packet *packets.Packet) {
-	// todo 根据 message id 划分路由
 }

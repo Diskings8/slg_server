@@ -50,4 +50,14 @@ enum ErrorCode {
     // ── 货币兑换 (70~) ──
     CurrencyExchangeConfNotFound = 70;  // 兑换规则不存在
     CurrencyExchangeCountInvalid = 71;  // 兑换数量非法（非整组）
+
+    // ── 登录 (80~) ──
+    AccountExists         = 80;  // 账号名已存在（全局唯一）
+    AccountOrPasswordWrong = 81; // 账号或密码错误
+    TokenInvalid          = 82;  // 登录票据无效
+    ChannelNotDeclared    = 83;  // 渠道未声明
+    ServerNotFound        = 84;  // 区服不存在
+    ServerMaintenance     = 85;  // 区服维护中
+    RoleNameExists        = 86;  // 角色名已存在（服内唯一）
+    RoleNotOwned          = 87;  // 账号不拥有该角色
 }

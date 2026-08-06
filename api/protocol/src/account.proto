@@ -3,6 +3,7 @@ package account;
 option go_package = "server.slg.com/api/protocol/pb/pb_account";
 
 import "role.proto";
+import "common.proto";
 
 enum ChannelType {
     Mine       = 0;  // 官方渠道（只是渠道的一种，与第三方渠道同构）
@@ -73,4 +74,6 @@ service AccountService {
     rpc LoginAccount(LoginAccountReq) returns (LoginAccountResp);
     rpc ServerList(ServerListReq) returns (ServerListResp);
     rpc EnterServer(EnterServerReq) returns (EnterServerResp);
+    // Do: unified protocol entry, route by NodePacket.msgId（gateway 转发入口）
+    rpc Do(common.NodePacket) returns (common.NodePacket);
 }

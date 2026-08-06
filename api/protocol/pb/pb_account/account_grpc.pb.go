@@ -11,6 +11,7 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	pb_common "server.slg.com/api/protocol/pb/pb_common"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -23,6 +24,7 @@ const (
 	AccountService_LoginAccount_FullMethodName  = "/account.AccountService/LoginAccount"
 	AccountService_ServerList_FullMethodName    = "/account.AccountService/ServerList"
 	AccountService_EnterServer_FullMethodName   = "/account.AccountService/EnterServer"
+	AccountService_Do_FullMethodName            = "/account.AccountService/Do"
 )
 
 // AccountServiceClient is the client API for AccountService service.
@@ -33,6 +35,8 @@ type AccountServiceClient interface {
 	LoginAccount(ctx context.Context, in *LoginAccountReq, opts ...grpc.CallOption) (*LoginAccountResp, error)
 	ServerList(ctx context.Context, in *ServerListReq, opts ...grpc.CallOption) (*ServerListResp, error)
 	EnterServer(ctx context.Context, in *EnterServerReq, opts ...grpc.CallOption) (*EnterServerResp, error)
+	// Do: unified protocol entry, route by NodePacket.msgId（gateway 转发入口）
+	Do(ctx context.Context, in *pb_common.NodePacket, opts ...grpc.CallOption) (*pb_common.NodePacket, error)
 }
 
 type accountServiceClient struct {
@@ -83,6 +87,16 @@ func (c *accountServiceClient) EnterServer(ctx context.Context, in *EnterServerR
 	return out, nil
 }
 
+func (c *accountServiceClient) Do(ctx context.Context, in *pb_common.NodePacket, opts ...grpc.CallOption) (*pb_common.NodePacket, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(pb_common.NodePacket)
+	err := c.cc.Invoke(ctx, AccountService_Do_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AccountServiceServer is the server API for AccountService service.
 // All implementations must embed UnimplementedAccountServiceServer
 // for forward compatibility.
@@ -91,6 +105,8 @@ type AccountServiceServer interface {
 	LoginAccount(context.Context, *LoginAccountReq) (*LoginAccountResp, error)
 	ServerList(context.Context, *ServerListReq) (*ServerListResp, error)
 	EnterServer(context.Context, *EnterServerReq) (*EnterServerResp, error)
+	// Do: unified protocol entry, route by NodePacket.msgId（gateway 转发入口）
+	Do(context.Context, *pb_common.NodePacket) (*pb_common.NodePacket, error)
 	mustEmbedUnimplementedAccountServiceServer()
 }
 
@@ -112,6 +128,9 @@ func (UnimplementedAccountServiceServer) ServerList(context.Context, *ServerList
 }
 func (UnimplementedAccountServiceServer) EnterServer(context.Context, *EnterServerReq) (*EnterServerResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method EnterServer not implemented")
+}
+func (UnimplementedAccountServiceServer) Do(context.Context, *pb_common.NodePacket) (*pb_common.NodePacket, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Do not implemented")
 }
 func (UnimplementedAccountServiceServer) mustEmbedUnimplementedAccountServiceServer() {}
 func (UnimplementedAccountServiceServer) testEmbeddedByValue()                        {}
@@ -206,6 +225,24 @@ func _AccountService_EnterServer_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AccountService_Do_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(pb_common.NodePacket)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccountServiceServer).Do(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AccountService_Do_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AccountServiceServer).Do(ctx, req.(*pb_common.NodePacket))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AccountService_ServiceDesc is the grpc.ServiceDesc for AccountService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -228,6 +265,10 @@ var AccountService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "EnterServer",
 			Handler:    _AccountService_EnterServer_Handler,
+		},
+		{
+			MethodName: "Do",
+			Handler:    _AccountService_Do_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
