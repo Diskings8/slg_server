@@ -126,6 +126,14 @@ func (mi *MapInfo) Occupy(ownerID uint64) {
 func (mi *MapInfo) Free(now time.Time) {
 	mi.rwLock.Lock()
 	defer mi.rwLock.Unlock()
+	mi.freeLocked(now)
+}
+
+// freeLocked 地块被释放（调用方需已持有 mi 写锁）
+//
+// 供 SetRoleMainCity 等已持锁场景使用，避免对 GetFreeBorn 返回的已加锁格子
+// 重复 Lock 造成重入死锁（sync.RWMutex 不可重入）。
+func (mi *MapInfo) freeLocked(now time.Time) {
 	mi.ownerID = 0
 	if mi.ElementType != cores_declarations.ElementType_Terrain_3 {
 		mi.protectedEndTime = now.Add(time.Hour).Unix()

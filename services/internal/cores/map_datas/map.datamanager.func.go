@@ -2,16 +2,35 @@ package map_datas
 
 import (
 	"errors"
+	"sync"
 	"time"
 
 	"go.uber.org/zap"
 	"server.slg.com/api/protocol/pb/pb_role"
 	"server.slg.com/common/globals/common_globals"
 	"server.slg.com/common/loggers"
+	"server.slg.com/common/utils/asyncsave_entity"
+	"server.slg.com/common/utils/crontabs"
 	"server.slg.com/services/internal/cores/cores_declarations"
 	"server.slg.com/services/internal/cores/map_aois"
 	"server.slg.com/services/internal/cores/roles"
 )
+
+// registerAsyncSaveOnce 保证 MapDataManager 的异步保存实体只注册一次
+var registerAsyncSaveOnce sync.Once
+
+// roleBriefSaveFunc 放置主城后回写角色简略数据。
+// 包级函数变量，便于测试注入替换（默认实现访问角色 poller，依赖 Redis/DB）。
+var roleBriefSaveFunc = func(brief *pb_role.RoleBrief) {
+	roleData, releaseFunc, saveFunc, err := roles.Get(brief.GetRoleBaseInfo().GetSimpleInfo().GetRoleId())
+	if err != nil {
+		loggers.Logger.Error(err.Error())
+		return
+	}
+	roleData.GetBrief().RoleBrief = brief
+	saveFunc()
+	releaseFunc()
+}
 
 // NewMapDataManager 创建并初始化地图数据管理器（稠密全量地图）
 //   - mapConfig: 地图配置
@@ -39,6 +58,14 @@ func NewMapDataManager(mapConfig cores_declarations.MapConfigI, tableName string
 	}
 
 	mdm.Init(bigMap)
+
+	// 注册异步保存实体，使 mdm.Save() 可用（全局只注册一次，重复创建返回已存在错误，忽略）
+	registerAsyncSaveOnce.Do(func() {
+		if _, err := asyncsave_entity.NewAsyncSaveEntity(crontabs.Pre1Minutes, "MapDataManager"); err != nil {
+			// 已注册则忽略（幂等）
+		}
+	})
+
 	return mdm
 }
 func (mdm *MapDataManager) Clear(mapIDs []cores_declarations.MapID, isNeedLock bool) {
@@ -77,12 +104,14 @@ func (mdm *MapDataManager) SetRoleMainCity(roleCityState cores_declarations.Role
 		if len(dataSlice) != cores_declarations.RoleMainCityStateNormalCoverCount {
 			return errors.New("地块数量不对")
 		}
-		coreIndex = cores_declarations.Land1CoverBaseKey
+		// 3×3 主城核心在中心（index 4），须与 GetFreeBorn 的 coreMapID 一致
+		coreIndex = cores_declarations.Land3CoverBaseKey
 	default:
 		if len(dataSlice) != cores_declarations.RoleMainCityStatePortableCoverCount {
 			return errors.New("地块数量不对")
 		}
-		coreIndex = cores_declarations.Land3CoverBaseKey
+		// 单格便携主城，唯一元素即核心
+		coreIndex = 0
 	}
 	// 检测位置可使用情况
 	if !CheckRoleBornSiteSafeByMapInfos(false, dataSlice...) {
@@ -93,7 +122,8 @@ func (mdm *MapDataManager) SetRoleMainCity(roleCityState cores_declarations.Role
 	updateNow := time.Now()
 	coreMapInfo := dataSlice[coreIndex]
 	for _, mapInfo := range dataSlice {
-		mapInfo.Free(updateNow)
+		// dataSlice 已由调用方持有写锁（GetFreeBorn 分配），用 freeLocked 避免重入死锁
+		mapInfo.freeLocked(updateNow)
 		mapInfo.serverID = roleBrief.GetRoleBaseInfo().GetSimpleInfo().GetServerId()
 		mapInfo.ownerID = roleBrief.GetRoleBaseInfo().GetSimpleInfo().GetRoleId()
 		mapInfo.coreMapID = coreMapInfo.mapID
@@ -102,15 +132,8 @@ func (mdm *MapDataManager) SetRoleMainCity(roleCityState cores_declarations.Role
 	}
 	mdm.Save(dataSlice...)
 
-	// 更新角色数据
-	roleData, releaseFunc, saveFunc, err := roles.Get(roleBrief.GetRoleBaseInfo().GetSimpleInfo().GetRoleId())
-	if err != nil {
-		loggers.Logger.Error(err.Error())
-	} else {
-		roleData.GetBrief().RoleBrief = roleBrief
-		saveFunc()
-		releaseFunc()
-	}
+	// 更新角色数据（函数变量，测试可注入替换）
+	roleBriefSaveFunc(roleBrief)
 	// aoi更新
 	return nil
 }

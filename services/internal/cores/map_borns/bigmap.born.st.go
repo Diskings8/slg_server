@@ -9,11 +9,20 @@ import (
 
 var _ cores_declarations.BornBlockI = (*BigMapBornBlockManager)(nil)
 
+// NewBigMapBornBlockManager 构造大地图出生块管理器
+// bornChan 需有缓冲（容量=区块数），否则 Range→reload 对 nil/无缓冲 channel send 会永久阻塞
+func NewBigMapBornBlockManager(count int32) *BigMapBornBlockManager {
+	return &BigMapBornBlockManager{
+		BornCount: count,
+		bornChan:  make(chan cores_declarations.BornBlockID, count),
+	}
+}
+
 // BigMapBornBlockManager 大地图出生块管理器
 // 维护两个状态 map：emptyBornMap（空闲出生块）和 useBornMap（已使用出生块）
 // 通过 Store/Load/Use/Free 操作管理出生块的生命周期
 type BigMapBornBlockManager struct {
-	BronCount    int32
+	BornCount    int32
 	bornChan     chan cores_declarations.BornBlockID
 	emptyBornMap hashtriemap.HashTrieMap[cores_declarations.BornBlockID, map[int32]struct{}] // 空闲出生块集合
 	useBornMap   hashtriemap.HashTrieMap[cores_declarations.BornBlockID, map[int32]struct{}] // 已使用出生块集合

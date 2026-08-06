@@ -5,6 +5,7 @@ import (
 
 	"server.slg.com/services/internal/cores/cores_declarations"
 	"server.slg.com/services/internal/cores/map_blocks"
+	"server.slg.com/services/internal/cores/map_borns"
 	"server.slg.com/services/internal/cores/map_connects"
 	"server.slg.com/services/internal/cores/map_datas"
 	"server.slg.com/services/internal/cores/marchs"
@@ -33,7 +34,35 @@ func NewMapManager(
 		waitUpdateMapID:    make(map[cores_declarations.MapID]struct{}),
 		opts:               evaluateOptions(op),
 	}
+
+	initBornAts(mm, mapDataManager)
+
 	return mm
+}
+
+// initBornAts 接线地图出生块管理器
+//
+// 每个地图区块 Store 若干"可出生候选种子"（区块内部偏移点，过滤掉不可出生地形）。
+// 出生点分配（GetFreeBorn）以种子为中心展开 3×3 校验完整空地后占为己用。
+func initBornAts(mm *MapManager, mapDataManager *map_datas.MapDataManager) {
+	bornMgr := map_borns.NewBigMapBornBlockManager(cores_declarations.ServerMapBlockCutNum)
+	for i := int32(1); i <= cores_declarations.ServerMapBlockCutNum; i++ {
+		sx, sy := mm.mapBlock.FirstXY(cores_declarations.BornBlockID(i))
+		seeds := make(map[int32]struct{})
+		// 区块内部偏移点：远离地图边界（保证 3×3 邻域完整），且分散覆盖区块
+		for _, ox := range []int32{50, 100, 150} {
+			for _, oy := range []int32{50, 100, 150} {
+				mid := mapDataManager.GetConfig().XY2MapID(sx+ox, sy+oy)
+				if info, ok := mapDataManager.GetMapInfo(mid); ok && !info.GetElementType().IsCantBornUse() {
+					seeds[int32(mid)] = struct{}{}
+				}
+			}
+		}
+		if len(seeds) > 0 {
+			bornMgr.Store(cores_declarations.BornBlockID(i), seeds)
+		}
+	}
+	mapDataManager.BornAts = bornMgr
 }
 
 func (mm *MapManager) Stop() {}

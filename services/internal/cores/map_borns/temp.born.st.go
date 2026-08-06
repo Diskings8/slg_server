@@ -8,7 +8,7 @@ import (
 var _ cores_declarations.BornBlockI = (*TempBornBlockManager)(nil)
 
 type TempBornBlockManager struct {
-	BronCount    int32
+	BornCount    int32
 	emptyBornMap hashtriemap.HashTrieMap[cores_declarations.BornBlockID, map[int32]struct{}] // 空闲出生块集合
 	useBornMap   hashtriemap.HashTrieMap[cores_declarations.BornBlockID, map[int32]struct{}] // 已使用出生块集合
 }

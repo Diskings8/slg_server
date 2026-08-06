@@ -11,7 +11,7 @@
 
 ```go
 type BigMapBornBlockManager struct {
-    BronCount    int32
+    BornCount    int32
     bornChan     chan cores_declarations.BornBlockID
     emptyBornMap hashtriemap.HashTrieMap[...]  // 空闲出生块
     useBornMap   hashtriemap.HashTrieMap[...]  // 已使用出生块
