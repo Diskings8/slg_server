@@ -94,6 +94,10 @@ cancel() 信号中断触发           GrpcStreamServer 监听 globalCtx.Done()
 
 入口: `services/battle_record/BATTLE_RECORD_OVERVIEW.md`
 
+### login 模块
+
+入口: `services/login/LOGIN_OVERVIEW.md`
+
 ### 新增模块文档的约定
 
 - 模块入口文档统一命名 `{MODULE}_OVERVIEW.md`，放在模块根目录
