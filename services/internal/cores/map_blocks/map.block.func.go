@@ -53,6 +53,11 @@ func NewMapBlock(mapData *map_datas.MapDataManager) *MapBlock {
 	return mb
 }
 
+// BlockLength 返回区块边长（格子数）
+func (mb *MapBlock) BlockLength() int32 {
+	return mb.blockLength
+}
+
 // FirstXY 计算指定区块的起始坐标（左上角）
 // blockID 范围：1 ~ ServerMapBlockCutNum
 func (mb *MapBlock) FirstXY(blockID cores_declarations.BornBlockID) (x, y int32) {

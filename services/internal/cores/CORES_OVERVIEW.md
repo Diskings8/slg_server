@@ -121,7 +121,7 @@ AOI（Area of Interest）系统管理的"感兴趣区域"，即玩家的视野�
 
 **文件**: `bigmap.born.st.go` · `sort.born.go` · `temp.born.st.go`
 
-实现了 `cores_declarations.BornBlockI` 接口，管理玩家出生点的分配与回收。
+实现了 `cores_declarations.BornBlockManagerI` 接口，管理玩家出生点的分配与回收。
 
 **`BigMapBornBlockManager`** — 大地图出生块管理器，双池状态机（空闲池 ↔ 使用池）：
 - `Store(bornID, data)` / `Load(bornID)` / `Use(bornID)` / `Free(bornID)` — 出生块生命周期

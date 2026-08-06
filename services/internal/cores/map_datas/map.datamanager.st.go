@@ -1,6 +1,7 @@
 package map_datas
 
 import (
+	"sync"
 	"sync/atomic"
 
 	"go.uber.org/zap"
@@ -8,6 +9,7 @@ import (
 	"server.slg.com/common/conns/dbconn"
 	"server.slg.com/common/loggers"
 	"server.slg.com/common/utils/asyncsave_entity"
+	"server.slg.com/common/utils/crontabs"
 	"server.slg.com/common/utils/hashmaps"
 	"server.slg.com/services/internal/cores/cores_declarations"
 	"server.slg.com/services/internal/cores/map_aois"
@@ -26,18 +28,19 @@ var _ common_declarations.AsyncSaveEntityI = new(MapDataManager)
 //   - smallMapData（稀疏）：map[MapID]*MapInfo，仅存有值格子，适合事件/战场小地图
 //   - isSparse 为 true 时使用 smallMapData，否则使用 bigMapData
 type MapDataManager struct {
-	Id        uint64
-	waitSave  hashmaps.Map[cores_declarations.MapID, *MapInfo]
-	config    cores_declarations.MapConfigI
-	tableName string
-	saving    atomic.Bool
+	Id            uint64
+	waitSave      hashmaps.Map[cores_declarations.MapID, *MapInfo]
+	config        cores_declarations.MapConfigI
+	tableName     string
+	saving        atomic.Bool
+	asyncSaveOnce sync.Once
 
-	AOI     *map_aois.ScreenData
-	BornAts cores_declarations.BornBlockI
+	AOI              *map_aois.ScreenData
+	BornBlockManager cores_declarations.BornBlockManagerI
 
-	isSparse     bool                                    // true → smallMapData，false → bigMapData
-	bigMapData   []MapInfo                               // 稠密：值类型 slice，O(1) 索引
-	smallMapData map[cores_declarations.MapID]*MapInfo   // 稀疏：仅存有值格子
+	isSparse     bool                                  // true → smallMapData，false → bigMapData
+	bigMapData   []MapInfo                             // 稠密：值类型 slice，O(1) 索引
+	smallMapData map[cores_declarations.MapID]*MapInfo // 稀疏：仅存有值格子
 }
 
 // GenerateMap 按生成函数批量初始化地图元素（地形/资源分布）
@@ -88,6 +91,11 @@ func (mdm *MapDataManager) Init(mapD []MapInfo, isSparse ...bool) {
 			mdm.AOI.MapDataAdd(cores_declarations.MapID(mapID))
 		}
 	}
+	mdm.asyncSaveOnce.Do(func() {
+		if _, err := asyncsave_entity.NewAsyncSaveEntity(crontabs.Pre1Minutes, mdm.Tag()); err != nil {
+			// 已注册则忽略（幂等）
+		}
+	})
 }
 
 func (mdm *MapDataManager) Tag() string {

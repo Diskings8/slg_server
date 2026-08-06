@@ -76,7 +76,7 @@ type MapDataManager struct {
     tableName string
     saving    atomic.Bool
     AOI       *map_aois.ScreenData
-    BornAts   cores_declarations.BornBlockI
+    BornBlockManager cores_declarations.BornBlockManagerI
     mapData   []MapInfo
 }
 ```
@@ -130,7 +130,7 @@ func (l LockMapSlice) Data() []*MapInfo // 获取数据
 | `GetFreeBorn()` | 从空闲出生块中查找可用空地，自动上锁并返回 |
 
 **GetFreeBorn 详细流程**:
-1. 遍历 `BornAts.Range`（按 `blockSort` 优先级）
+1. 遍历 `BornBlockManager.Range`（按 `blockSort` 优先级）
 2. 对每个出生块 ID，调用 `CoverMapIDs(bornID, 1, HallLandCover/2)` 检查 9 格完整性
 3. 批量加锁 `mapSlice`
 4. 调用 `CheckRoleBornSiteSafeByMapInfos` 检测地形合法性

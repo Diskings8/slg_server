@@ -74,7 +74,7 @@ func (i MapID) IsInvalid() bool  // 检查是否为 InvalidMapID（-1）
 | `MarchInfoI` | `GetMarchID()`, `GetUnionID()`, `AddPassingAOIBlock(AoiScreenI)`, `AddAOIBlock(AoiScreenI)`, `GetRelocationVal()` | 行军信息接口 |
 | `MarchDoFuncHandleI` | `Do()`, `LockDo()`, `CallBack()`, `CallBackNow()`, `Lock()`, `Unlock()`, `Leave()` | 行军执行处理接口，定义完整生命周期 |
 | `MapRoleConnectI` | `GetRoleID()`, `GetScreenMapID()`, `SetScreenMapID(MapID)`, `Send(*pb_common.NodePacket)` | 角色连接接口 |
-| `BornBlockI` | `Store(BornBlockID, map[int32]struct{})`, `Load(BornBlockID)`, `Use(BornBlockID)`, `Free(BornBlockID)`, `Delete(BornBlockID)`, `Range(f)` | 出生块管理器接口 |
+| `BornBlockManagerI` | `Store(BornBlockID, map[int32]struct{})`, `Load(BornBlockID)`, `Use(BornBlockID)`, `Free(BornBlockID)`, `Delete(BornBlockID)`, `Range(f)` | 出生块管理器接口 |
 | `MapConfigI` | `MapCount()`, `MapScope()`, `MapID2XY(MapID)`, `XY2MapID(int32, int32)`, `SortByDis(MapID, []MapID)`, `CoverMapIDs(int32, int, any)` | 地图配置接口 |
 | `BaseBuildingConfI` | `GetBuildingsMaxHp(uint32, uint32)`, `GetBuildingsMaxLevel()` | 建筑配置接口 |
 | `NpcBuildingConfI` | 继承 `BaseBuildingConfI` | NPC 建筑配置接口 |
@@ -106,6 +106,6 @@ var ErrLockFailed = errors.New("cores: 锁定失败")
 
 - 所有类型和方法集中在声明包中，避免循环依赖
 - `MarchDoFuncHandleI` 是行军执行器的核心接口，定义了加锁/执行/回调/离开的完整生命周期
-- `BornBlockI` 采用接口抽象，支持大地图和活动地图两种不同实现
+- `BornBlockManagerI` 采用接口抽象，支持大地图和活动地图两种不同实现
 - `MapConfigI` 是地图配置的抽象层，屏蔽具体地图尺寸和坐标转换逻辑
 - 错误常量统一放在 `errors.func.go`，各子包通过 `cores_declarations.ErrXxx` 引用

@@ -9,8 +9,6 @@ import (
 	"server.slg.com/api/protocol/pb/pb_role"
 	"server.slg.com/common/globals/common_globals"
 	"server.slg.com/common/loggers"
-	"server.slg.com/common/utils/asyncsave_entity"
-	"server.slg.com/common/utils/crontabs"
 	"server.slg.com/services/internal/cores/cores_declarations"
 	"server.slg.com/services/internal/cores/map_aois"
 	"server.slg.com/services/internal/cores/roles"
@@ -48,7 +46,7 @@ func NewMapDataManager(mapConfig cores_declarations.MapConfigI, tableName string
 
 	count := mapConfig.MapCount()
 	bigMap := make([]MapInfo, count)
-	for id := int32(0); id < count; id++ {
+	for id := range count {
 		x, y := mapConfig.MapID2XY(cores_declarations.MapID(id))
 		info := &bigMap[id]
 		info.mapID = cores_declarations.MapID(id)
@@ -58,14 +56,6 @@ func NewMapDataManager(mapConfig cores_declarations.MapConfigI, tableName string
 	}
 
 	mdm.Init(bigMap)
-
-	// 注册异步保存实体，使 mdm.Save() 可用（全局只注册一次，重复创建返回已存在错误，忽略）
-	registerAsyncSaveOnce.Do(func() {
-		if _, err := asyncsave_entity.NewAsyncSaveEntity(crontabs.Pre1Minutes, "MapDataManager"); err != nil {
-			// 已注册则忽略（幂等）
-		}
-	})
-
 	return mdm
 }
 func (mdm *MapDataManager) Clear(mapIDs []cores_declarations.MapID, isNeedLock bool) {
@@ -141,7 +131,7 @@ func (mdm *MapDataManager) SetRoleMainCity(roleCityState cores_declarations.Role
 // GetFreeBorn 可用出生点,失败要调用freeBornFunc放回到出生块里
 // 注意：取出的mapSlice是带锁的
 func (mdm *MapDataManager) GetFreeBorn() (mapIDs []cores_declarations.MapID, lockMapSlice LockMapSlice, bornID cores_declarations.BornBlockID, coreMapID cores_declarations.MapID, freeBornFunc func(), err error) {
-	mdm.BornAts.Range(func(bornIDTmp cores_declarations.BornBlockID, v map[int32]struct{}) bool {
+	mdm.BornBlockManager.Range(func(bornIDTmp cores_declarations.BornBlockID, v map[int32]struct{}) bool {
 		// 随机找一个四块地都是空地
 		for mapID := range v {
 			mapIDsTmp := mdm.GetConfig().CoverMapIDs(mapID, 1, cores_declarations.HallLandCover/2)
@@ -170,10 +160,10 @@ func (mdm *MapDataManager) GetFreeBorn() (mapIDs []cores_declarations.MapID, loc
 				}
 				coreMapID = mapIDsTmp[cores_declarations.Land3CoverBaseKey]
 
-				mdm.BornAts.Use(bornID)
+				mdm.BornBlockManager.Use(bornID)
 
 				freeBornFunc = func() {
-					mdm.BornAts.Free(bornID)
+					mdm.BornBlockManager.Free(bornID)
 				}
 
 				return false
@@ -186,7 +176,7 @@ func (mdm *MapDataManager) GetFreeBorn() (mapIDs []cores_declarations.MapID, loc
 			loggers.Logger.Warn("在一个可放置玩家的位置，找不到一个1格相连的空地，打印出错误信息", zap.Int32("coreMapID", int32(coreMapID)), zap.Any("v", v))
 		}
 
-		mdm.BornAts.Delete(bornIDTmp)
+		mdm.BornBlockManager.Delete(bornIDTmp)
 
 		return true
 	})

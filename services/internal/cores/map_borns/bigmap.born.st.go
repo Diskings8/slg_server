@@ -7,7 +7,7 @@ import (
 	"server.slg.com/services/internal/cores/cores_declarations"
 )
 
-var _ cores_declarations.BornBlockI = (*BigMapBornBlockManager)(nil)
+var _ cores_declarations.BornBlockManagerI = (*BigMapBornBlockManager)(nil)
 
 // NewBigMapBornBlockManager 构造大地图出生块管理器
 // bornChan 需有缓冲（容量=区块数），否则 Range→reload 对 nil/无缓冲 channel send 会永久阻塞

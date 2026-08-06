@@ -3,7 +3,7 @@
 > 路径: `services/internal/cores/map_borns/`  
 > 文件: `bigmap.born.st.go` · `sort.born.go` · `temp.born.st.go`
 
-实现了 `cores_declarations.BornBlockI` 接口，管理玩家出生点的分配与回收。
+实现了 `cores_declarations.BornBlockManagerI` 接口，管理玩家出生点的分配与回收。
 
 ---
 
@@ -79,5 +79,5 @@ type TempBornBlockManager struct {
 ## 设计要点
 
 - **双池状态管理**: 空闲 ↔ 使用 的完整生命周期，确保同一出生块不被重复分配
-- **接口抽象**: `BornBlockI` 支持两种不同场景（大地图 vs 活动地图）
+- **接口抽象**: `BornBlockManagerI` 支持两种不同场景（大地图 vs 活动地图）
 - **并发安全**: 使用 `hashtriemap` 并发哈希 Trie 图，`reloadLocker` 防止重入

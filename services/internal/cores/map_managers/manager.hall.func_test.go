@@ -57,7 +57,7 @@ func (testMapConfig) CoverMapIDs(id int32, _ int, i2 any) []cores_declarations.M
 }
 
 // setBornSafe 把区块 1 的候选种子区域（x/y∈[40,160]）设为可出生地形。
-// 覆盖 initBornAts 的全部偏移种子（50/100/150）及其 3×3 邻域。
+// 覆盖 initBornManager 的全部偏移种子（50/100/150）及其 3×3 邻域。
 func setBornSafe(mdm *map_datas.MapDataManager) {
 	for y := int32(40); y <= 160; y++ {
 		for x := int32(40); x <= 160; x++ {
@@ -69,9 +69,9 @@ func setBornSafe(mdm *map_datas.MapDataManager) {
 	}
 }
 
-// TestNewMapManager_WiresBornAts 验证 NewMapManager 完成出生块接线：
-// mdm.BornAts 非 nil，且 GetFreeBorn 能正常分配出生点。
-func TestNewMapManager_WiresBornAts(t *testing.T) {
+// TestNewMapManager_WiresBornBlockManager 验证 NewMapManager 完成出生块接线：
+// mdm.BornBlockManager 非 nil，且 GetFreeBorn 能正常分配出生点。
+func TestNewMapManager_WiresBornBlockManager(t *testing.T) {
 	mdm := map_datas.NewMapDataManager(testMapConfig{}, "map_data")
 	setBornSafe(mdm)
 
@@ -79,8 +79,8 @@ func TestNewMapManager_WiresBornAts(t *testing.T) {
 	marchMgr := marchs.New(tickerChan, "march_info", testMapConfig{}, cores_declarations.MarchTimeTypeStraight)
 	_ = NewMapManager(1, cores_declarations.MapGroupBase, mdm, marchMgr, nil, nil)
 
-	if mdm.BornAts == nil {
-		t.Fatal("BornAts not wired by NewMapManager")
+	if mdm.BornBlockManager == nil {
+		t.Fatal("BornBlockManager not wired by NewMapManager")
 	}
 
 	mapIDs, ls, bornID, _, _, err := mdm.GetFreeBorn()

@@ -5,7 +5,7 @@ import (
 	"server.slg.com/services/internal/cores/cores_declarations"
 )
 
-var _ cores_declarations.BornBlockI = (*TempBornBlockManager)(nil)
+var _ cores_declarations.BornBlockManagerI = (*TempBornBlockManager)(nil)
 
 type TempBornBlockManager struct {
 	BornCount    int32

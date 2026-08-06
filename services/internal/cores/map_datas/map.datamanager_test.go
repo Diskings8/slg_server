@@ -79,7 +79,7 @@ func newTestMDM(t *testing.T) *MapDataManager {
 	bornMgr := map_borns.NewBigMapBornBlockManager(cores_declarations.ServerMapBlockCutNum)
 	addBornBlock(mdm, bornMgr, 1, [][2]int32{{100, 100}, {150, 100}, {100, 150}, {150, 150}})
 	addBornBlock(mdm, bornMgr, 2, [][2]int32{{250, 100}, {300, 100}, {250, 150}, {300, 150}})
-	mdm.BornAts = bornMgr
+	mdm.BornBlockManager = bornMgr
 	return mdm
 }
 

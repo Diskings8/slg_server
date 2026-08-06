@@ -57,8 +57,8 @@ type MapRoleConnectI interface {
 	Send(packet *pb_common.NodePacket) error
 }
 
-// BornBlockI 出生块接口
-type BornBlockI interface {
+// BornBlockManagerI 出生块接口
+type BornBlockManagerI interface {
 	Store(bornID BornBlockID, data map[int32]struct{}) bool
 	Load(bornID BornBlockID) (map[int32]struct{}, bool)
 	Use(bornID BornBlockID) bool
