@@ -54,6 +54,15 @@ func (c *Client) CreateMarch(ctx context.Context, req *pb_worldmap.CreateMarchRe
 	return cli.CreateMarch(ctx, req)
 }
 
+// CreateRole 创建角色主城（分配出生点并落主城）
+func (c *Client) CreateRole(ctx context.Context, req *pb_worldmap.CreateRoleReq) (*pb_worldmap.CreateRoleRsp, error) {
+	cli := c.hub.GetWorldMapHandlerClient()
+	if cli == nil {
+		return nil, fmt.Errorf("worldmap not connected")
+	}
+	return cli.CreateRole(ctx, req)
+}
+
 // CancelMarch 取消行军
 func (c *Client) CancelMarch(ctx context.Context, req *pb_worldmap.CancelMarchReq) (*pb_worldmap.CancelMarchRsp, error) {
 	cli := c.hub.GetWorldMapHandlerClient()

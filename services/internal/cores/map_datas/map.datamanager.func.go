@@ -20,6 +20,10 @@ var registerAsyncSaveOnce sync.Once
 // roleBriefSaveFunc 放置主城后回写角色简略数据。
 // 包级函数变量，便于测试注入替换（默认实现访问角色 poller，依赖 Redis/DB）。
 var roleBriefSaveFunc = func(brief *pb_role.RoleBrief) {
+	if roles.GetPollerMgr() == nil {
+		// 角色数据 poller 未初始化（单测环境），跳过回写
+		return
+	}
 	roleData, releaseFunc, saveFunc, err := roles.Get(brief.GetRoleBaseInfo().GetSimpleInfo().GetRoleId())
 	if err != nil {
 		loggers.Logger.Error(err.Error())

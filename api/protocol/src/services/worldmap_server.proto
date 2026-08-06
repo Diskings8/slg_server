@@ -22,6 +22,9 @@ service WorldMapHandler {
 
     // 地图
     rpc MapData(MapDataReq) returns (MapDataRsp);
+
+    // 角色
+    rpc CreateRole(CreateRoleReq) returns (CreateRoleRsp);
 }
 
 // ---------- 行军 ----------
@@ -103,4 +106,18 @@ message MarchBrief {
 // WorldMapConnectReq game→worldmap 建立连接的握手消息（首条 NodePacket.message.body）
 message WorldMapConnectReq {
     int32 map_id = 1;  // 玩家所在地图ID（主城位置）
+}
+
+// ---------- 角色 ----------
+
+// CreateRoleReq 创建角色主城（分配出生点并落主城）
+message CreateRoleReq {
+    uint64 role_id   = 1;  // 角色ID
+    uint32 server_id = 2;  // 所在区服
+    string role_name = 3;  // 角色名（写入 cores RoleBrief）
+}
+
+// CreateRoleRsp 创建结果
+message CreateRoleRsp {
+    int32 map_id = 1;  // 主城核心格 MapID
 }

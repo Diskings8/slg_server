@@ -91,12 +91,13 @@ func (ras *RoleAttrs) Format2Pb() *pb_attr.RoleAttr {
 	}
 }
 
-// FillRoleSimpleInfo 填充角色简略信息（server_id / vip_level），供 account 登录流调用
+// FillRoleSimpleInfo 填充角色简略信息（role_name / server_id / vip_level），供 account 登录流调用
 func (ras *RoleAttrs) FillRoleSimpleInfo(simple *pb_role.RoleSimpleInfo) {
 	if simple == nil {
 		return
 	}
 	attr := ras.Ensure()
+	simple.RoleName = attr.RoleName
 	simple.ServerId = attr.ServerID
 	simple.VipLevel = ras.VipLevelEffective()
 }

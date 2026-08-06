@@ -126,6 +126,7 @@ const (
 	WorldMapHandler_CancelMarch_FullMethodName = "/pb_worldmap.WorldMapHandler/CancelMarch"
 	WorldMapHandler_MarchInfo_FullMethodName   = "/pb_worldmap.WorldMapHandler/MarchInfo"
 	WorldMapHandler_MapData_FullMethodName     = "/pb_worldmap.WorldMapHandler/MapData"
+	WorldMapHandler_CreateRole_FullMethodName  = "/pb_worldmap.WorldMapHandler/CreateRole"
 )
 
 // WorldMapHandlerClient is the client API for WorldMapHandler service.
@@ -140,6 +141,8 @@ type WorldMapHandlerClient interface {
 	MarchInfo(ctx context.Context, in *MarchInfoReq, opts ...grpc.CallOption) (*MarchInfoRsp, error)
 	// 地图
 	MapData(ctx context.Context, in *MapDataReq, opts ...grpc.CallOption) (*MapDataRsp, error)
+	// 角色
+	CreateRole(ctx context.Context, in *CreateRoleReq, opts ...grpc.CallOption) (*CreateRoleRsp, error)
 }
 
 type worldMapHandlerClient struct {
@@ -190,6 +193,16 @@ func (c *worldMapHandlerClient) MapData(ctx context.Context, in *MapDataReq, opt
 	return out, nil
 }
 
+func (c *worldMapHandlerClient) CreateRole(ctx context.Context, in *CreateRoleReq, opts ...grpc.CallOption) (*CreateRoleRsp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateRoleRsp)
+	err := c.cc.Invoke(ctx, WorldMapHandler_CreateRole_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // WorldMapHandlerServer is the server API for WorldMapHandler service.
 // All implementations must embed UnimplementedWorldMapHandlerServer
 // for forward compatibility.
@@ -202,6 +215,8 @@ type WorldMapHandlerServer interface {
 	MarchInfo(context.Context, *MarchInfoReq) (*MarchInfoRsp, error)
 	// 地图
 	MapData(context.Context, *MapDataReq) (*MapDataRsp, error)
+	// 角色
+	CreateRole(context.Context, *CreateRoleReq) (*CreateRoleRsp, error)
 	mustEmbedUnimplementedWorldMapHandlerServer()
 }
 
@@ -223,6 +238,9 @@ func (UnimplementedWorldMapHandlerServer) MarchInfo(context.Context, *MarchInfoR
 }
 func (UnimplementedWorldMapHandlerServer) MapData(context.Context, *MapDataReq) (*MapDataRsp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method MapData not implemented")
+}
+func (UnimplementedWorldMapHandlerServer) CreateRole(context.Context, *CreateRoleReq) (*CreateRoleRsp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateRole not implemented")
 }
 func (UnimplementedWorldMapHandlerServer) mustEmbedUnimplementedWorldMapHandlerServer() {}
 func (UnimplementedWorldMapHandlerServer) testEmbeddedByValue()                         {}
@@ -317,6 +335,24 @@ func _WorldMapHandler_MapData_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WorldMapHandler_CreateRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateRoleReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorldMapHandlerServer).CreateRole(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorldMapHandler_CreateRole_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorldMapHandlerServer).CreateRole(ctx, req.(*CreateRoleReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // WorldMapHandler_ServiceDesc is the grpc.ServiceDesc for WorldMapHandler service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -339,6 +375,10 @@ var WorldMapHandler_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "MapData",
 			Handler:    _WorldMapHandler_MapData_Handler,
+		},
+		{
+			MethodName: "CreateRole",
+			Handler:    _WorldMapHandler_CreateRole_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

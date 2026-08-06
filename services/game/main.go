@@ -26,6 +26,7 @@ import (
 	vgc "server.slg.com/common/globals/common_globals"
 	"server.slg.com/common/loggers"
 	"server.slg.com/common/servers"
+	"server.slg.com/common/utils/snowflakes"
 	"server.slg.com/services/game/game_entitys"
 	"server.slg.com/services/game/game_handlers/game_servers"
 	"server.slg.com/services/game/game_handlers/game_streams"
@@ -100,6 +101,7 @@ func main() {
 	servers.NewLifecycle(
 		servers.WithAsyncInit(
 			func() {
+				snowflakes.Init() // 雪花 ID（角色/建筑主键由应用层生成）
 				dbconn.MustInitDB("mysql",
 					common_configs.GetConf().DB.Game.Dsn(),
 					common_configs.GetConf().DB.Game.Dsn())

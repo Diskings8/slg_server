@@ -10,6 +10,7 @@ const role_attr = "role_attr"
 type RoleAttr struct {
 	models.ModelBase
 	RoleID     uint64 `gorm:"column:role_id;type:bigint(20);not null;uniqueIndex:idx_role_attr"` // 角色ID
+	RoleName   string `gorm:"column:role_name;type:varchar(64);not null;default:''"`             // 角色名
 	ServerID   uint32 `gorm:"column:server_id;type:int(11) unsigned;not null;default:0"`         // 所在区服
 	CreateAt   int64  `gorm:"column:create_at;type:bigint(20);not null;default:0"`               // 创建时间戳（首次登录记录）
 	CreateIP   string `gorm:"column:create_ip;type:varchar(32);not null;default:''"`             // 创建IP

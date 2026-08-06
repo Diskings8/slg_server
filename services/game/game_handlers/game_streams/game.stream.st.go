@@ -37,16 +37,20 @@ func (gs *GameStream) gateConnectDo(roleID uint64, stream pb_game.GameService_St
 		return err
 	}
 
-	// 记录登录统计（跨日登录天数/最后登录时间）
+	// 记录登录统计（跨日登录天数/最后登录时间）+ 取主城坐标（供 worldmap 视野流握手）
+	mainCityMapID := int32(0)
 	if poller, role, err := game_roles.GetRole(roleID); err == nil {
 		role.Login()
+		if main := role.GetBuildings().GetMainCity(); main != nil {
+			mainCityMapID = main.MapID
+		}
 		poller.Save()
 		poller.Release()
 	}
 
 	// 玩家建立到 worldmap 的视野流（cores push 经此流下推回客户端）
-	// mapID: 玩家所在地图位置，TODO 主城落位后从角色数据获取
-	if err := game_rpc_clients.WorldMap().ConnectRoleStream(stream.Context(), roleID, 0); err != nil {
+	// mapID: 玩家所在地图位置（主城核心格，无主城时为 0）
+	if err := game_rpc_clients.WorldMap().ConnectRoleStream(stream.Context(), roleID, mainCityMapID); err != nil {
 		loggers.Logger.Warn("connect worldmap stream failed",
 			zap.Uint64("role_id", roleID), zap.Error(err))
 	}

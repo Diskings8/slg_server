@@ -5,21 +5,21 @@ import (
 	"server.slg.com/services/internal/cores/cores_declarations"
 )
 
-// CreateRole 创建角色位置
-func (mm *MapManager) CreateRole(roleBrief *pb_role.RoleBrief) ([]cores_declarations.MapID, error) {
-	mapIDs, lockMapSlice, _, baseMapID, freeBornFunc, err := mm.GetMapDataManager().GetFreeBorn()
+// CreateRole 创建角色位置，返回主城核心 MapID
+func (mm *MapManager) CreateRole(roleBrief *pb_role.RoleBrief) (cores_declarations.MapID, error) {
+	_, lockMapSlice, _, coreMapID, freeBornFunc, err := mm.GetMapDataManager().GetFreeBorn()
 	if err != nil {
-		return nil, err
+		return cores_declarations.InvalidMapID, err
 	}
 
 	defer lockMapSlice.Unlock()
 	err = mm.mapDataManager.SetRoleMainCity(cores_declarations.RoleMainCityStateNormal, lockMapSlice.Data(), roleBrief)
 	if err != nil {
 		freeBornFunc()
-		return nil, err
+		return cores_declarations.InvalidMapID, err
 	}
 
-	mm.UpdateMapPush(baseMapID)
+	mm.UpdateMapPush(coreMapID)
 
-	return mapIDs, err
+	return coreMapID, nil
 }

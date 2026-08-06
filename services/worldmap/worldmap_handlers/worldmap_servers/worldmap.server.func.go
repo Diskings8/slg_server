@@ -6,6 +6,7 @@ import (
 
 	"server.slg.com/api/protocol/pb/pb_battle"
 	"server.slg.com/api/protocol/pb/pb_maps_march"
+	"server.slg.com/api/protocol/pb/pb_role"
 	"server.slg.com/api/protocol/pb/pb_worldmap"
 	"server.slg.com/common/loggers"
 	"server.slg.com/services/internal/cores/cores_declarations"
@@ -237,6 +238,41 @@ func (s *WorldMapServer) MapData(ctx context.Context, req *pb_worldmap.MapDataRe
 	}
 
 	return resp, nil
+}
+
+// CreateRole 创建角色主城（分配出生点并落主城），返回主城核心 MapID
+func (s *WorldMapServer) CreateRole(ctx context.Context, req *pb_worldmap.CreateRoleReq) (*pb_worldmap.CreateRoleRsp, error) {
+	loggers.Logger.Info("CreateRole",
+		zap.Uint64("role_id", req.GetRoleId()),
+		zap.Uint32("server_id", req.GetServerId()))
+
+	if s.engine == nil {
+		return nil, status.Error(codes.Internal, "engine not initialized")
+	}
+	if req.GetRoleId() == 0 {
+		return nil, status.Error(codes.InvalidArgument, "invalid params")
+	}
+
+	// 构造最小 RoleBrief（cores 仅使用 server_id / role_id）
+	roleBrief := &pb_role.RoleBrief{
+		RoleBaseInfo: &pb_role.RoleBaseInfo{
+			SimpleInfo: &pb_role.RoleSimpleInfo{
+				ServerId: req.GetServerId(),
+				RoleId:   req.GetRoleId(),
+				RoleName: req.GetRoleName(),
+			},
+		},
+	}
+
+	coreMapID, err := s.engine.MapManager.CreateRole(roleBrief)
+	if err != nil {
+		loggers.Logger.Error("CreateRole failed",
+			zap.Uint64("role_id", req.GetRoleId()),
+			zap.Error(err))
+		return nil, status.Errorf(codes.Internal, "create role main city failed: %v", err)
+	}
+
+	return &pb_worldmap.CreateRoleRsp{MapId: coreMapID.Int32()}, nil
 }
 
 // buildMapCellInfo 组装地块数据

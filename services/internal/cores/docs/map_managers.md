@@ -149,7 +149,7 @@ loopTickAccept
 
 | 方法 | 说明 |
 |---|---|
-| `CreateRole(roleBrief)` | 创建角色位置：`GetFreeBorn()` 分配出生点 → `SetHall(data, brief)` 设大厅 → `UpdateMapPush` 推送 |
+| `CreateRole(roleBrief)` | 创建角色位置，返回主城核心 MapID：`GetFreeBorn()` 分配出生点 → `SetRoleMainCity(data, brief)` 落主城 → `UpdateMapPush` 推送 |
 
 ---
 

@@ -23,7 +23,7 @@ message Int32KV {
 }
 
 message CreateRoleReq {
-    uint64 userId   = 1;
+    uint64 roleId   = 1;  // roleID 由 login/account 节点分配
     string roleName = 2;
 }
 

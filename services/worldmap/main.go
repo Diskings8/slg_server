@@ -25,6 +25,7 @@ import (
 	vgc "server.slg.com/common/globals/common_globals"
 	"server.slg.com/common/loggers"
 	"server.slg.com/common/servers"
+	"server.slg.com/services/internal/cores/roles"
 	"server.slg.com/services/worldmap/worldmap_handlers/worldmap_servers"
 	"server.slg.com/services/worldmap/worldmap_handlers/worldmap_streams"
 	worldmap_inits "server.slg.com/services/worldmap/worldmap_internals/worldmap_inits"
@@ -115,6 +116,10 @@ func main() {
 					common_configs.GetConf().DB.Game.Dsn(),
 					common_configs.GetConf().DB.Game.Dsn())
 				loggers.Logger.Info("数据库初始化完成")
+
+				// 角色数据 poller：主城落位回写 role_data（须在 DB 初始化后调用）
+				roles.Init(ctx)
+				loggers.Logger.Info("roles poller 初始化完成")
 			},
 		),
 
