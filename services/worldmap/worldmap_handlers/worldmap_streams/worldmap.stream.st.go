@@ -1,4 +1,4 @@
-package worldmap_handlers
+package worldmap_streams
 
 import (
 	"server.slg.com/api/protocol/pb/pb_worldmap"

@@ -92,12 +92,12 @@ func main() {
 
 	// 初始化 cores 引擎
 	engine := worldmap_inits.NewEngine(ctx)
-	worldmap_handlers.WorldMapStreamHandler.SetEngine(engine)
+	worldmap_streams.WorldMapStreamHandler.SetEngine(engine)
 	worldmap_servers.WorldMapServerHandler.SetEngine(engine)
 
 	// 注册 gRPC 服务
 	{
-		pb_worldmap.RegisterWorldMapServiceServer(grpcServer, worldmap_handlers.WorldMapStreamHandler)
+		pb_worldmap.RegisterWorldMapServiceServer(grpcServer, worldmap_streams.WorldMapStreamHandler)
 		pb_worldmap.RegisterWorldMapHandlerServer(grpcServer, worldmap_servers.WorldMapServerHandler)
 	}
 

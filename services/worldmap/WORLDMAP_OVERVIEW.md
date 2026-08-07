@@ -31,7 +31,7 @@ worldmap/
         └── map.generate.func.go              # 地图元素生成（种子确定性）
 ```
 
-> 注：`worldmap_streams/` 目录内文件 Go 包名为 `worldmap_handlers`（与目录名不同，main.go 以包名引用）。
+> 注：`worldmap_servers/` 与 `worldmap_streams/` 均为 `worldmap_handlers/` 下的子目录，各自独立成包（`worldmap_servers` / `worldmap_streams`），main.go 分别引用。
 
 ---
 
