@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc/reflection"
 	"server.slg.com/common/common_declarations"
 	common_configs "server.slg.com/common/configs"
+	"server.slg.com/common/conns/cacheconn"
 	"server.slg.com/common/conns/etcdconn"
 	"server.slg.com/common/conns/netconn/tcp_conn"
 	vgc "server.slg.com/common/globals/common_globals"
@@ -49,6 +50,15 @@ func main() {
 	tcpAddr := common_configs.GetConf().Gateway.TcpDsn()
 	etcdconn.RegisterServiceByNodeType(ctx, common_declarations.NodeGatewayService, *vgc.CommonGlobalVarInstance, rpcAddr)
 
+	// redis：订阅进服广播（踢旧连接）+ 路由表查询
+	if err := cacheconn.Init(ctx); err != nil {
+		loggers.Logger.Fatal("redis 初始化失败", zap.Error(err))
+	}
+
+	// 本 gateway 节点标识（唯一：instance + 监听地址）+ 启动进服广播监听
+	session_gateways.SetNodeID(*vgc.CommonGlobalVarInstance + ":" + rpcAddr)
+	session_gateways.StartRoleEnterWatcher(ctx)
+
 	// Build gRPC server
 	grpcLis, err := net.Listen("tcp", rpcAddr)
 	if err != nil {
@@ -67,7 +77,8 @@ func main() {
 	// Build TCP server
 	tcpSrv := servers.NewTcpBuilder(servers.Config{Addr: tcpAddr}).
 		WithHandler(func(conn net.Conn) {
-			session_gateways.NewSession(tcp_conn.NewNetConn(conn)).RunToReceiveFromConn()
+			// 全局 ctx 传入会话：game 流等长驻资源从它派生，关停时统一传导
+			session_gateways.NewSession(ctx, tcp_conn.NewNetConn(conn)).RunToReceiveFromConn()
 		}).
 		Build()
 
@@ -75,6 +86,9 @@ func main() {
 	ls := servers.NewLifecycle(
 		servers.WithGrpcServer(grpcSrv, grpcLis),
 		servers.WithTcpServer(tcpSrv),
+		servers.WithShutdown(func() {
+			_ = cacheconn.ShutDown() // 关闭 redis 连接
+		}),
 	)
 
 	// 系统信号 → ctx cancel → Lifecycle 优雅关闭

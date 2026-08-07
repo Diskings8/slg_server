@@ -144,12 +144,12 @@ func (m *Manager) GateOnlineNum() int {
 	return len(m.streams)
 }
 
-// Push 推送消息给指定角色（异步）
+// Push 推送消息给指定角色（同步发送，错误仅记日志，不向外返回）
 func Push(roleID uint64, protocolID pb_protocol.MsgID, msg proto.Message) {
 	defaultManager.Push(roleID, protocolID, msg)
 }
 
-// Push 推送消息给指定角色（异步）
+// Push 推送消息给指定角色（同步发送，错误仅记日志，不向外返回）
 func (m *Manager) Push(roleID uint64, protocolID pb_protocol.MsgID, msg proto.Message) {
 	err := m.pushFunc(roleID, protocolID, msg)
 	if err != nil {

@@ -24,7 +24,7 @@ import (
 	"server.slg.com/common/loggers"
 	"server.slg.com/common/utils/snowflakes"
 	"server.slg.com/services/login/login_handlers/login_servers"
-	"server.slg.com/services/login/login_internals/login_tokens"
+	"server.slg.com/services/login/login_internals/login_game_clients"
 	"server.slg.com/services/login/login_testutil"
 )
 
@@ -48,8 +48,8 @@ func newTestServer(t *testing.T, game *fakeGameClient) (pb_account.AccountServic
 	loggers.Init()
 	snowflakes.Init()
 
-	accStore, chStore, svStore := login_testutil.SetupStores(t)
-	login_servers.LoginServerHandler.SetStore(accStore, chStore, svStore, login_tokens.NewTokenManager(), game)
+	login_testutil.SetupStores(t)       // 初始化各 store/token 包级单例
+	login_game_clients.SetForTest(game) // 替换 game 客户端单例（mock）
 
 	lis := bufconn.Listen(1024 * 1024)
 	srv := grpc.NewServer()

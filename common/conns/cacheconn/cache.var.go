@@ -17,6 +17,10 @@ type CacheI interface {
 	Set(background context.Context, key string, b any, ttl time.Duration) *redis.StatusCmd
 	SAdd(background context.Context, key string, member ...any) *redis.IntCmd
 	Get(background context.Context, key string) *redis.StringCmd
+
+	// Pub/Sub：login 发布进服广播，gateway 订阅踢旧连接
+	Publish(ctx context.Context, channel string, msg any) *redis.IntCmd
+	Subscribe(ctx context.Context, channels ...string) *redis.PubSub
 }
 
 // Sep 缓存分隔符
@@ -24,14 +28,63 @@ func Sep() byte {
 	return ':'
 }
 
+// Init 初始化 redis 连接（single / cluster），启动时由服务 main.go 调用。
+// Ping 验证连接，失败快速返回（fail fast）。
+func Init(ctx context.Context) error {
+	initManager()
+	switch m := cacheManager.(type) {
+	case *CacheSingleManager:
+		return m.Ping(ctx).Err()
+	case *CacheClusterManager:
+		return m.Ping(ctx).Err()
+	}
+	return nil
+}
+
+// ShutDown 关闭 redis 连接（进程优雅退出）
+func ShutDown() error {
+	if cacheManager == nil {
+		return nil
+	}
+	if cli, ok := any(cacheManager).(interface{ Close() error }); ok {
+		return cli.Close()
+	}
+	return nil
+}
+
+// initManager 按配置建立 redis client（single / cluster），幂等。
+// Address 为空时使用默认 localhost:6379（go-redis），连接失败在调用方报错而非 panic。
+func initManager() {
+	if cacheManager != nil {
+		return
+	}
+	conf := common_configs.GetConf().Cache
+	switch conf.GetNodeType() {
+	case "cluster":
+		cacheManager = &CacheClusterManager{
+			ClusterClient: redis.NewClusterClient(&redis.ClusterOptions{
+				Addrs:    conf.Address,
+				Password: conf.Password,
+			}),
+		}
+	default: // single
+		addr := "localhost:6379"
+		if len(conf.Address) > 0 && conf.Address[0] != "" {
+			addr = conf.Address[0]
+		}
+		cacheManager = &CacheSingleManager{
+			Client: redis.NewClient(&redis.Options{
+				Addr:     addr,
+				Password: conf.Password,
+				DB:       conf.DB,
+			}),
+		}
+	}
+}
+
 func Get() CacheI {
 	if cacheManager == nil {
-		switch common_configs.GetConf().Cache.GetNodeType() {
-		case "single":
-			cacheManager = NewCacheSingleManager("")
-		default:
-			cacheManager = NewCacheSingleManager("")
-		}
+		initManager()
 	}
 	return cacheManager
 }

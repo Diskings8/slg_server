@@ -19,7 +19,8 @@ import (
 	"server.slg.com/common/loggers"
 	"server.slg.com/services/login/login_internals/login_accounts"
 	"server.slg.com/services/login/login_internals/login_channels"
-	"server.slg.com/services/login/login_internals/login_servers"
+	"server.slg.com/services/login/login_internals/login_servers_store"
+	"server.slg.com/services/login/login_internals/login_tokens"
 	"server.slg.com/services/login/login_models"
 )
 
@@ -43,40 +44,31 @@ func InitDB(t *testing.T) {
 }
 
 // SetupStores 初始化三张账号域表并返回 store（已 Migrate + 渠道/区服种子）
-func SetupStores(t *testing.T) (*login_accounts.AccountStore, *login_channels.ChannelStore, *login_servers.ServerStore) {
+func SetupStores(t *testing.T) (*login_accounts.AccountStore, *login_channels.ChannelStore, *login_servers_store.ServerStore) {
 	t.Helper()
 	InitDB(t)
 
 	db := dbconn.GetWriteDbConn()
 
-	accStore := login_accounts.NewAccountStore(db)
-	if err := accStore.Migrate(); err != nil {
+	if err := login_accounts.Init(db); err != nil {
 		t.Fatalf("migrate account: %v", err)
 	}
-
-	chStore := login_channels.NewChannelStore(db)
-	if err := chStore.Migrate(); err != nil {
-		t.Fatalf("migrate channel: %v", err)
+	if err := login_channels.Init(db); err != nil {
+		t.Fatalf("init channel: %v", err)
 	}
-	if err := chStore.SeedDefault(); err != nil {
-		t.Fatalf("seed official channel: %v", err)
-	}
-	// 声明第三方渠道（类型 1，供跨渠道绑定用例）
-	if ch, err := chStore.GetChannel(1); err != nil {
+	// 测试专属：声明第三方渠道（类型 1，供跨渠道绑定用例）
+	if ch, err := login_channels.Get().GetChannel(1); err != nil {
 		t.Fatalf("query third-party channel: %v", err)
 	} else if ch == nil {
 		if err := db.Create(&login_models.Channel{ChannelType: 1, ChannelName: "测试渠道", Status: 0}).Error(); err != nil {
 			t.Fatalf("declare third-party channel: %v", err)
 		}
 	}
-
-	svStore := login_servers.NewServerStore(db)
-	if err := svStore.Migrate(); err != nil {
-		t.Fatalf("migrate server: %v", err)
-	}
-	if err := svStore.SeedIfEmpty(); err != nil {
-		t.Fatalf("seed server: %v", err)
+	if err := login_servers_store.Init(db); err != nil {
+		t.Fatalf("init server: %v", err)
 	}
 
-	return accStore, chStore, svStore
+	login_tokens.InitManager()
+
+	return login_accounts.Get(), login_channels.Get(), login_servers_store.Get()
 }

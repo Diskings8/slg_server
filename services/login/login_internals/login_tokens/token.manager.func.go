@@ -27,6 +27,15 @@ func NewTokenManager() *TokenManager {
 	return &TokenManager{tokens: make(map[uint64]tokenEntry)}
 }
 
+// defaultManager 包级默认票据管理器（单例，login 启动 / 测试 setup 时 InitManager 设置）
+var defaultManager *TokenManager
+
+// InitManager 初始化包级默认票据管理器
+func InitManager() { defaultManager = NewTokenManager() }
+
+// Get 获取包级默认票据管理器（须先 InitManager；login_logics 直接访问）
+func Get() *TokenManager { return defaultManager }
+
 // Issue 签发新票据并返回（crypto/rand 32B hex；rand.Read 失败概率可忽略）
 func (m *TokenManager) Issue(accountID uint64) string {
 	buf := make([]byte, 32)

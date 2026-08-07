@@ -76,13 +76,15 @@ func (s *Session) forwardToLogin(packet *packets.Packet) {
 		s.captureEnterServerID(packet)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	// 从会话持有的全局 ctx 派生 + 超时：关停时在途 login 请求一并取消
+	ctx, cancel := context.WithTimeout(s.ctx, 10*time.Second)
 	defer cancel()
 
 	resp, err := cli.Do(ctx, &pb_common.NodePacket{
 		MsgId: msgID,
 		Message: &pb_common.MessagePacket{
-			Body: packet.Body,
+			Body:           packet.Body,
+			GatewayNodeId:  nodeID, // 携带本 gateway 标识，login 记录角色所在节点并广播
 		},
 	})
 	if err != nil {
@@ -111,6 +113,8 @@ func (s *Session) captureEnterServerRoleID(resp *pb_common.NodePacket) {
 	var out pb_account.EnterServerResp
 	if err := proto.Unmarshal(resp.GetMessage().GetBody(), &out); err == nil && out.GetRoleId() > 0 {
 		s.roleID = out.GetRoleId()
+		// 登记到下推注册表：其他节点可经 GatewayService.Stream 按 roleID 定位本连接并下推
+		defaultSessionManager.Register(s.roleID, s)
 	}
 }
 
@@ -125,7 +129,7 @@ func (s *Session) writeNodePacket(seq uint32, resp *pb_common.NodePacket) {
 		loggers.Logger.Warn("marshal response packet failed", zap.Error(err))
 		return
 	}
-	if err := s.conn.WriteToConn(seq, &packets.Packet{
+	if err := s.writePacket(seq, &packets.Packet{
 		MsgID: uint32(resp.GetMsgId()),
 		Body:  body,
 	}); err != nil {
@@ -142,7 +146,7 @@ func (s *Session) writeErrorPacket(seq uint32, msgID pb_protocol.MsgID, code pb_
 	if err != nil {
 		return
 	}
-	if err := s.conn.WriteToConn(seq, &packets.Packet{
+	if err := s.writePacket(seq, &packets.Packet{
 		MsgID: uint32(msgID),
 		Body:  body,
 	}); err != nil {

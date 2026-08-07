@@ -9,6 +9,7 @@ message MessagePacket {
     bytes body                    = 1;
     string dev_msg                = 2;
     error_code.ErrorCode err_code = 3;
+    string gateway_node_id        = 4;  // gateway 转发时填自身节点标识（login 读，用于进服路由/踢旧连接）
 }
 
 message NodePacket {

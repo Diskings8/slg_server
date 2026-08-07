@@ -74,7 +74,8 @@ func (s *Session) connectGameStream(serverID uint32, roleID uint64) error {
 		return fmt.Errorf("game[%d] not connected", serverID)
 	}
 
-	streamCtx, cancel := context.WithCancel(context.Background())
+	// 从会话持有的全局 ctx 派生：网关关停（root cancel）时直接传导，断开该 game 流
+	streamCtx, cancel := context.WithCancel(s.ctx)
 	stream, err := cli.Stream(streamCtx)
 	if err != nil {
 		cancel()

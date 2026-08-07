@@ -283,6 +283,69 @@ func (x *HeroExpItem) GetExp() uint32 {
 	return 0
 }
 
+// RoleEnterEvent 角色进服事件 — login EnterServer 成功后发布，所有 gateway 订阅。
+// 本机持有该角色旧连接则踢掉（跨 gateway 异设备登录 / 同 gateway 重连双开）。
+type RoleEnterEvent struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	RoleId        uint64 `protobuf:"varint,1,opt,name=role_id,json=roleId,proto3" json:"role_id,omitempty"`                       // 进服角色
+	ServerId      uint32 `protobuf:"varint,2,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"`                 // 进入的区服
+	GatewayNodeId string `protobuf:"bytes,3,opt,name=gateway_node_id,json=gatewayNodeId,proto3" json:"gateway_node_id,omitempty"` // 角色所在 gateway 节点标识（login 记录/广播）
+}
+
+func (x *RoleEnterEvent) Reset() {
+	*x = RoleEnterEvent{}
+	mi := &file_redis_stream_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RoleEnterEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RoleEnterEvent) ProtoMessage() {}
+
+func (x *RoleEnterEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_redis_stream_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RoleEnterEvent.ProtoReflect.Descriptor instead.
+func (*RoleEnterEvent) Descriptor() ([]byte, []int) {
+	return file_redis_stream_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *RoleEnterEvent) GetRoleId() uint64 {
+	if x != nil {
+		return x.RoleId
+	}
+	return 0
+}
+
+func (x *RoleEnterEvent) GetServerId() uint32 {
+	if x != nil {
+		return x.ServerId
+	}
+	return 0
+}
+
+func (x *RoleEnterEvent) GetGatewayNodeId() string {
+	if x != nil {
+		return x.GatewayNodeId
+	}
+	return ""
+}
+
 // StreamEnvelope 统一的消息信封
 type StreamEnvelope struct {
 	state         protoimpl.MessageState
@@ -296,7 +359,7 @@ type StreamEnvelope struct {
 
 func (x *StreamEnvelope) Reset() {
 	*x = StreamEnvelope{}
-	mi := &file_redis_stream_proto_msgTypes[3]
+	mi := &file_redis_stream_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -308,7 +371,7 @@ func (x *StreamEnvelope) String() string {
 func (*StreamEnvelope) ProtoMessage() {}
 
 func (x *StreamEnvelope) ProtoReflect() protoreflect.Message {
-	mi := &file_redis_stream_proto_msgTypes[3]
+	mi := &file_redis_stream_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -321,7 +384,7 @@ func (x *StreamEnvelope) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StreamEnvelope.ProtoReflect.Descriptor instead.
 func (*StreamEnvelope) Descriptor() ([]byte, []int) {
-	return file_redis_stream_proto_rawDescGZIP(), []int{3}
+	return file_redis_stream_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *StreamEnvelope) GetTopic() string {
@@ -378,7 +441,14 @@ var file_redis_stream_proto_rawDesc = []byte{
 	0x48, 0x65, 0x72, 0x6f, 0x45, 0x78, 0x70, 0x49, 0x74, 0x65, 0x6d, 0x12, 0x17, 0x0a, 0x07, 0x68,
 	0x65, 0x72, 0x6f, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x06, 0x68, 0x65,
 	0x72, 0x6f, 0x49, 0x64, 0x12, 0x10, 0x0a, 0x03, 0x65, 0x78, 0x70, 0x18, 0x02, 0x20, 0x01, 0x28,
-	0x0d, 0x52, 0x03, 0x65, 0x78, 0x70, 0x22, 0x5e, 0x0a, 0x0e, 0x53, 0x74, 0x72, 0x65, 0x61, 0x6d,
+	0x0d, 0x52, 0x03, 0x65, 0x78, 0x70, 0x22, 0x6e, 0x0a, 0x0e, 0x52, 0x6f, 0x6c, 0x65, 0x45, 0x6e,
+	0x74, 0x65, 0x72, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x12, 0x17, 0x0a, 0x07, 0x72, 0x6f, 0x6c, 0x65,
+	0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x06, 0x72, 0x6f, 0x6c, 0x65, 0x49,
+	0x64, 0x12, 0x1b, 0x0a, 0x09, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x0d, 0x52, 0x08, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x49, 0x64, 0x12, 0x26,
+	0x0a, 0x0f, 0x67, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x5f, 0x6e, 0x6f, 0x64, 0x65, 0x5f, 0x69,
+	0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0d, 0x67, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79,
+	0x4e, 0x6f, 0x64, 0x65, 0x49, 0x64, 0x22, 0x5e, 0x0a, 0x0e, 0x53, 0x74, 0x72, 0x65, 0x61, 0x6d,
 	0x45, 0x6e, 0x76, 0x65, 0x6c, 0x6f, 0x70, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x74, 0x6f, 0x70, 0x69,
 	0x63, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x74, 0x6f, 0x70, 0x69, 0x63, 0x12, 0x18,
 	0x0a, 0x07, 0x70, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0c, 0x52,
@@ -411,13 +481,14 @@ func file_redis_stream_proto_rawDescGZIP() []byte {
 }
 
 var file_redis_stream_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_redis_stream_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_redis_stream_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_redis_stream_proto_goTypes = []any{
 	(MarchEventType)(0),       // 0: redis_stream.MarchEventType
 	(*MarchEvent)(nil),        // 1: redis_stream.MarchEvent
 	(*MarchBattleResult)(nil), // 2: redis_stream.MarchBattleResult
 	(*HeroExpItem)(nil),       // 3: redis_stream.HeroExpItem
-	(*StreamEnvelope)(nil),    // 4: redis_stream.StreamEnvelope
+	(*RoleEnterEvent)(nil),    // 4: redis_stream.RoleEnterEvent
+	(*StreamEnvelope)(nil),    // 5: redis_stream.StreamEnvelope
 }
 var file_redis_stream_proto_depIdxs = []int32{
 	0, // 0: redis_stream.MarchEvent.type:type_name -> redis_stream.MarchEventType
@@ -441,7 +512,7 @@ func file_redis_stream_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_redis_stream_proto_rawDesc,
 			NumEnums:      1,
-			NumMessages:   4,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

@@ -90,7 +90,7 @@ func TestIsGameMsgID(t *testing.T) {
 
 func TestSwitchForwardNotEntered(t *testing.T) {
 	conn := &fakeConn{}
-	s := NewSession(conn)
+	s := NewSession(context.Background(), conn)
 
 	// 未进服（serverID/roleID 为空）就发 game 协议 → 拒绝
 	s.switchForward(&packets.Packet{Seq: 1, MsgID: uint32(pb_protocol.MsgID_GameHeroList), Body: nil})
@@ -119,7 +119,7 @@ func TestSwitchForwardEnterServerCapture(t *testing.T) {
 	gateway_rpc_clients.Client().SetLoginClient(cli)
 
 	conn := &fakeConn{}
-	s := NewSession(conn)
+	s := NewSession(context.Background(), conn)
 
 	reqBody, _ := proto.Marshal(&pb_account.EnterServerReq{
 		AccountId: 1, ServerId: 1, RoleId: 0, RoleName: "HeroA", Token: "t",
@@ -148,7 +148,7 @@ func TestSwitchForwardLogin(t *testing.T) {
 	gateway_rpc_clients.Client().SetLoginClient(cli)
 
 	conn := &fakeConn{}
-	s := NewSession(conn)
+	s := NewSession(context.Background(), conn)
 
 	// 构造登录请求包：LoginAccount MsgID + LoginAccountReq 序列化 body
 	reqBytes, _ := proto.Marshal(&pb_account.LoginAccountReq{
@@ -180,7 +180,7 @@ func TestSwitchForwardLogin(t *testing.T) {
 
 func TestSwitchForwardUnsupported(t *testing.T) {
 	conn := &fakeConn{}
-	s := NewSession(conn)
+	s := NewSession(context.Background(), conn)
 
 	// 既非 login 也非 game 协议（如下推段，客户端不应上行）→ ProtocolNotFound 错误包
 	s.switchForward(&packets.Packet{Seq: 1, MsgID: uint32(pb_protocol.MsgID_PushMapInfo), Body: nil})
@@ -204,7 +204,7 @@ func TestSwitchForwardLoginNodeDown(t *testing.T) {
 	})
 
 	conn := &fakeConn{}
-	s := NewSession(conn)
+	s := NewSession(context.Background(), conn)
 
 	s.switchForward(&packets.Packet{Seq: 2, MsgID: uint32(pb_protocol.MsgID_LoginServerList), Body: nil})
 

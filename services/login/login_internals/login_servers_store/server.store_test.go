@@ -1,6 +1,6 @@
 //go:build integration
 
-package login_servers_test
+package login_servers_store_test
 
 // 区服存储单测 — 连真实 mysql（common_db_0）。
 // 运行：go test -tags integration ./services/login/...
@@ -8,7 +8,7 @@ package login_servers_test
 import (
 	"testing"
 
-	login_servers_store "server.slg.com/services/login/login_internals/login_servers"
+	"server.slg.com/services/login/login_internals/login_servers_store"
 	"server.slg.com/services/login/login_testutil"
 )
 

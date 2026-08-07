@@ -36,6 +36,16 @@ message HeroExpItem {
     uint32 exp     = 2;  // 本次获得总经验
 }
 
+// ========== 角色进服事件（login → gateway 广播，踢旧连接） ==========
+
+// RoleEnterEvent 角色进服事件 — login EnterServer 成功后发布，所有 gateway 订阅。
+// 本机持有该角色旧连接则踢掉（跨 gateway 异设备登录 / 同 gateway 重连双开）。
+message RoleEnterEvent {
+    uint64 role_id         = 1;  // 进服角色
+    uint32 server_id       = 2;  // 进入的区服
+    string gateway_node_id = 3;  // 角色所在 gateway 节点标识（login 记录/广播）
+}
+
 // ========== 通用 Stream 信封（后续扩展用） ==========
 
 // StreamEnvelope 统一的消息信封

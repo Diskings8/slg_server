@@ -42,6 +42,22 @@ func NewAccountStore(db common_declarations.DbcI) *AccountStore {
 	return &AccountStore{db: db}
 }
 
+// defaultStore 包级默认 store（单例，login 启动 / 测试 setup 时 Init 设置）
+var defaultStore *AccountStore
+
+// Init 初始化默认 store（New + Migrate + 设单例），login_internals.Init / SetupStores 调用
+func Init(db common_declarations.DbcI) error {
+	s := NewAccountStore(db)
+	if err := s.Migrate(); err != nil {
+		return err
+	}
+	defaultStore = s
+	return nil
+}
+
+// Get 获取包级默认 store（须先 Init；login_logics 直接访问）
+func Get() *AccountStore { return defaultStore }
+
 // Migrate 建表（AutoMigrate 幂等，索引由 model tag 声明）
 func (s *AccountStore) Migrate() error {
 	return s.db.AutoMigrate(&login_models.Account{}, &login_models.ChannelAccount{}, &login_models.Role{})

@@ -29,7 +29,7 @@ login/
 │   ├── role.st.go                             # login_role 账号×区服×角色映射
 │   └── server.st.go                           # login_server 区服表（ID=server_id=game instance）
 │
-├── login_internals/
+├── login_internals/                           # 存储 / 票据 / 客户端 / 路由
 │   ├── login_accounts/                        # 账户 / 渠道绑定 / 角色映射存储
 │   │   ├── account.store.func.go             # 事务建账号+首渠道绑定 / 查询 / last_login / 认证信息更新
 │   │   ├── role.store.func.go                # 角色映射 CRUD
@@ -37,19 +37,30 @@ login/
 │   ├── login_channels/                        # 渠道声明存储 + 官方渠道种子
 │   │   ├── channel.store.func.go
 │   │   └── channel.store_test.go
-│   ├── login_servers/                         # 区服列表存储 + 默认区服种子
+│   ├── login_servers_store/                   # 区服列表存储 + 默认区服种子（改名避免与 RPC 门面 login_servers 同名）
 │   │   ├── server.store.func.go
 │   │   └── server.store_test.go
 │   ├── login_tokens/                          # 进程内登录票据（TTL 24h）
 │   │   └── token.manager.func.go
-│   └── login_game_clients/                    # 按 server_id 发现对应 game 节点的门面
-│       ├── game.client.st.go                 #   + RoleCreator 接口（测试可 mock）
-│       └── game.client.func.go
+│   ├── login_game_clients/                    # 按 server_id 发现对应 game 节点的门面
+│   │   ├── game.client.st.go                 #   + RoleCreator 接口（测试可 mock）
+│   │   └── game.client.func.go
+│   └── login_role_routes/                     # 角色进服路由：Redis 路由表 + 广播踢旧连接
+│       └── role.route.func.go                # PublishRoleEnter（SET 路由表 + PUBLISH）
 │
-└── login_handlers/
-    └── login_servers/                         # AccountService（CreateAccount/LoginAccount/ServerList/EnterServer）
-        ├── login.server.st.go                # LoginServer + SetStore 依赖注入
-        ├── login.server.func.go              # 4 个 RPC 实现
+├── login_logics/                              # 业务逻辑层（对标 game_logics，纯包级函数）
+│   ├── account.logic.func.go                 # 注册 / 登录 / 渠道解析 / 角色列表（依赖走包级单例 Get()）
+│   ├── server.logic.func.go                  # 区服列表
+│   ├── role.enter.logic.func.go              # 进服（建角/校验 + 进服广播）
+│   └── login.logic.ctx.func.go               # gatewayNodeID 请求级 ctx helper
+│
+└── login_handlers/                            # 协议路由层（对标 game_handlers）
+    ├── login.protocol.registry.go            # 协议注册表（protomap：RegisterProto/GetProtoHandler/Wrap）
+    └── login_servers/                         # RPC 服务门面（AccountService + Do）
+        ├── login.server.st.go                # LoginServer（无状态门面，内嵌 UnimplementedAccountServiceServer）
+        ├── login.server.func.go              # 4 个 RPC 方法（gRPC 接口适配，调 login_logics 包级函数）
+        ├── login.server.do.go                # Do 统一协议入口（GetProtoHandler 路由 + 错误码映射）
+        ├── login.protocol.gen.go             # 协议注册 init（handler 所在包注册，避免循环依赖）
         └── login.server_test.go              # bufconn RPC 冒烟（sqlite + mock game）
 ```
 

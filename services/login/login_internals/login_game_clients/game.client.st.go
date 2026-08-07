@@ -29,6 +29,25 @@ func NewGameClient() *GameClient {
 	return &GameClient{clients: make(map[uint32]*rpc_handlers.ClientHandler)}
 }
 
+// defaultClient 包级默认建角客户端（单例，类型为 RoleCreator 接口：运行时真实、测试可 SetForTest 替换）
+var defaultClient RoleCreator
+
+// Init 初始化包级默认客户端（login_internals.Init 调用）
+func Init() { defaultClient = NewGameClient() }
+
+// Get 获取包级默认客户端（须先 Init；login_logics 直接访问）
+func Get() RoleCreator { return defaultClient }
+
+// SetForTest 测试替换默认客户端（mock fakeGameClient）
+func SetForTest(c RoleCreator) { defaultClient = c }
+
+// Shutdown 关闭默认客户端底层连接（进程退出；fake 无 Close 则跳过）
+func Shutdown() {
+	if c, ok := any(defaultClient).(interface{ Close() error }); ok {
+		c.Close()
+	}
+}
+
 // hub 按 server_id 取（懒创建）ClientHandler
 func (c *GameClient) hub(serverID uint32) *rpc_handlers.ClientHandler {
 	c.mu.Lock()

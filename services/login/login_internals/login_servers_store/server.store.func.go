@@ -1,4 +1,4 @@
-package login_servers
+package login_servers_store
 
 import (
 	"errors"
@@ -17,6 +17,25 @@ type ServerStore struct {
 func NewServerStore(db common_declarations.DbcI) *ServerStore {
 	return &ServerStore{db: db}
 }
+
+// defaultStore 包级默认 store（单例，login 启动 / 测试 setup 时 Init 设置）
+var defaultStore *ServerStore
+
+// Init 初始化默认 store（New + Migrate + 区服种子 + 设单例），login_internals.Init / SetupStores 调用
+func Init(db common_declarations.DbcI) error {
+	s := NewServerStore(db)
+	if err := s.Migrate(); err != nil {
+		return err
+	}
+	if err := s.SeedIfEmpty(); err != nil {
+		return err
+	}
+	defaultStore = s
+	return nil
+}
+
+// Get 获取包级默认 store（须先 Init；login_logics 直接访问）
+func Get() *ServerStore { return defaultStore }
 
 // Migrate 建表（幂等）
 func (s *ServerStore) Migrate() error {

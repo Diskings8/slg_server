@@ -23,6 +23,7 @@ import (
 	"server.slg.com/api/protocol/pb/pb_account"
 	"server.slg.com/common/common_declarations"
 	"server.slg.com/common/configs"
+	"server.slg.com/common/conns/cacheconn"
 	"server.slg.com/common/conns/dbconn"
 	"server.slg.com/common/conns/etcdconn"
 	vgc "server.slg.com/common/globals/common_globals"
@@ -118,7 +119,12 @@ func main() {
 
 				// 必须初始化 etcd client，否则 SyncInit 注册时 etcdClient 为 nil
 				etcdconn.InitEtcd(common_configs.GetConf().Etcd.Dsn())
-				loggers.Logger.Info("DB/ETCD 初始化完成")
+
+				// redis：角色进服路由表 + 广播发布（踢旧连接）
+				if err := cacheconn.Init(ctx); err != nil {
+					loggers.Logger.Fatal("redis 初始化失败", zap.Error(err))
+				}
+				loggers.Logger.Info("DB/ETCD/Redis 初始化完成")
 			},
 		),
 
@@ -133,6 +139,7 @@ func main() {
 		servers.WithShutdown(
 			func() {
 				login_internals.Shutdown()
+				_ = cacheconn.ShutDown() // 关闭 redis 连接
 				loggers.Logger.Info("login 关闭...")
 			},
 		),
