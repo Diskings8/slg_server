@@ -51,7 +51,7 @@ func TestSettlePvPAttackerWin(t *testing.T) {
 		t.Fatalf("期望被击败防守方 march=111，实际 %+v", rsp.GetDefeatedDefenders())
 	}
 	// 攻方大营承伤（守方大营在守方行动序前已阵亡 → 攻方无损）
-	if got := rsp.GetResults().GetResults()[0].GetAttacker().GetTeamInfo().GetSlotInfo()[0].GetCurAliveNum(); got != 100 {
+	if got := rsp.GetResults().GetResults()[0].GetAttacker().GetTeamInfo().GetSlotInfo()[0].GetHeroInfo().GetSoldierInfo().GetCurAliveNum(); got != 100 {
 		t.Errorf("攻方大营有效兵力 = %d, want 100", got)
 	}
 }

@@ -37,7 +37,7 @@ func grantBattleExp(attackerSlots []*pb_battle.TeamSlotInfo, defSlots []*pb_batt
 		if s == nil || s.GetHeroInfo() == nil {
 			continue
 		}
-		if s.GetHeroInfo().GetCurStatus() == pb_hero.Status_Injured || s.GetCurAliveNum() == 0 {
+		if s.GetHeroInfo().GetCurStatus() == pb_hero.Status_Injured || slotAliveNum(s) == 0 {
 			continue
 		}
 		participants = append(participants, s)
@@ -52,7 +52,7 @@ func grantBattleExp(attackerSlots []*pb_battle.TeamSlotInfo, defSlots []*pb_batt
 
 	for _, s := range participants {
 		result.HeroExp = append(result.HeroExp, &pb_battle.HeroExpGain{
-			HeroId: s.GetHeroId(),
+			HeroId: s.GetHeroInfo().GetHeroId(),
 			Exp:    perHero,
 		})
 	}

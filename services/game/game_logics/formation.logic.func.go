@@ -33,12 +33,22 @@ func FormationFieldHero(role *game_roles.Role, req *pb_maps_march.FormationField
 	}
 
 	// 3. 校验英雄存在
-	if hero := role.GetHeroes().GetHero(req.GetHeroId()); hero == nil {
+	hero := role.GetHeroes().GetHero(req.GetHeroId())
+	if hero == nil {
 		return rpc_results.Error(pb_error_code.ErrorCode_ParamError, "hero not found")
 	}
 
-	// 4. 设置槽位
-	slots := setHeroSlot(formation.HeroSlots, int(req.GetSlotPos()), req.GetHeroId(), req.GetSoldierNum())
+	// 4. 计算上阵兵力：未指定默认 100，并按英雄等级+兵营上限封顶
+	soldierNum := req.GetSoldierNum()
+	if soldierNum == 0 {
+		soldierNum = 100 // 默认上阵兵力
+	}
+	if limit := soldierLimitOf(role, formation.CityID, hero.GetLevel()); limit > 0 && soldierNum > limit {
+		soldierNum = limit
+	}
+
+	// 5. 设置槽位
+	slots := setHeroSlot(formation.HeroSlots, int(req.GetSlotPos()), req.GetHeroId(), soldierNum)
 	if slots == nil {
 		return rpc_results.Error(pb_error_code.ErrorCode_ParamError, "formation slot full")
 	}

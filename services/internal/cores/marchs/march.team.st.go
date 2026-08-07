@@ -31,7 +31,9 @@ func (t *Team) GetAliveSoliderCount() uint64 {
 	var sum = uint64(0)
 	for _, v := range t.Slots {
 		if v.GetHeroInfo().GetCurStatus() != pb_hero.Status_Injured {
-			sum += uint64(v.GetCurAliveNum())
+			if si := v.GetHeroInfo().GetSoldierInfo(); si != nil {
+				sum += uint64(si.GetCurAliveNum())
+			}
 		}
 	}
 	return sum
@@ -40,7 +42,9 @@ func (t *Team) GetAliveSoliderCount() uint64 {
 func (t *Team) GetMaxCount() uint64 {
 	var sum = uint64(0)
 	for _, v := range t.Slots {
-		sum += uint64(v.GetMaxSoldierNum())
+		if si := v.GetHeroInfo().GetSoldierInfo(); si != nil {
+			sum += uint64(si.GetMaxSoldierNum())
+		}
 	}
 	return sum
 }

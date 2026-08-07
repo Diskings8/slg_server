@@ -108,12 +108,18 @@ func (e *Engine) initGuardConfig(mm *map_managers.MapManager) {
 		slots := make([]*pb_battle.TeamSlotInfo, 0, len(guardConf.Slots))
 		for i, s := range guardConf.Slots {
 			heroInfo := buildGuardHeroInfo(gc.Hero, s.HeroConfID, int32(level))
-			slots = append(slots, &pb_battle.TeamSlotInfo{
-				SlotId:        int32(i),
-				HeroId:        uint64(s.HeroConfID),
-				HeroInfo:      heroInfo,
+			// 守军为 NPC：HeroInfo 无属性时兜底空对象，兵力字段填入
+			if heroInfo == nil {
+				heroInfo = &pb_hero.HeroInfo{}
+			}
+			heroInfo.HeroId = uint64(s.HeroConfID)
+			heroInfo.SoldierInfo = &pb_hero.SoldierInfo{
 				MaxSoldierNum: s.SoldierNum,
 				CurAliveNum:   s.SoldierNum,
+			}
+			slots = append(slots, &pb_battle.TeamSlotInfo{
+				SlotId:   int32(i),
+				HeroInfo: heroInfo,
 			})
 		}
 		return slots
@@ -311,6 +317,12 @@ func (e *Engine) OnMarchArrived(marchInfo *marchs.MarchInfo) {
 		}
 	}
 
+	// 队伍快照（战后存活兵力）：BACKARRIVED/ARRIVED 携带，供 game 写回 formation
+	var teamInfo *pb_battle.TeamInfo
+	if team := marchInfo.GetTeam(); team != nil {
+		teamInfo = team.Format2Pb()
+	}
+
 	publishMarchEvent(e.ctx, &pb_redis_stream.MarchEvent{
 		Type:         eventType,
 		MarchId:      marchInfo.GetMarchID().Uint64(),
@@ -320,6 +332,7 @@ func (e *Engine) OnMarchArrived(marchInfo *marchs.MarchInfo) {
 		State:        int32(marchInfo.MarchState),
 		Ts:           time.Now().Unix(),
 		BattleResult: marchInfo.BattleResult, // 攻击行军携带战果（英雄经验）回传 game
+		TeamInfo:     teamInfo,
 	})
 }
 

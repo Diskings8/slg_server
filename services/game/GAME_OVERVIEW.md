@@ -208,5 +208,7 @@ game ──Unary/Stream──▶ worldmap
 | Stream 连接管理 | ✅ | gate_stream（Manager 结构体）+ gateConnectDo |
 | 出站 RPC 客户端 | ✅ | game_rpc_clients → rpcconn hub，instance 感知发现 |
 | 行军事件消费 | ✅ | stream_consumers 消费 Redis Stream（到达/回城/取消） |
+| 士兵模型 | ✅ | 上阵默认100兵 + 兵力上限（英雄等级+兵营，soldier 配置驱动）+ 回城战损写回 formation；补兵机制⏸ 后续 |
+| 兵营建筑 | ✅ | BuildingType.RoleBarracks + CityID 归属城市，读等级算兵力加成 |
 | 英雄基础 | ⚠️ | 实体/模型完成，逻辑层待接入消耗 |
 | 协议处理器 | ⬜ | 空模板，待按需补充 |

@@ -13,7 +13,8 @@ import (
 // HandlerFormationField 上阵英雄到队列 (1000008)
 func HandlerFormationField(ctx context.Context, roleID uint64, req *pb_maps_march.FormationFieldReq, resp *pb_maps_march.FormationFieldResp) rpc_results.ResultI {
 	// 参数格式校验（快速失败，不加载角色）
-	if req.GetCityId() == 0 || req.GetFormationId() == 0 || req.GetSlotPos() < 1 || req.GetHeroId() == 0 || req.GetSoldierNum() == 0 {
+	// soldier_num 可选：0/缺省时默认 100（见 game_logics.FormationFieldHero）
+	if req.GetCityId() == 0 || req.GetFormationId() == 0 || req.GetSlotPos() < 1 || req.GetHeroId() == 0 {
 		return rpc_results.Error(pb_error_code.ErrorCode_ParamError, "invalid params")
 	}
 

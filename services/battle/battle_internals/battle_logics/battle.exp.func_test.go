@@ -11,10 +11,15 @@ import (
 
 func expHero(slotID int32, heroID uint64, alive uint32, level uint32) *pb_battle.TeamSlotInfo {
 	return &pb_battle.TeamSlotInfo{
-		SlotId:      slotID,
-		HeroId:      heroID,
-		CurAliveNum: alive,
-		HeroInfo:    &pb_hero.HeroInfo{ConfigId: 1, CurLevel: level},
+		SlotId: slotID,
+		HeroInfo: &pb_hero.HeroInfo{
+			ConfigId:  1,
+			CurLevel:  level,
+			HeroId:    heroID,
+			SoldierInfo: &pb_hero.SoldierInfo{
+				CurAliveNum: alive,
+			},
+		},
 	}
 }
 

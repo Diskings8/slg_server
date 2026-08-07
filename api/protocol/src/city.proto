@@ -17,6 +17,7 @@ enum BuildingType {
     RoleMainCity   = 101;  // 主城
     RoleBranchCity = 102;  // 分城
     RoleMilitary   = 103;  // 军事建筑
+    RoleBarracks   = 104;  // 兵营（兵力上限加成，归属城市）
 }
 
 // BuildingFootprint 建筑占地（格数）
@@ -61,12 +62,14 @@ message RoleBuildingInfo {
     int32 map_id                = 4;  // 中心格
     uint32 level                = 5;
     BuildingState state         = 6;  // 建筑状态
+    uint64 city_id              = 7;  // 归属城市（兵营等附属建筑）
 }
 
-// 建造建筑（主城/分城/军事建筑）
+// 建造建筑（主城/分城/军事建筑/兵营）
 message BuildingBuildReq {
-    BuildingType type = 1;  // 角色建筑类型（RoleMainCity/BranchCity/Military）
+    BuildingType type = 1;  // 角色建筑类型（RoleMainCity/BranchCity/Military/Barracks）
     int32 map_id      = 2;  // 放置的中心格
+    uint64 city_id    = 3;  // 归属城市ID（兵营等附属建筑；主城/分城默认 0）
 }
 
 message BuildingBuildResp {

@@ -18,6 +18,7 @@ import (
 	"server.slg.com/api/game_conf/battle"
 	"server.slg.com/api/game_conf/skill"
 	"server.slg.com/api/protocol/pb/pb_battle"
+	"server.slg.com/api/protocol/pb/pb_hero"
 	"server.slg.com/api/protocol/pb/pb_skill"
 )
 
@@ -123,15 +124,21 @@ func prepSide(slots []*pb_battle.TeamSlotInfo, side int) []*battleUnit {
 		if s == nil || s.GetHeroInfo() == nil {
 			continue
 		}
+		// 兵力状态：SoldierInfo 为 nil 时按 0 兵力处理（防御方无队伍快照等兜底）
+		var alive, injured uint32
+		if si := s.GetHeroInfo().GetSoldierInfo(); si != nil {
+			alive = si.GetCurAliveNum()
+			injured = si.GetCurInjuredNum()
+		}
 		units = append(units, &battleUnit{
 			slot:        s.GetSlotId(),
 			side:        side,
-			heroID:      s.GetHeroId(),
+			heroID:      s.GetHeroInfo().GetHeroId(),
 			level:       s.GetHeroInfo().GetCurLevel(),
 			attrs:       slotAttr(s),
-			attackRange: s.GetAttackRange(),
-			alive:       s.GetCurAliveNum(),
-			injured:     s.GetCurInjuredNum(),
+			attackRange: s.GetHeroInfo().GetAttackRange(),
+			alive:       alive,
+			injured:     injured,
 			skills:      s.GetHeroInfo().GetSkills(),
 		})
 	}
@@ -148,8 +155,14 @@ func syncUnitsToPb(units []*battleUnit, slots []*pb_battle.TeamSlotInfo) {
 	}
 	for _, u := range units {
 		if pb := bySlot[u.slot]; pb != nil {
-			pb.CurAliveNum = u.alive
-			pb.CurInjuredNum = u.injured
+			if pb.HeroInfo == nil {
+				pb.HeroInfo = &pb_hero.HeroInfo{}
+			}
+			if pb.HeroInfo.SoldierInfo == nil {
+				pb.HeroInfo.SoldierInfo = &pb_hero.SoldierInfo{}
+			}
+			pb.HeroInfo.SoldierInfo.CurAliveNum = u.alive
+			pb.HeroInfo.SoldierInfo.CurInjuredNum = u.injured
 		}
 	}
 }

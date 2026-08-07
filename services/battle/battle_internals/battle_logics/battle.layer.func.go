@@ -75,7 +75,7 @@ func baseDeadAfter(side *pb_battle.BattleSide) bool {
 	}
 	for _, s := range side.GetTeamInfo().GetSlotInfo() {
 		if s.GetSlotId() == 0 {
-			return s.GetCurAliveNum() == 0
+			return slotAliveNum(s) == 0
 		}
 	}
 	return true // 无大营视为败

@@ -44,15 +44,18 @@ func TestBattleSettleRPC(t *testing.T) {
 		AttackerTeam: &pb_battle.TeamInfo{
 			SlotInfo: []*pb_battle.TeamSlotInfo{
 				{
-					SlotId:        0, // 大营
-					MaxSoldierNum: 100,
-					CurAliveNum:   100,
-					AttackRange:   5,
+					SlotId: 0, // 大营
 					HeroInfo: &pb_hero.HeroInfo{
 						ConfigId:       1,
 						CurLevel:       1,
 						CurStatus:      pb_hero.Status_Normal,
+						HeroId:         1001,
+						AttackRange:    5,
 						AttrRelocation: &pb_cultivate.Cultivate{CurVal: 20, AddValCamp: 130}, // 基础拆20 + 加点130 = 150
+						SoldierInfo: &pb_hero.SoldierInfo{
+							MaxSoldierNum: 100,
+							CurAliveNum:   100,
+						},
 					},
 				},
 			},

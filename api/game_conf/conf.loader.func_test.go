@@ -122,7 +122,7 @@ func TestLoadAll_ValidateFailure(t *testing.T) {
 	}
 }
 
-// TestLoadAll_RealJSONDir 从仓库 json/ 目录全量加载（7 表 + 跨表校验），验证 JSON 路径端到端可用。
+// TestLoadAll_RealJSONDir 从仓库 json/ 目录全量加载（全部表 + 跨表校验），验证 JSON 路径端到端可用。
 //
 // 覆盖：全部表 JSON 化、跨表校验通过、各域索引可用（升级/技能/道具/抽卡/兑换）。
 func TestLoadAll_RealJSONDir(t *testing.T) {
@@ -130,8 +130,8 @@ func TestLoadAll_RealJSONDir(t *testing.T) {
 	if err != nil {
 		t.Fatalf("loadAll(json) failed: %v", err)
 	}
-	// 7 表全部 JSON 加载（content hash 非空）
-	for _, tbl := range []string{"battle", "hero", "skill", "item", "troop", "exchange", "gacha"} {
+	// 全部表 JSON 加载（content hash 非空）
+	for _, tbl := range []string{"battle", "hero", "skill", "item", "troop", "exchange", "gacha", "guard", "soldier"} {
 		if _, ok := gc.tableVersions[tbl]; !ok {
 			t.Errorf("table %s not JSON-loaded", tbl)
 		}

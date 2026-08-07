@@ -31,8 +31,8 @@ func TestMarchBuildTeamZeroBasedSlots(t *testing.T) {
 	if slots[1].GetSlotId() != 1 {
 		t.Errorf("slot[1] = %d, want 1", slots[1].GetSlotId())
 	}
-	// 攻击距离从 hero 配置填充
-	if slots[0].GetAttackRange() != 3 {
-		t.Errorf("attack_range = %d, want 3", slots[0].GetAttackRange())
+	// 攻击距离从 hero 配置填充（写入 HeroInfo）
+	if slots[0].GetHeroInfo().GetAttackRange() != 3 {
+		t.Errorf("attack_range = %d, want 3", slots[0].GetHeroInfo().GetAttackRange())
 	}
 }

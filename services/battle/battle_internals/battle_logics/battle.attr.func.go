@@ -57,7 +57,7 @@ func teamAttack(slots []*pb_battle.TeamSlotInfo) uint64 {
 		if s.GetHeroInfo().GetCurStatus() == pb_hero.Status_Injured {
 			continue
 		}
-		sum += uint64(slotAttr(s).Attack) * uint64(s.GetCurAliveNum())
+		sum += uint64(slotAttr(s).Attack) * uint64(slotAliveNum(s))
 	}
 	return sum
 }
@@ -72,7 +72,7 @@ func teamDefense(slots []*pb_battle.TeamSlotInfo) uint64 {
 		if s.GetHeroInfo().GetCurStatus() == pb_hero.Status_Injured {
 			continue
 		}
-		sum += uint64(slotAttr(s).Defense) * uint64(s.GetCurAliveNum())
+		sum += uint64(slotAttr(s).Defense) * uint64(slotAliveNum(s))
 	}
 	return sum
 }
@@ -93,4 +93,12 @@ func teamDefenseTeams(teams [][]*pb_battle.TeamSlotInfo) uint64 {
 		sum += teamDefense(team)
 	}
 	return sum
+}
+
+// slotAliveNum 单个槽位当前有效兵力（SoldierInfo/HeroInfo nil 时按 0）
+func slotAliveNum(s *pb_battle.TeamSlotInfo) uint32 {
+	if s == nil || s.GetHeroInfo() == nil || s.GetHeroInfo().GetSoldierInfo() == nil {
+		return 0
+	}
+	return s.GetHeroInfo().GetSoldierInfo().GetCurAliveNum()
 }

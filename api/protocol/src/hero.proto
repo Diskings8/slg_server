@@ -20,6 +20,7 @@ message HeroInfo {
     Status cur_status                     = 4;   // 当前状态
     uint32 cur_level                      = 5;   // 当前等级
     uint32 cur_exp                        = 6;   // 当前经验
+    uint64 hero_id                        = 7;   // 英雄实例ID（经验归属/战斗身份；区别于 config_id 配置ID）
     cultivate.Cultivate attr_attack       = 11;  // 攻击属性
     cultivate.Cultivate attr_defense      = 12;  // 防御属性
     cultivate.Cultivate attr_intelligence = 13;  // 智力属性
@@ -31,6 +32,15 @@ message HeroInfo {
     bool is_locked                        = 24;  // 是否锁定（锁定后不可被消耗，如升星消耗卡）
     int32 cur_troop_type_id               = 31;  // 当前兵种类型id
     repeated equip.Troop troops           = 32;  // 所有兵种信息
+    uint32 attack_range                   = 33;  // 攻击距离（能打到"距对方大营 ≤ D"）
+    SoldierInfo soldier_info              = 34;  // 兵力状态（兵力上限/当前兵力/伤兵）
+}
+
+// SoldierInfo 兵力状态（兵力上限/当前兵力/伤兵）
+message SoldierInfo {
+    uint32 max_soldier_num = 1;  // 兵力上限
+    uint32 cur_alive_num   = 2;  // 当前可用兵力
+    uint32 cur_injured_num = 3;  // 当前伤兵
 }
 
 // ---- Game RPC 请求/响应 ----
@@ -45,12 +55,12 @@ message HeroListResp {
 
 // HeroCultivate 英雄培养
 message HeroCultivateReq {
-    uint64 hero_id         = 1;
+    uint64 hero_id        = 1;
     uint32 cultivate_type = 2;  // 0:攻击 1:防御 2:智力 3:速度 4:拆迁
 }
 
 message HeroCultivateResp {
-    uint64 hero_id            = 1;
+    uint64 hero_id           = 1;
     uint32 cultivate_type    = 2;
     cultivate.Cultivate attr = 3;
     uint32 attr_point        = 4;  // 加点后的剩余自由属性点
@@ -58,23 +68,23 @@ message HeroCultivateResp {
 
 // HeroTroopTransform 兵种转化（x 等级后选择已解锁派生类型，消耗资源）
 message HeroTroopTransformReq {
-    uint64 hero_id       = 1;
+    uint64 hero_id      = 1;
     int32 troop_type_id = 2;  // 目标派生兵种类型
 }
 
 message HeroTroopTransformResp {
-    uint64 hero_id           = 1;
+    uint64 hero_id          = 1;
     int32 cur_troop_type_id = 2;  // 转化后的当前兵种
 }
 
 // HeroTroopUnlock 扩展兵种（使用道具解锁新的可选派生类型）
 message HeroTroopUnlockReq {
-    uint64 hero_id       = 1;
+    uint64 hero_id      = 1;
     int32 troop_type_id = 2;  // 要解锁的派生兵种类型
 }
 
 message HeroTroopUnlockResp {
-    uint64 hero_id               = 1;
+    uint64 hero_id              = 1;
     int32 troop_type_id         = 2;
     repeated equip.Troop troops = 3;  // 解锁后的兵种列表
 }
@@ -84,7 +94,7 @@ message HeroTroopUnlockResp {
 // 升级英雄身上（EquipSkills 槽位）的技能等级，消耗道具。不改变技能库(hero_skills)等级。
 message HeroSkillUpgradeReq {
     uint64 hero_id = 1;  // 英雄实例ID
-    int32 slot_id = 2;  // 技能槽位（1/2；0=默认技能不可升级）
+    int32 slot_id  = 2;  // 技能槽位（1/2；0=默认技能不可升级）
 }
 
 message HeroSkillUpgradeResp {
@@ -100,7 +110,7 @@ message HeroUpgradeStarReq {
 }
 
 message HeroUpgradeStarResp {
-    uint64 hero_id    = 1;  // 升星英雄实例ID
+    uint64 hero_id   = 1;  // 升星英雄实例ID
     int32 star_stage = 2;  // 升星后星级
 }
 
@@ -129,7 +139,7 @@ message HeroUnlockResp {
 // 将角色技能库（hero_skills）的技能放入英雄技能槽。装配前校验槽位可用性
 // （slot1=英雄等级达标；slot2=等级达标+已觉醒）与技能库状态（存在/未装配他处/装配次数未满）。
 message HeroEquipSkillReq {
-    uint64 hero_id       = 1;  // 英雄实例ID
+    uint64 hero_id      = 1;  // 英雄实例ID
     int32 slot_id       = 2;  // 技能槽位（1/2）
     int32 skill_conf_id = 3;  // 技能库技能配置ID
 }
@@ -143,10 +153,10 @@ message HeroEquipSkillResp {
 // 从英雄技能槽移除技能，清空技能库装配记录，按已升级等级返还部分升级资源。
 message HeroUnequipSkillReq {
     uint64 hero_id = 1;  // 英雄实例ID
-    int32 slot_id = 2;  // 技能槽位（1/2）
+    int32 slot_id  = 2;  // 技能槽位（1/2）
 }
 
 message HeroUnequipSkillResp {
     repeated skill.Skill skills = 1;  // 拆卸后的英雄技能槽
-    int64 refund_count           = 2; // 返还的升级道具数量
+    int64 refund_count          = 2;  // 返还的升级道具数量
 }

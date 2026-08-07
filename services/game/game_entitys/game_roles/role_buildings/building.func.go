@@ -74,6 +74,21 @@ func (rbs *RoleBuildings) GetMainCity() *RoleBuilding {
 	return nil
 }
 
+// GetBarrackByCity 获取归属指定城市且已完成的兵营（兵力上限加成）
+func (rbs *RoleBuildings) GetBarrackByCity(cityID uint64) *RoleBuilding {
+	if cityID == 0 {
+		return nil
+	}
+	for _, modelOne := range rbs.List {
+		if modelOne.Type == pb_city.BuildingType_RoleBarracks &&
+			modelOne.CityID == cityID &&
+			modelOne.State == pb_city.BuildingState_Completed {
+			return NewRoleBuilding(modelOne)
+		}
+	}
+	return nil
+}
+
 // HasMilitaryBuilding 是否已建造完成的军事建筑（解锁上阵队伍）
 func (rbs *RoleBuildings) HasMilitaryBuilding() bool {
 	for _, modelOne := range rbs.List {

@@ -18,24 +18,26 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-// testSlot 构造战斗槽位（槽位0=大营；属性由快照 Cultivate 组件携带，含攻击距离）
+// testSlot 构造战斗槽位（槽位0=大营；属性/实例ID/兵力/攻击距离由 HeroInfo 快照携带）
 func testSlot(slot int32, heroID uint64, alive uint32, mov, atk, def, intel, rng uint32, skills ...*pb_skill.Skill) *pb_battle.TeamSlotInfo {
 	return &pb_battle.TeamSlotInfo{
-		SlotId:        slot,
-		HeroId:        heroID,
-		MaxSoldierNum: alive,
-		CurAliveNum:   alive,
-		CurInjuredNum: 0,
-		AttackRange:   rng,
+		SlotId: slot,
 		HeroInfo: &pb_hero.HeroInfo{
 			ConfigId:         1,
 			CurLevel:         1,
 			CurStatus:        pb_hero.Status_Normal,
+			HeroId:           heroID,
+			AttackRange:      rng,
 			AttrAttack:       &pb_cultivate.Cultivate{CurVal: atk},
 			AttrDefense:      &pb_cultivate.Cultivate{CurVal: def},
 			AttrIntelligence: &pb_cultivate.Cultivate{CurVal: intel},
 			AttrMovement:     &pb_cultivate.Cultivate{CurVal: mov},
 			Skills:           skills,
+			SoldierInfo: &pb_hero.SoldierInfo{
+				MaxSoldierNum: alive,
+				CurAliveNum:   alive,
+				CurInjuredNum: 0,
+			},
 		},
 	}
 }
@@ -69,15 +71,15 @@ func TestRunBattle_AttackerWins(t *testing.T) {
 		t.Errorf("结算期望 killed=8，实际 %+v", act)
 	}
 	// 守方大营战后：有效0、伤兵 85-8=77
-	if defender[0].GetCurAliveNum() != 0 {
-		t.Errorf("守方大营有效兵力 = %d, want 0", defender[0].GetCurAliveNum())
+	if defender[0].GetHeroInfo().GetSoldierInfo().GetCurAliveNum() != 0 {
+		t.Errorf("守方大营有效兵力 = %d, want 0", defender[0].GetHeroInfo().GetSoldierInfo().GetCurAliveNum())
 	}
-	if defender[0].GetCurInjuredNum() != 77 {
-		t.Errorf("守方大营伤兵 = %d, want 77", defender[0].GetCurInjuredNum())
+	if defender[0].GetHeroInfo().GetSoldierInfo().GetCurInjuredNum() != 77 {
+		t.Errorf("守方大营伤兵 = %d, want 77", defender[0].GetHeroInfo().GetSoldierInfo().GetCurInjuredNum())
 	}
 	// 攻方未承伤（守方大营已死无法行动）
-	if attacker[0].GetCurAliveNum() != 100 {
-		t.Errorf("攻方大营有效兵力 = %d, want 100", attacker[0].GetCurAliveNum())
+	if attacker[0].GetHeroInfo().GetSoldierInfo().GetCurAliveNum() != 100 {
+		t.Errorf("攻方大营有效兵力 = %d, want 100", attacker[0].GetHeroInfo().GetSoldierInfo().GetCurAliveNum())
 	}
 	if r.GetAttacker().GetKilledSoldiers() != 23 { // 15死 + 8结算死
 		t.Errorf("攻方击杀数 = %d, want 23", r.GetAttacker().GetKilledSoldiers())
@@ -94,8 +96,8 @@ func TestRunBattle_Draw(t *testing.T) {
 	if len(r.GetRounds()) != 8 {
 		t.Fatalf("期望 8 回合平局，实际 %d", len(r.GetRounds()))
 	}
-	if attacker[0].GetCurAliveNum() != 100 || defender[0].GetCurAliveNum() != 100 {
-		t.Fatalf("平局双方大营均应有兵，实际 %d/%d", attacker[0].GetCurAliveNum(), defender[0].GetCurAliveNum())
+	if attacker[0].GetHeroInfo().GetSoldierInfo().GetCurAliveNum() != 100 || defender[0].GetHeroInfo().GetSoldierInfo().GetCurAliveNum() != 100 {
+		t.Fatalf("平局双方大营均应有兵，实际 %d/%d", attacker[0].GetHeroInfo().GetSoldierInfo().GetCurAliveNum(), defender[0].GetHeroInfo().GetSoldierInfo().GetCurAliveNum())
 	}
 }
 
@@ -114,8 +116,8 @@ func TestRunBattle_SameRoundMutual(t *testing.T) {
 
 	// 行动序：攻大营(50) → 守大营(40) → 守2号(35) → 攻2号(30)
 	// 攻大营击杀守2号；守大营反杀攻大营；攻2号补刀守大营 → 同归
-	if attacker[0].GetCurAliveNum() != 0 || defender[0].GetCurAliveNum() != 0 {
-		t.Fatalf("期望同归于尽（双方大营归零），实际 %d/%d", attacker[0].GetCurAliveNum(), defender[0].GetCurAliveNum())
+	if attacker[0].GetHeroInfo().GetSoldierInfo().GetCurAliveNum() != 0 || defender[0].GetHeroInfo().GetSoldierInfo().GetCurAliveNum() != 0 {
+		t.Fatalf("期望同归于尽（双方大营归零），实际 %d/%d", attacker[0].GetHeroInfo().GetSoldierInfo().GetCurAliveNum(), defender[0].GetHeroInfo().GetSoldierInfo().GetCurAliveNum())
 	}
 	if r.GetAttacker().GetKilledSoldiers() == 0 || r.GetDefender().GetKilledSoldiers() == 0 {
 		t.Errorf("同归双方均应有击杀，实际 %d/%d", r.GetAttacker().GetKilledSoldiers(), r.GetDefender().GetKilledSoldiers())

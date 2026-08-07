@@ -41,7 +41,8 @@ func handleMessage(_ context.Context, msg redisstream.Message) error {
 		loggers.Logger.Info("march back arrived event",
 			zap.Uint64("march_id", ev.MarchId),
 			zap.Uint64("role_id", ev.RoleId))
-		// TODO: 处理行军回城到站（归还士兵、解锁队伍等）
+		// 回城战损写回：把行军战后存活兵力写回 formation（不释放、不恢复，补兵机制后续）
+		handleMarchBackArrived(&ev)
 
 	case pb_redis_stream.MarchEventType_MARCH_EVENT_CANCELED:
 		loggers.Logger.Info("march canceled event",
@@ -56,6 +57,50 @@ func handleMessage(_ context.Context, msg redisstream.Message) error {
 	}
 
 	return nil
+}
+
+// handleMarchBackArrived 回城到站战损写回：消费 MarchEvent.team_info 的战后存活兵力，
+// 按 hero_id 匹配角色全部 formation 槽位并写回 SoldierNum（保留战损值，不补满）。
+// 补兵机制（消耗资源补到上限）后续接入。
+func handleMarchBackArrived(ev *pb_redis_stream.MarchEvent) {
+	team := ev.GetTeamInfo()
+	if team == nil || len(team.GetSlotInfo()) == 0 {
+		return
+	}
+
+	// 战后存活兵力：hero_id → cur_alive_num
+	alive := make(map[uint64]uint32, len(team.GetSlotInfo()))
+	for _, s := range team.GetSlotInfo() {
+		if s == nil || s.GetHeroInfo() == nil || s.GetHeroInfo().GetSoldierInfo() == nil {
+			continue
+		}
+		alive[s.GetHeroInfo().GetHeroId()] = s.GetHeroInfo().GetSoldierInfo().GetCurAliveNum()
+	}
+	if len(alive) == 0 {
+		return
+	}
+
+	poller, role, err := game_roles.GetRole(ev.GetRoleId())
+	if err != nil {
+		return
+	}
+	defer poller.Release()
+
+	changed := false
+	for _, f := range role.GetFormations().List {
+		for _, hs := range f.HeroSlots {
+			if hs == nil {
+				continue
+			}
+			if cur, ok := alive[hs.GetHeroId()]; ok {
+				hs.SoldierNum = cur
+				changed = true
+			}
+		}
+	}
+	if changed {
+		poller.Save()
+	}
 }
 
 // handleBattleExp 战斗经验发放：消费 MarchEvent.battle_result，给参战英雄累加经验（HeroAddExp 内部判升级）。

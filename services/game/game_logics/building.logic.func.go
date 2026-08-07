@@ -33,6 +33,7 @@ func BuildingBuild(role *game_roles.Role, roleID uint64, req *pb_city.BuildingBu
 		MapID:     req.GetMapId(),
 		Level:     1,
 		State:     pb_city.BuildingState_Completed, // TODO: 引入建造时长后置为 Constructing
+		CityID:    req.GetCityId(),                 // 兵营等附属建筑归属城市；主城/分城为 0
 	}
 	building.ID = snowflakes.GenUUID()
 
@@ -86,7 +87,8 @@ func isRoleBuildingType(t pb_city.BuildingType) bool {
 	switch t {
 	case pb_city.BuildingType_RoleMainCity,
 		pb_city.BuildingType_RoleBranchCity,
-		pb_city.BuildingType_RoleMilitary:
+		pb_city.BuildingType_RoleMilitary,
+		pb_city.BuildingType_RoleBarracks:
 		return true
 	}
 	return false
@@ -101,6 +103,8 @@ func footprintOf(t pb_city.BuildingType) pb_city.BuildingFootprint {
 		return pb_city.BuildingFootprint_Footprint9 // TODO: 按分城功能配置 4/9
 	case pb_city.BuildingType_RoleMilitary:
 		return pb_city.BuildingFootprint_Footprint4 // TODO: 确认军事建筑占地
+	case pb_city.BuildingType_RoleBarracks:
+		return pb_city.BuildingFootprint_Footprint4 // 兵营 2×2（占位可调）
 	default:
 		return pb_city.BuildingFootprint_Footprint_None
 	}
@@ -118,5 +122,6 @@ func formatBuilding(b *game_models.RoleBuilding) *pb_city.RoleBuildingInfo {
 		MapId:     b.MapID,
 		Level:     b.Level,
 		State:     b.State,
+		CityId:    b.CityID,
 	}
 }

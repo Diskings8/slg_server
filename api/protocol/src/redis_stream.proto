@@ -2,6 +2,8 @@ syntax = "proto3";
 package redis_stream;
 option go_package = "server.slg.com/api/protocol/pb/pb_redis_stream";
 
+import "battle.proto";
+
 // ========== 行军事件 ==========
 
 // MarchEventType 行军事件类型
@@ -22,6 +24,7 @@ message MarchEvent {
     int64 ts            = 6;  // unix 时间戳
     int32 state         = 7;  // 结算后行军状态 (pb_maps_march.MarchState): 驻留=6, 回城=5
     MarchBattleResult battle_result = 8;  // 战斗结果（仅攻击行军 ARRIVED 携带）
+    battle.TeamInfo team_info = 9;  // 队伍快照（战后存活兵力）；BACKARRIVED 携带供 game 写回 formation
 }
 
 // MarchBattleResult 战斗结果（worldmap → game，供经验发放）
