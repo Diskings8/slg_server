@@ -1,0 +1,19 @@
+{
+  "max_develop_level": 9,
+  "configs": [
+    {"level": 0, "slots": [
+      {"hero_conf_id": 1, "soldier_num": 100}
+    ]},
+    {"level": 3, "slots": [
+      {"hero_conf_id": 1, "soldier_num": 300}
+    ]},
+    {"level": 6, "slots": [
+      {"hero_conf_id": 1, "soldier_num": 600},
+      {"hero_conf_id": 2, "soldier_num": 200}
+    ]},
+    {"level": 9, "slots": [
+      {"hero_conf_id": 1, "soldier_num": 900},
+      {"hero_conf_id": 2, "soldier_num": 400}
+    ]}
+  ]
+}

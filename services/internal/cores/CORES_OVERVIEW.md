@@ -489,7 +489,7 @@ AOI（Area of Interest）系统管理的"感兴趣区域"，即玩家的视野�
 | `map_managers` (MapManager) | ✅ 核心调度完成，`clearMapFunc()` 为空 |
 | `map.manager.var.go` (对象池) | ⬜ 返回 nil/TODO |
 | `marchs` (MarchInfo / Team / MapAttribute) | ✅ 核心逻辑完成，定期保存 `SaveDo()` 为空 |
-| `marchdos` (BaseMarch / SingleMarch / MultiMarch) | ⬜ 到达回调为空实现 |
+| `marchdos` (BaseMarch / SingleMarch / MultiMarch) | ✅ 攻击/开发/驻守实现，采集(10003)⏸ 待 game 新机制 |
 | `roles` (Data / Poller) | ✅ 数据管理层完成，`Save()` 为 panic |
 | 跨服行军 | ⬜ `allAssembleMarch` 相关逻辑尚未实现 |
 | 数据库持久化 | ✅ 自动迁移 + 查询 + 创建/删除完成，定期保存 `SaveDo()` 为空 |

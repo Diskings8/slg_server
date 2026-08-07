@@ -17,6 +17,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
+	"server.slg.com/api/game_conf"
 	"server.slg.com/api/protocol/pb/pb_worldmap"
 	"server.slg.com/common/common_declarations"
 	"server.slg.com/common/configs"
@@ -116,6 +117,11 @@ func main() {
 					common_configs.GetConf().DB.Game.Dsn(),
 					common_configs.GetConf().DB.Game.Dsn())
 				loggers.Logger.Info("数据库初始化完成")
+
+				// 游戏配置：守军配置（开发行军战斗对象）；config_path 非空走 JSON，为空走 Go 内嵌占位
+				if err := game_conf.InitFromConf(); err != nil {
+					loggers.Logger.Error("game config init failed", zap.Error(err))
+				}
 
 				// 角色数据 poller：主城落位回写 role_data（须在 DB 初始化后调用）
 				roles.Init(ctx)

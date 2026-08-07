@@ -30,6 +30,7 @@ type MapManager struct {
 	waitUpdateMapLock sync.Mutex
 
 	battleSettleFunc cores_declarations.BattleSettleFunc // 战斗结算回调（worldmap 注入，内部调 battle 节点 RPC）
+	guardConfigFunc  cores_declarations.GuardConfigFunc // 守军配置回调（worldmap 注入，内部查 game_conf）
 }
 
 // SetBattleSettleFunc 注入战斗结算回调
@@ -40,6 +41,16 @@ func (mm *MapManager) SetBattleSettleFunc(f cores_declarations.BattleSettleFunc)
 // GetBattleSettleFunc 获取战斗结算回调（未注入返回 nil，attack 到点将走召回兜底）
 func (mm *MapManager) GetBattleSettleFunc() cores_declarations.BattleSettleFunc {
 	return mm.battleSettleFunc
+}
+
+// SetGuardConfigFunc 注入守军配置回调（开发行军战斗用）
+func (mm *MapManager) SetGuardConfigFunc(f cores_declarations.GuardConfigFunc) {
+	mm.guardConfigFunc = f
+}
+
+// GetGuardConfigFunc 获取守军配置回调（未注入返回 nil，develop 到点将走召回兜底）
+func (mm *MapManager) GetGuardConfigFunc() cores_declarations.GuardConfigFunc {
+	return mm.guardConfigFunc
 }
 
 func (mm *MapManager) GetMapDataManager() *map_datas.MapDataManager {

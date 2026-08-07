@@ -12,6 +12,11 @@ import (
 // 具体实现内部调用 battle 节点 RPC。保持 cores 不依赖 rpcconn。
 type BattleSettleFunc func(req *pb_battle.BattleSettleReq) (*pb_battle.BattleSettleRsp, error)
 
+// GuardConfigFunc 按地块等级返回守军队伍快照（开发行军战斗用）。
+// 由节点层（worldmap）注入，内部查 game_conf 守军配置，保持 cores 不依赖 game_conf。
+// 返回 nil 表示该等级无守军配置（不可开发）。
+type GuardConfigFunc func(level MapLevel) []*pb_battle.TeamSlotInfo
+
 type AoiScreenI interface {
 	MarchDelete(info MarchInfoI)
 	PassingMarchDelete(info MarchInfoI)

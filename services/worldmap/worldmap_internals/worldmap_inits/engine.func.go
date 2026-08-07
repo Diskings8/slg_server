@@ -5,8 +5,12 @@ import (
 	"fmt"
 	"time"
 
+	"server.slg.com/api/game_conf"
+	"server.slg.com/api/game_conf/hero"
 	"server.slg.com/api/protocol/pb/pb_battle"
 	"server.slg.com/api/protocol/pb/pb_battle_record"
+	"server.slg.com/api/protocol/pb/pb_cultivate"
+	"server.slg.com/api/protocol/pb/pb_hero"
 	"server.slg.com/api/protocol/pb/pb_maps_march"
 	"server.slg.com/api/protocol/pb/pb_redis_stream"
 	"server.slg.com/common/conns/rpcconn/rpc_handlers"
@@ -76,6 +80,8 @@ func NewEngine(ctx context.Context) *Engine {
 
 	// 注入战斗结算回调（内部调用 battle 节点 RPC）
 	e.initBattleSettle(manager)
+	// 注入守军配置回调（开发行军战斗用，内部查 game_conf）
+	e.initGuardConfig(manager)
 
 	return e
 }
@@ -84,6 +90,69 @@ func NewEngine(ctx context.Context) *Engine {
 func (e *Engine) initBattleSettle(mm *map_managers.MapManager) {
 	e.battleHub = rpc_handlers.NewClientHandler(*vgc.CommonGlobalVarInstance)
 	mm.SetBattleSettleFunc(e.settleBattle)
+}
+
+// initGuardConfig 注入守军配置回调：按地块等级返回守军队伍快照。
+// 闭包内懒加载 game_conf（配置在 main 的 AsyncInit 中初始化，运行时查表）。
+// 守军为 NPC（role_id=0），英雄属性由 hero 配置派生：base + growth*(level-1)。
+func (e *Engine) initGuardConfig(mm *map_managers.MapManager) {
+	mm.SetGuardConfigFunc(func(level cores_declarations.MapLevel) []*pb_battle.TeamSlotInfo {
+		gc := game_conf.Load()
+		if gc == nil || gc.Guard == nil {
+			return nil
+		}
+		guardConf := gc.Guard.GetGuard(int32(level))
+		if guardConf == nil {
+			return nil
+		}
+		slots := make([]*pb_battle.TeamSlotInfo, 0, len(guardConf.Slots))
+		for i, s := range guardConf.Slots {
+			heroInfo := buildGuardHeroInfo(gc.Hero, s.HeroConfID, int32(level))
+			slots = append(slots, &pb_battle.TeamSlotInfo{
+				SlotId:        int32(i),
+				HeroId:        uint64(s.HeroConfID),
+				HeroInfo:      heroInfo,
+				MaxSoldierNum: s.SoldierNum,
+				CurAliveNum:   s.SoldierNum,
+			})
+		}
+		return slots
+	})
+}
+
+// buildGuardHeroInfo 构造守军英雄快照：属性 = base + growth*(level-1)，填入 Cultivate 组件。
+// 英雄配置不存在时返回 nil（battle 侧按空属性兜底，但守军等级通常配置存在）。
+func buildGuardHeroInfo(heroConf *hero.Conf, confID int32, level int32) *pb_hero.HeroInfo {
+	if heroConf == nil {
+		return nil
+	}
+	hc, ok := heroConf.HeroConf(confID)
+	if !ok {
+		return nil
+	}
+
+	base := hc.Base
+	growth := hc.Growth
+	lv := uint32(1)
+	if level > 1 {
+		lv = uint32(level)
+	}
+	factor := lv - 1
+
+	cur := func(b, g uint32) *pb_cultivate.Cultivate {
+		return &pb_cultivate.Cultivate{CurVal: b + g*factor}
+	}
+
+	return &pb_hero.HeroInfo{
+		ConfigId:         confID,
+		CurLevel:         lv,
+		CurStatus:        pb_hero.Status_Normal,
+		AttrAttack:       cur(base.Attack, growth.Attack),
+		AttrDefense:      cur(base.Defense, growth.Defense),
+		AttrIntelligence: cur(base.Intelligence, growth.Intelligence),
+		AttrMovement:     cur(base.Movement, growth.Movement),
+		AttrRelocation:   cur(base.Relocation, growth.Relocation),
+	}
 }
 
 // settleBattle 注入回调实现：调用 battle 节点 BattleSettle RPC

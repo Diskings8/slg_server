@@ -4,6 +4,7 @@ import (
 	"server.slg.com/api/game_conf/battle"
 	"server.slg.com/api/game_conf/exchange"
 	"server.slg.com/api/game_conf/gacha"
+	"server.slg.com/api/game_conf/guard"
 	"server.slg.com/api/game_conf/hero"
 	"server.slg.com/api/game_conf/item"
 	"server.slg.com/api/game_conf/skill"
@@ -27,6 +28,7 @@ type GameConf struct {
 	Troop    *troop.Conf
 	Gacha    *gacha.Conf
 	Exchange *exchange.Conf
+	Guard    *guard.Conf
 }
 
 // Version 全局配置版本（内嵌基线=1；JSON 加载/热更每次成功 +1）。

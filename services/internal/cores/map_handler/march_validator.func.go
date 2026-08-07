@@ -40,8 +40,20 @@ func ValidateCreateMarch(mm *map_managers.MapManager, info *marchs.MarchInfo) (*
 
 	_ = fromInfo
 
-	if toInfo.GetOwnerID() == 0 && toInfo.GetOverlayBuilding() == nil {
-		return nil, errors.New("目标地块无效")
+	// 按行军类型分流目标合法性校验
+	switch info.MarchType {
+	case cores_declarations.MarchTypeAttack:
+		// 攻击：目标有归属或有建筑（可攻占）
+		if toInfo.GetOwnerID() == 0 && toInfo.GetOverlayBuilding() == nil {
+			return nil, errors.New("目标地块无效")
+		}
+	case cores_declarations.MarchTypeDevelop:
+		// 开发：仅自己的地可开发
+		if toInfo.GetOwnerID() != info.GetFromRoleID() {
+			return nil, errors.New("只能开发自己的地块")
+		}
+	default:
+		// 其他类型（assist/sweep/strategy 等）暂不在此强校验
 	}
 
 	// TODO: 检查目标是否在保护期内

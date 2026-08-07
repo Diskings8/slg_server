@@ -8,6 +8,7 @@ import (
 	"server.slg.com/api/game_conf/battle"
 	"server.slg.com/api/game_conf/exchange"
 	"server.slg.com/api/game_conf/gacha"
+	"server.slg.com/api/game_conf/guard"
 	"server.slg.com/api/game_conf/hero"
 	"server.slg.com/api/game_conf/item"
 	"server.slg.com/api/game_conf/skill"
@@ -28,6 +29,7 @@ func newEmbedded() *GameConf {
 		Troop:    troop.New(),
 		Gacha:    gacha.New(),
 		Exchange: exchange.New(),
+		Guard:    guard.New(),
 	}
 }
 

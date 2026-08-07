@@ -4,6 +4,7 @@ package login_logics
 
 import (
 	"context"
+	"errors"
 
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
@@ -123,7 +124,7 @@ func createNewRole(ctx context.Context, req *pb_account.EnterServerReq) (*login_
 		RoleName:  req.GetRoleName(),
 	}
 	if err := login_accounts.Get().CreateRole(role); err != nil {
-		if err == login_accounts.ErrRoleExists {
+		if errors.Is(err, login_accounts.ErrRoleExists) {
 			return nil, status.Error(codes.AlreadyExists, "role name already exists")
 		}
 		// 映射写失败（本地 DB 错误）：game 侧留下孤儿角色，记录日志，无害

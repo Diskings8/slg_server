@@ -22,6 +22,7 @@ type MapInfo struct {
 	y                int
 	serverID         uint32
 	ownerID          uint64
+	isDeveloped      bool
 	protectedEndTime int64
 	overlayEvent     *map_events.OverlayEvent
 	overlayBuilding  *map_buildings.OverlayBuilding
@@ -84,6 +85,28 @@ func (mi *MapInfo) SetElement(elementType cores_declarations.ElementType, config
 	mi.Level = level
 }
 
+// GetIsDeveloped 地块是否已开发
+func (mi *MapInfo) GetIsDeveloped() bool {
+	mi.rwLock.RLock()
+	defer mi.rwLock.RUnlock()
+	return mi.isDeveloped
+}
+
+// MarkDeveloped 标记地块为已开发（开发行军胜利后调用）
+func (mi *MapInfo) MarkDeveloped() {
+	mi.rwLock.Lock()
+	defer mi.rwLock.Unlock()
+	mi.isDeveloped = true
+}
+
+// AddLevel 地块等级增加 inc（开发升级用），返回升级后的等级
+func (mi *MapInfo) AddLevel(inc cores_declarations.MapLevel) cores_declarations.MapLevel {
+	mi.rwLock.Lock()
+	defer mi.rwLock.Unlock()
+	mi.Level += inc
+	return mi.Level
+}
+
 //----------------Lock----------------//
 
 func (mi *MapInfo) TryLock() bool {
@@ -135,6 +158,7 @@ func (mi *MapInfo) Free(now time.Time) {
 // 重复 Lock 造成重入死锁（sync.RWMutex 不可重入）。
 func (mi *MapInfo) freeLocked(now time.Time) {
 	mi.ownerID = 0
+	mi.isDeveloped = false
 	if mi.ElementType != cores_declarations.ElementType_Terrain_3 {
 		mi.protectedEndTime = now.Add(time.Hour).Unix()
 	}

@@ -20,6 +20,7 @@ var allTables = []tableReg{
 	{"exchange", func(gc *GameConf) table.Table { return gc.Exchange }},
 	{"battle", func(gc *GameConf) table.Table { return gc.Battle }},
 	{"gacha", func(gc *GameConf) table.Table { return gc.Gacha }},
+	{"guard", func(gc *GameConf) table.Table { return gc.Guard }},
 }
 
 // battleTables battle 节点子集（battle 规则 + 技能表）。

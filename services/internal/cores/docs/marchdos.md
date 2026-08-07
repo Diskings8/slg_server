@@ -200,9 +200,9 @@ func init() {
 |---|---|---|---|
 | `MarchTypeAttack` | 10001 | `attack_march/` | 攻击行军：校验 → 战斗 → 占领 → 推送 |
 | `MarchTypeAssist` | 10002 | `assist_march/` | 驻守行军：注册驻军 |
-| `MarchTypeSweep` | 10003 | `sweep_march/` | 扫荡行军：采集资源 |
+| `MarchTypeSweep` | 10003 | `sweep_march/` | 扫荡行军：采集资源（⏸ 待 game 侧新机制） |
 | `MarchTypeStrategy` | 10004 | `strategy_march/` | 计略行军 |
-| `MarchTypeDevelop` | 10005 | `strategy_march/` | 开发行军 |
+| `MarchTypeDevelop` | 10005 | `develop_march/` | 开发行军：打守军 → 升级地块 |
 
 ---
 
@@ -252,6 +252,37 @@ Finish → pushBattleResult() + triggerBattleEvents()
 
 结算回调通过 `cores_declarations.BattleSettleFunc` 注入 `MapManager`（`SetBattleSettleFunc`），
 cores 保持纯逻辑包，不依赖 rpcconn；battle 节点实现见 `services/battle/BATTLE_OVERVIEW.md`。
+
+---
+
+## 6. DevelopMarch — 开发行军（格子争夺：升级地块）
+
+**文件**: `develop_march/march.func.go`
+
+开发行军（10005）语义：**派队 + 打地块守军 → 胜利后地块升级 +3 级、标记已开发（只升级不占归属）**。
+
+```
+Prepare → checkDevelopable()
+    ├─ 目标为自己的地（ownerID == fromRoleID）
+    ├─ 目标等级（当前+3）有守军配置（guard.json）→ 可开发
+    └─ 不合法 → DefeatRecall()
+
+Do → buildDevelopSettleReq()           ← 守军构造成 DefenderGroup（NPC role_id=0，仅一层）
+    ├─ mgr.GetBattleSettleFunc()(req)  ← 复用 battle 节点（PvE：无建筑 → occupied=true）
+    │    ├─ 回调未注入 / RPC 失败 → DefeatRecall()
+    │    └─ 失败（!attacker_win）→ DefeatRecall()
+    └─ 胜利 → applyDevelopResult()
+         ├─ toMapInfo.AddLevel(3)     ← 地块等级 +3
+         └─ toMapInfo.MarkDeveloped() ← 标记已开发（ownerID 不变）
+
+Finish → 去留分流
+    ├─ IsStay → MarchState_Stay（驻留地块）
+    └─ 否则 → CallBack()（MarchState_Back 反向返回）
+```
+
+**守军配置**：`game_conf/guard` 域（`guard.json`），按地块等级 → 守军队伍（英雄配置ID + 固定兵力）。
+守军英雄属性由 worldmap 侧派生（`base + growth×(level-1)`，见 `worldmap_inits/engine.func.go`），
+经 `GuardConfigFunc` 回调注入 `MapManager`（`SetGuardConfigFunc`），cores 不依赖 game_conf。
 
 ---
 
