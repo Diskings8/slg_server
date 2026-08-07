@@ -60,4 +60,11 @@ enum ErrorCode {
     ServerMaintenance     = 85;  // 区服维护中
     RoleNameExists        = 86;  // 角色名已存在（服内唯一）
     RoleNotOwned          = 87;  // 账号不拥有该角色
+
+    // ── 建筑 (90~) ──
+    BuildingConfNotFound   = 90;  // 建筑配置不存在
+    BuildingNotFound       = 91;  // 建筑不存在
+    BuildingAlreadyExists  = 92;  // 同类型建筑已存在（附属类同城市唯一）
+    BuildingConstructing   = 93;  // 建筑建造/升级中，不可再次升级
+    BuildingMaxLevel       = 94;  // 建筑已达等级上限
 }

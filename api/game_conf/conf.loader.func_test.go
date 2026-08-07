@@ -131,7 +131,7 @@ func TestLoadAll_RealJSONDir(t *testing.T) {
 		t.Fatalf("loadAll(json) failed: %v", err)
 	}
 	// 全部表 JSON 加载（content hash 非空）
-	for _, tbl := range []string{"battle", "hero", "skill", "item", "troop", "exchange", "gacha", "guard", "soldier"} {
+	for _, tbl := range []string{"battle", "hero", "skill", "item", "troop", "exchange", "gacha", "guard", "soldier", "building"} {
 		if _, ok := gc.tableVersions[tbl]; !ok {
 			t.Errorf("table %s not JSON-loaded", tbl)
 		}

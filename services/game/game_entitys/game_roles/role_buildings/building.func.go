@@ -74,19 +74,50 @@ func (rbs *RoleBuildings) GetMainCity() *RoleBuilding {
 	return nil
 }
 
-// GetBarrackByCity 获取归属指定城市且已完成的兵营（兵力上限加成）
+// GetBarrackByCity 获取归属指定城市的兵营（兵力上限加成）
+// 注意：不过滤 State==Completed——升级中兵营旧等级加成继续生效；新建 Level=0 贡献 0 天然正确。
 func (rbs *RoleBuildings) GetBarrackByCity(cityID uint64) *RoleBuilding {
 	if cityID == 0 {
 		return nil
 	}
 	for _, modelOne := range rbs.List {
-		if modelOne.Type == pb_city.BuildingType_RoleBarracks &&
-			modelOne.CityID == cityID &&
-			modelOne.State == pb_city.BuildingState_Completed {
+		if modelOne.Type == pb_city.BuildingType_RoleBarracks && modelOne.CityID == cityID {
 			return NewRoleBuilding(modelOne)
 		}
 	}
 	return nil
+}
+
+// GetDrillByCity 获取归属指定城市的校场
+func (rbs *RoleBuildings) GetDrillByCity(cityID uint64) *RoleBuilding {
+	if cityID == 0 {
+		return nil
+	}
+	for _, modelOne := range rbs.List {
+		if modelOne.Type == pb_city.BuildingType_RoleDrill && modelOne.CityID == cityID {
+			return NewRoleBuilding(modelOne)
+		}
+	}
+	return nil
+}
+
+// BuildingExists 校验建筑是否已存在：
+// 城市类（主城/分城）不限数量；附属类（校场/兵营/城墙/仓库/资源）同 city 同类型唯一。
+func (rbs *RoleBuildings) BuildingExists(t pb_city.BuildingType, cityID uint64) bool {
+	for _, modelOne := range rbs.List {
+		if modelOne.Type != t {
+			continue
+		}
+		// 城市类：不限制数量（主城/分城可多个）
+		if t == pb_city.BuildingType_RoleMainCity || t == pb_city.BuildingType_RoleBranchCity {
+			continue
+		}
+		// 附属类：同 city 同类型唯一
+		if modelOne.CityID == cityID {
+			return true
+		}
+	}
+	return false
 }
 
 // HasMilitaryBuilding 是否已建造完成的军事建筑（解锁上阵队伍）

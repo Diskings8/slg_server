@@ -7,6 +7,7 @@ import (
 	"server.slg.com/services/game/game_entitys/game_roles"
 	"server.slg.com/services/game/game_internals/game_rpc_clients"
 	"server.slg.com/services/game/game_internals/gate_stream"
+	"server.slg.com/services/game/game_logics"
 )
 
 // GameStreamHandler 供 main.go 注册 gRPC 服务
@@ -41,6 +42,10 @@ func (gs *GameStream) gateConnectDo(roleID uint64, stream pb_game.GameService_St
 	mainCityMapID := int32(0)
 	if poller, role, err := game_roles.GetRole(roleID); err == nil {
 		role.Login()
+		// 登录惰性结算：建造/升级到期的建筑置为 Completed（城市完成→落校场+同步队列）
+		if game_logics.SettleBuildings(role, roleID) {
+			poller.Save()
+		}
 		if main := role.GetBuildings().GetMainCity(); main != nil {
 			mainCityMapID = main.MapID
 		}

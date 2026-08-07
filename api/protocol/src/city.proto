@@ -15,9 +15,16 @@ enum BuildingType {
 
     // ── 角色建筑（角色建造/拥有） ──
     RoleMainCity   = 101;  // 主城
-    RoleBranchCity = 102;  // 分城
+    RoleBranchCity = 102;  // 分城（地图交互，归 worldmap OverlayEvent，本轮不实现）
     RoleMilitary   = 103;  // 军事建筑
     RoleBarracks   = 104;  // 兵营（兵力上限加成，归属城市）
+    RoleDrill      = 105;  // 校场（队列数）
+    RoleWall       = 106;  // 城墙（防御，预留）
+    RoleWarehouse  = 107;  // 仓库（资源存量上限，预留）
+    RoleFarm       = 108;  // 农场（资源产出，预留）
+    RoleLumber     = 109;  // 伐木场（资源产出，预留）
+    RoleStone      = 110;  // 采石场（资源产出，预留）
+    RoleIron       = 111;  // 铁矿（资源产出，预留）
 }
 
 // BuildingFootprint 建筑占地（格数）
@@ -60,24 +67,45 @@ message RoleBuildingInfo {
     BuildingType type           = 2;  // 类型（场景/角色建筑统一枚举）
     BuildingFootprint footprint = 3;  // 占地
     int32 map_id                = 4;  // 中心格
-    uint32 level                = 5;
+    uint32 level                = 5;  // 当前生效等级（升级中旧等级仍生效）
     BuildingState state         = 6;  // 建筑状态
-    uint64 city_id              = 7;  // 归属城市（兵营等附属建筑）
+    uint64 city_id              = 7;  // 归属城市（校场/兵营等附属建筑）
+    uint32 next_level           = 8;  // 建造/升级目标等级（Constructing 时展示倒计时；Completed 为 0）
+    int64 end_time_ux           = 9;  // 完成时间戳（Constructing 时倒计时；Completed 为 0）
 }
 
 // 建造建筑（主城/分城/军事建筑/兵营）
 message BuildingBuildReq {
-    BuildingType type = 1;  // 角色建筑类型（RoleMainCity/BranchCity/Military/Barracks）
+    BuildingType type = 1;  // 角色建筑类型（RoleMainCity/Barracks/Drill/...）
     int32 map_id      = 2;  // 放置的中心格
-    uint64 city_id    = 3;  // 归属城市ID（兵营等附属建筑；主城/分城默认 0）
+    uint64 city_id    = 3;  // 归属城市ID（附属建筑；主城默认 0）
 }
 
 message BuildingBuildResp {
     RoleBuildingInfo building = 1;
 }
 
-// 查询建筑列表
+// 升级建筑
+message BuildingUpgradeReq {
+    uint64 building_id = 1;  // 建筑ID
+}
+
+message BuildingUpgradeResp {
+    RoleBuildingInfo building = 1;  // 升级后状态（Constructing）
+}
+
+// 查询单个建筑
+message BuildingGetReq {
+    uint64 building_id = 1;  // 建筑ID
+}
+
+message BuildingGetResp {
+    RoleBuildingInfo building = 1;
+}
+
+// 查询建筑列表（city_id 过滤：0=全部）
 message BuildingListReq {
+    uint64 city_id = 1;  // 归属城市ID过滤，0=全部
 }
 
 message BuildingListResp {

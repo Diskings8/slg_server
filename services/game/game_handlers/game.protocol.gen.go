@@ -133,7 +133,7 @@ func init() {
 		Resp: &pb_maps_march.FormationListResp{},
 	})
 
-	// ===== 建筑 (1000011~1000012) =====
+	// ===== 建筑 (1000011~1000037) =====
 	RegisterProto(pb_protocol.MsgID_GameBuildingBuild, &ProtoHandler{
 		F:    Wrap(building_handler.HandlerBuildingBuild),
 		Req:  &pb_city.BuildingBuildReq{},
@@ -143,6 +143,16 @@ func init() {
 		F:    Wrap(building_handler.HandlerBuildingList),
 		Req:  &pb_city.BuildingListReq{},
 		Resp: &pb_city.BuildingListResp{},
+	})
+	RegisterProto(pb_protocol.MsgID_GameBuildingUpgrade, &ProtoHandler{
+		F:    Wrap(building_handler.HandlerBuildingUpgrade),
+		Req:  &pb_city.BuildingUpgradeReq{},
+		Resp: &pb_city.BuildingUpgradeResp{},
+	})
+	RegisterProto(pb_protocol.MsgID_GameBuildingGet, &ProtoHandler{
+		F:    Wrap(building_handler.HandlerBuildingGet),
+		Req:  &pb_city.BuildingGetReq{},
+		Resp: &pb_city.BuildingGetResp{},
 	})
 
 	// ===== 战报 (1000013) =====

@@ -38,6 +38,7 @@ const (
 	ReasonSkill    ItemChangeReason = "skill"    // 技能（升级消耗）
 	ReasonGacha    ItemChangeReason = "gacha"    // 抽卡（消耗券/金币 / 产出道具）
 	ReasonExchange ItemChangeReason = "exchange" // 货币兑换（一级→二级）
+	ReasonBuilding ItemChangeReason = "building" // 建造/升级建筑消耗
 )
 
 type ItemUse struct {

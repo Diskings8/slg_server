@@ -2,6 +2,7 @@ package game_conf
 
 import (
 	"server.slg.com/api/game_conf/battle"
+	"server.slg.com/api/game_conf/building"
 	"server.slg.com/api/game_conf/exchange"
 	"server.slg.com/api/game_conf/gacha"
 	"server.slg.com/api/game_conf/guard"
@@ -31,6 +32,7 @@ type GameConf struct {
 	Exchange *exchange.Conf
 	Guard    *guard.Conf
 	Soldier  *soldier.Conf
+	Building *building.Conf
 }
 
 // Version 全局配置版本（内嵌基线=1；JSON 加载/热更每次成功 +1）。
