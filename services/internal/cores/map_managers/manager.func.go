@@ -47,16 +47,17 @@ func NewMapManager(
 func initBornManager(mm *MapManager, mapDataManager *map_datas.MapDataManager) {
 	bornMgr := map_borns.NewBigMapBornBlockManager(cores_declarations.ServerMapBlockCutNum)
 	blockLength := mm.mapBlock.BlockLength()
-	// 区块内部偏移点：取区块边长 1/4、1/2、3/4 三档位置，
-	// 远离地图边界（保证 3×3 邻域完整），且分散覆盖区块
-	offsets := []int32{blockLength / 4, blockLength / 2, blockLength * 3 / 4}
+	// 区块内部候选种子：按固定间距布设（间距见 map_borns.BornSeedOffsets），
+	// 原 1/4、1/2、3/4 三档位置太稀疏（25 块仅 225 个候选位），加密后每块数百个，玩家可分散到全图
+	offsets := map_borns.BornSeedOffsets(blockLength)
 	for i := int32(1); i <= cores_declarations.ServerMapBlockCutNum; i++ {
 		sx, sy := mm.mapBlock.FirstXY(cores_declarations.BornBlockID(i))
 		seeds := make(map[int32]struct{})
 		for _, ox := range offsets {
 			for _, oy := range offsets {
 				mid := mapDataManager.GetConfig().XY2MapID(sx+ox, sy+oy)
-				if info, ok := mapDataManager.GetMapInfo(mid); ok && !info.GetElementType().IsCantBornUse() {
+				// 候选种子同样放宽：可诞生地形，或初始等级≤5且未开发的资源格
+				if info, ok := mapDataManager.GetMapInfo(mid); ok && map_datas.CanBeOccupiedByMainCity(info, false) {
 					seeds[int32(mid)] = struct{}{}
 				}
 			}

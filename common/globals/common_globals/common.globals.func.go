@@ -3,7 +3,8 @@ package common_globals
 func GetEnvPath() string {
 	switch *CommonGlobalVarEnv {
 	case "dev":
-		return "../../api/yaml_conf/slg.dev.yaml"
+		// 根目录相对：服务统一从项目根运行（go run services/...），game_conf 的 config_path 同为根相对
+		return "api/yaml_conf/slg.dev.yaml"
 	}
 	return ""
 }

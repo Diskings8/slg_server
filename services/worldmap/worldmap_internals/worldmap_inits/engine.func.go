@@ -320,7 +320,10 @@ func (e *Engine) MarchTickHandler(mm *map_managers.MapManager, marchID cores_dec
 	}
 
 	toMapLock := marchInfo.GetMarchState() != pb_maps_march.MarchState_Back
-	handle.Lock(true, false, toMapLock)
+	// 注意：不对行军本体拿写锁。行军互斥由上面的 LockMarchDo（marchDoLocker）保证，
+	// 若再对 march RwLock 加写锁，Do 内部所有 getter（GetMarchState/GetTeam/...）的 RLock 会自锁死。
+	// 仅锁目标地块，Do 里的 getter 可正常 RLock，召回时的 TryLock 也能成功。
+	handle.Lock(false, false, toMapLock)
 	err := handle.Do()
 	handle.Unlock()
 

@@ -61,8 +61,8 @@ func (s *GameServer) CreateRole(ctx context.Context, req *pb_common.CreateRoleRe
 	}
 	coreMapID := createRsp.GetMapId()
 
-	// 5. 建主城建筑（复用统一入口：占地/ID/校场队列初始化）
-	if _, result := game_logics.BuildingBuild(role, roleID, &pb_city.BuildingBuildReq{
+	// 5. 建主城建筑（即时建成，跳过建造时长与消耗；主城 Completed 才会落校场 + 分配编队队列）
+	if _, result := game_logics.BuildMainCityInstant(role, roleID, &pb_city.BuildingBuildReq{
 		Type:  pb_city.BuildingType_RoleMainCity,
 		MapId: coreMapID,
 	}); result != nil {

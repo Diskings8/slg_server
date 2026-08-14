@@ -21,6 +21,7 @@ import (
 	"server.slg.com/api/protocol/pb/pb_game"
 	"server.slg.com/common/common_declarations"
 	"server.slg.com/common/configs"
+	"server.slg.com/common/conns/cacheconn"
 	"server.slg.com/common/conns/dbconn"
 	"server.slg.com/common/conns/etcdconn"
 	vgc "server.slg.com/common/globals/common_globals"
@@ -101,13 +102,20 @@ func main() {
 	servers.NewLifecycle(
 		servers.WithAsyncInit(
 			func() {
+				// 注意：WithAsyncInit 的多个函数是【并发】执行的（lifecycle 里各自一个 goroutine），
+				// 此前把 DB 初始化与 game_entitys.Init 拆成两个函数会造成竞态：
+				// game_entitys.Init 可能在 MustInitDB 完成前拿到 nil writeDb。故合并为单函数顺序执行。
 				snowflakes.Init() // 雪花 ID（角色/建筑主键由应用层生成）
 				dbconn.MustInitDB("mysql",
-					common_configs.GetConf().DB.Game.Dsn(),
-					common_configs.GetConf().DB.Game.Dsn())
+					common_configs.GetConf().DB.Game.DsnWithInstance(*vgc.CommonGlobalVarInstance),
+					common_configs.GetConf().DB.Game.DsnWithInstance(*vgc.CommonGlobalVarInstance))
 				loggers.Logger.Info("数据库初始化完成")
-			},
-			func() {
+
+				// redis：redisstream 消费者（march 事件等）依赖 cacheconn 的客户端，缺了 XRead 一直报 redis: nil
+				if err := cacheconn.Init(ctx); err != nil {
+					loggers.Logger.Fatal("redis 初始化失败", zap.Error(err))
+				}
+
 				// 游戏配置：config_path 非空走 JSON 配置表，为空走 Go 内嵌占位
 				if err := game_conf.InitFromConf(); err != nil {
 					loggers.Logger.Error("game config init failed", zap.Error(err))

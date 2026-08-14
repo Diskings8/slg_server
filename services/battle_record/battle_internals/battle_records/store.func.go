@@ -216,6 +216,14 @@ func buildTags(rec *battle_record_models.BattleRecord) []*battle_record_models.B
 }
 
 // RecordFromReq SaveBattleRecordReq → 主表 model
+// nonNilUint64Slice 空/nil 切片归一为空数组（json.Marshal(nil) → null/空串，MySQL JSON 列会拒收空文档）。
+func nonNilUint64Slice(s []uint64) []uint64 {
+	if s == nil {
+		return []uint64{}
+	}
+	return s
+}
+
 func RecordFromReq(req *pb_battle_record.SaveBattleRecordReq) (*battle_record_models.BattleRecord, error) {
 	battleTime := req.GetBattleTime()
 	if battleTime == 0 {
@@ -228,8 +236,8 @@ func RecordFromReq(req *pb_battle_record.SaveBattleRecordReq) (*battle_record_mo
 		MapID:            req.GetMapId(),
 		AttackerRoleID:   req.GetAttackerRoleId(),
 		AttackerUnionID:  req.GetAttackerUnionId(),
-		DefenderRoleIDs:  req.GetDefenderRoleIds(),
-		DefenderUnionIDs: req.GetDefenderUnionIds(),
+		DefenderRoleIDs:  nonNilUint64Slice(req.GetDefenderRoleIds()),
+		DefenderUnionIDs: nonNilUint64Slice(req.GetDefenderUnionIds()),
 		AttackerWin:      req.GetAttackerWin(),
 		IsOccupied:       req.GetIsOccupied(),
 		BuildingDamage:   req.GetBuildingDamage(),

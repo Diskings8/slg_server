@@ -184,6 +184,7 @@ func (hr *RoleHero) Format2Pb() *pb_hero.HeroInfo {
 	}
 
 	return &pb_hero.HeroInfo{
+		HeroId:           hr.ID, // 英雄实例ID（此前遗漏，导致 HeroList 拿不到 hero_id）
 		ConfigId:         hr.HeroConfID,
 		StarStage:        hr.StarStage,
 		CurLevel:         hr.Level,

@@ -126,9 +126,7 @@ func consume(ctx context.Context, streamKey string, handler Handler, opts *Consu
 				time.Sleep(5 * time.Second)
 				continue
 			}
-			log.Warn("redis stream XRead error",
-				zap.String("stream", streamKey),
-				zap.Error(err))
+
 			time.Sleep(time.Second)
 			continue
 		}

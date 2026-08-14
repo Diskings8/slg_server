@@ -7,8 +7,8 @@ const hero_skill = "hero_skill"
 // HeroSkill 英雄技能
 type HeroSkill struct {
 	models.ModelBase
-	RoleID        uint64 `gorm:"column:role_id;type:bigint(20);not null;uniqueIndex:idx_hero_skill"`
-	SkillConfID   int32  `gorm:"column:skill_conf_id;type:int(11);not null;uniqueIndex:idx_hero_skill"`
+	RoleID        uint64 `gorm:"column:role_id;type:bigint(20);not null;uniqueIndex:idx_hero_skill,priority:1"`
+	SkillConfID   int32  `gorm:"column:skill_conf_id;type:int(11);not null;uniqueIndex:idx_hero_skill,priority:2"`
 	Level         int32  `gorm:"column:level;type:int(11);not null;default:1"`
 	IsAwakened    bool   `gorm:"column:is_awakened;type:tinyint(1);not null;default:0"`
 	IsUnlocked    bool   `gorm:"column:is_unlocked;type:tinyint(1);not null;default:0"`

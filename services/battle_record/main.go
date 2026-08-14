@@ -109,8 +109,8 @@ func main() {
 
 				// DB 初始化 + 建表 + 注入存储 + 启动清理
 				dbconn.MustInitDB("mysql",
-					common_configs.GetConf().DB.Game.Dsn(),
-					common_configs.GetConf().DB.Game.Dsn())
+					common_configs.GetConf().DB.Game.DsnWithInstance(*vgc.CommonGlobalVarInstance),
+					common_configs.GetConf().DB.Game.DsnWithInstance(*vgc.CommonGlobalVarInstance))
 
 				store := battle_records.New(dbconn.GormDB())
 				if err := store.Migrate(); err != nil {

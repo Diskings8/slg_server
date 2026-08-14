@@ -16,7 +16,7 @@ db:
     password: "123456"
     host: "127.0.0.1"
     port: 3306
-    db_name: "game_db_0"
+    db_name: "game_db" # 基础名，实际库为 game_db_<instance>（见 DsnWithInstance）
     params: "charset=utf8mb4&parseTime=True&loc=Local"
 
 cache:
@@ -47,7 +47,7 @@ battle_record:
   addr: "127.0.0.1:12002"
 
 worldmap:
-  addr: ":50060"
+  addr: "127.0.0.1:50060"
   seed: 20260731
 
 login:

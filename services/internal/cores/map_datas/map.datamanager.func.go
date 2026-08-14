@@ -164,11 +164,9 @@ func (mdm *MapDataManager) GetFreeBorn() (mapIDs []cores_declarations.MapID, loc
 				}
 				coreMapID = mapIDsTmp[cores_declarations.Land3CoverBaseKey]
 
-				mdm.BornBlockManager.Use(bornID)
-
-				freeBornFunc = func() {
-					mdm.BornBlockManager.Free(bornID)
-				}
+				// 不再整块 Use：出生只占 3×3（已 TryLock 独占），同一块内不同种子可容纳多个玩家。
+				// 块保持空闲池中，随城市增多 3×3 被占满的种子自然不可用，容量由 3×3 锁保证。
+				freeBornFunc = func() {}
 
 				return false
 			}

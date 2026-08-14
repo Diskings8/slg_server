@@ -1,6 +1,7 @@
 package map_borns
 
 import (
+	"math/rand/v2"
 	"sync"
 
 	"github.com/go4org/hashtriemap"
@@ -102,10 +103,16 @@ func (b *BigMapBornBlockManager) reload() {
 		return
 	}
 
-	for _, bornID := range blockSort {
+	// 收集全部空闲块并洗牌：保证每次分配块序随机（此前按 1..25 顺序，宏观上不随机）
+	ids := make([]cores_declarations.BornBlockID, 0, b.BornCount)
+	for bornID := int32(1); bornID <= b.BornCount; bornID++ {
 		var useBornID = cores_declarations.BornBlockID(bornID)
 		if _, ok := b.emptyBornMap.Load(useBornID); ok {
-			b.bornChan <- useBornID
+			ids = append(ids, useBornID)
 		}
+	}
+	rand.Shuffle(len(ids), func(i, j int) { ids[i], ids[j] = ids[j], ids[i] })
+	for _, id := range ids {
+		b.bornChan <- id
 	}
 }

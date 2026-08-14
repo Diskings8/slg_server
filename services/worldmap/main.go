@@ -21,6 +21,7 @@ import (
 	"server.slg.com/api/protocol/pb/pb_worldmap"
 	"server.slg.com/common/common_declarations"
 	"server.slg.com/common/configs"
+	"server.slg.com/common/conns/cacheconn"
 	"server.slg.com/common/conns/dbconn"
 	"server.slg.com/common/conns/etcdconn"
 	vgc "server.slg.com/common/globals/common_globals"
@@ -56,9 +57,9 @@ func main() {
 	common_configs.LoadByFormat(cfgFormat, vgc.GetEnvPath())
 	loggers.Init()
 
-	// 节点地址优先取命令行，否则从 TOML 节点配置读取
+	// 节点地址优先取命令行，否则从全局配置读取（worldmap.addr）
 	if rpcAddr == "" {
-		rpcAddr = common_configs.LoadNodeConfig(nodeName, "../../config", "config.dev")
+		rpcAddr = common_configs.GetConf().Worldmap.Addr
 	}
 
 	loggers.Logger.Info("worldmap 服务启动",
@@ -119,9 +120,17 @@ func main() {
 				snowflakes.Init()
 
 				dbconn.MustInitDB("mysql",
-					common_configs.GetConf().DB.Game.Dsn(),
-					common_configs.GetConf().DB.Game.Dsn())
+					common_configs.GetConf().DB.Game.DsnWithInstance(*vgc.CommonGlobalVarInstance),
+					common_configs.GetConf().DB.Game.DsnWithInstance(*vgc.CommonGlobalVarInstance))
 				loggers.Logger.Info("数据库初始化完成")
+
+				// etcd 客户端：SyncInit 里 RegisterServiceByNodeType 依赖它，缺了会 nil panic（对齐 game/battle/battle_record）
+				etcdconn.InitEtcd(common_configs.GetConf().Etcd.Dsn())
+
+				// redis：roles poller 定时保存依赖 cacheconn（SRandMember 刷盘队列）；缺了 cron 触发时 nil panic
+				if err := cacheconn.Init(ctx); err != nil {
+					loggers.Logger.Fatal("redis 初始化失败", zap.Error(err))
+				}
 
 				// 游戏配置：守军配置（开发行军战斗对象）；config_path 非空走 JSON，为空走 Go 内嵌占位
 				if err := game_conf.InitFromConf(); err != nil {

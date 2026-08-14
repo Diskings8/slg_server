@@ -120,6 +120,15 @@ func (i ElementType) IsCantBornUse() bool {
 		i != ElementType_Terrain_3
 }
 
+// IsResource 是否为资源格（主城可占用的非地形类型：Resources_1~4）
+func (i ElementType) IsResource() bool {
+	return i >= ElementType_Resources_1 && i <= ElementType_Resources_4
+}
+
+// MaxBornResourceLevel 主城可占用的资源格初始等级上限。
+// 规则：仅允许占用初始 lv ≤ 5 的资源格；已开发升级（isDeveloped=true）的资源格不可被主城占用。
+const MaxBornResourceLevel = 5
+
 const (
 	ElementType_None        ElementType = iota
 	ElementType_Resources_1             // 资源1

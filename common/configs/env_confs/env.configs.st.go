@@ -24,6 +24,16 @@ func (d DBInstance) Dsn() string {
 	return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?%s", d.User, d.Password, d.Host, d.Port, d.DBName, d.Params)
 }
 
+// DsnWithInstance 按实例 ID 生成 DSN：库名 = DBName_<instance>（用于按区服分库的连接）。
+// DBName 为基础名（如 "game_db"），实例 "1" → game_db_1；空 instance 按 "0" 处理 → game_db_0。
+func (d DBInstance) DsnWithInstance(instance string) string {
+	if instance == "" {
+		instance = "0"
+	}
+	dbName := fmt.Sprintf("%s_%s", d.DBName, instance)
+	return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?%s", d.User, d.Password, d.Host, d.Port, dbName, d.Params)
+}
+
 // DBConfig 数据库配置
 type DBConfig struct {
 	Common DBInstance `yaml:"common" toml:"common"`

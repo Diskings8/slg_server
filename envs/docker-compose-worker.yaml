@@ -1,0 +1,93 @@
+# 当前设备（worker 工作环境）的基础设施编排
+#
+# 与宿舍环境 envs/docker-compose.yml 的差异：
+#   - 镜像源：本机已验证官方源可达（Docker Hub / quay.io）且 mysql:8.0.36 / redis:7.0.15 /
+#     etcd:v3.5.16 已缓存，改用官方镜像，不依赖第三方代理 docker.1ms.run
+#   - Redis：不再挂载 redis.conf（该文件仓库中不存在，挂载会导致 redis-server 读到目录而起不来），
+#     改用命令行参数；无密码，与 slg.dev.yaml 的 cache.password="" 一致
+#   - MySQL：挂载 ./mysql/init 自动建库（common_db_0 / game_db_0），dbconn 只 AutoMigrate 建表、不建库
+#   - 容器/网络/卷均加 worker 前缀，避免与宿舍环境或其他项目冲突
+#
+# 使用：
+#   启动:  docker compose -f docker-compose-worker.yaml up -d
+#   停止:  docker compose -f docker-compose-worker.yaml down
+#   状态:  docker compose -f docker-compose-worker.yaml ps
+#
+# 端口映射到宿主机 3306/6379/2379/2380，与 api/yaml_conf/slg.dev.yaml 的连接配置一致。
+
+services:
+  mysql:
+    image: mysql:8.0.36
+    container_name: slg-worker-mysql
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+    volumes:
+      - slg_worker_mysql_data:/var/lib/mysql
+      - ./mysql/init:/docker-entrypoint-initdb.d
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - slg_worker_net
+
+  redis:
+    image: redis:7.0.15
+    container_name: slg-worker-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - slg_worker_redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - slg_worker_net
+
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.16
+    container_name: slg-worker-etcd
+    restart: unless-stopped
+    ports:
+      - "2379:2379"
+      - "2380:2380"
+    environment:
+      - ETCD_NAME=slg-worker-etcd
+      - ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379
+      - ETCD_ADVERTISE_CLIENT_URLS=http://0.0.0.0:2379
+      - ETCD_LISTEN_PEER_URLS=http://0.0.0.0:2380
+      - ETCD_INITIAL_ADVERTISE_PEER_URLS=http://0.0.0.0:2380
+      - ETCD_INITIAL_CLUSTER=slg-worker-etcd=http://0.0.0.0:2380
+      - ETCD_INITIAL_CLUSTER_TOKEN=slg-worker-cluster
+      - ETCD_INITIAL_CLUSTER_STATE=new
+      - ETCD_DATA_DIR=/etcd-data
+    volumes:
+      - slg_worker_etcd_data:/etcd-data
+    healthcheck:
+      test: ["CMD", "etcdctl", "endpoint", "health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - slg_worker_net
+
+volumes:
+  slg_worker_mysql_data:
+  slg_worker_redis_data:
+  slg_worker_etcd_data:
+
+networks:
+  slg_worker_net:
+    driver: bridge

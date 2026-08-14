@@ -120,16 +120,17 @@ func dial(addr string, timeout time.Duration) (*grpc.ClientConn, error) {
 		return nil, err
 	}
 
-	// NewClient 默认非阻塞，手动等待连接就绪
-	for {
-		state := conn.GetState()
-		if state == connectivity.Ready {
-			break
-		}
+	// grpc.NewClient 返回的连接处于 Idle，惰性拨号——必须先调用 Connect() 触发建连，
+	// 否则状态永远停在 Idle，WaitForStateChange 等不到变化，3s 超时报错。
+	conn.Connect()
+
+	// 手动等待连接就绪（官方推荐模式：等状态从 sourceState 变化后重查）
+	for state := conn.GetState(); state != connectivity.Ready; {
 		if !conn.WaitForStateChange(ctx, state) {
 			_ = conn.Close()
 			return nil, fmt.Errorf("dial %s: timeout", addr)
 		}
+		state = conn.GetState()
 	}
 	return conn, nil
 }

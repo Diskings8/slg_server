@@ -173,7 +173,8 @@ func preCheckCreateMarch(marchInfo *MarchInfo) {
 //
 // 入内存后标记异步写入，由 cron 定时批量刷盘。
 func (mm *MarchInfoManager) CreateMarch(marchInfo *MarchInfo) error {
-	if marchInfo == nil || marchInfo.GetMarchID() > 0 {
+	// 注意：校验必须 < 1（此前误写为 > 0，导致所有合法雪花 ID 行军都被拒）
+	if marchInfo == nil || marchInfo.GetMarchID() < 1 {
 		return errors.New("参数错误")
 	}
 

@@ -20,7 +20,7 @@ func GenDB() {
 	configPath := fmt.Sprintf("../../api/yaml_conf/slg.%s.yaml", genEnv)
 	configs.LoadYamlConf(configPath)
 
-	dsn := configs.GetConf().DB.Game.Dsn()
+	dsn := configs.GetConf().DB.Game.DsnWithInstance("0") // codegen 工具默认连 instance 0 的库（game_db_0）
 	if dsn == "" {
 		fmt.Fprintf(os.Stderr, "❌ mysql_game DSN 为空，请检查 %s\n", configPath)
 		os.Exit(1)
