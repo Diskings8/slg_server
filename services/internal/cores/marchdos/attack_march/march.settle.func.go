@@ -143,6 +143,9 @@ func tryOccupy(mgr *map_managers.MapManager, attacker *marchs.MarchInfo, rsp *pb
 	}
 
 	toMapInfo.Occupy(attacker.GetFromRoleID())
+
+	// 持久化归属变更（当前持锁，Save 只标记脏，SaveDo 稍后刷盘）
+	mgr.GetMapDataManager().Save(toMapInfo)
 }
 
 // updateWinStreak 更新连胜计数（占位：win_count_inc 恒 0，保行为）

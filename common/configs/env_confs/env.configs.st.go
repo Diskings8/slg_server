@@ -79,12 +79,18 @@ func (g GatewayConfig) RpcDsn() string { return g.RPCAddr }
 
 // ─── 通用节点 ────────────────────────────────────────────────────
 
-// NodeConfig 通用服务节点（game / battle / worldmap）
+// NodeConfig 通用服务节点（game / battle / battle_record / login）
 type NodeConfig struct {
 	Addr string `yaml:"addr" toml:"addr"`
 }
 
 func (n NodeConfig) Dsn() string { return n.Addr }
+
+// WorldmapConfig worldmap 节点配置
+type WorldmapConfig struct {
+	Addr string `yaml:"addr" toml:"addr"`
+	Seed int64  `yaml:"seed" toml:"seed"` // 地图生成种子：同种子 → 同底图（重启稳定）
+}
 
 // ─── 其它 ────────────────────────────────────────────────────────
 
@@ -115,7 +121,7 @@ type Config struct {
 	Game         NodeConfig      `yaml:"game" toml:"game"`
 	Battle       NodeConfig      `yaml:"battle" toml:"battle"`
 	BattleRecord NodeConfig      `yaml:"battle_record" toml:"battle_record"`
-	Worldmap     NodeConfig      `yaml:"worldmap" toml:"worldmap"`
+	Worldmap     WorldmapConfig  `yaml:"worldmap" toml:"worldmap"`
 	Login        NodeConfig      `yaml:"login" toml:"login"`
 	GameConf     GameConfConfig  `yaml:"game_conf" toml:"game_conf"`
 

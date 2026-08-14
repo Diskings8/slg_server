@@ -212,7 +212,15 @@ func (mdm *MapDataManager) Save(list ...*MapInfo) {
 
 func (mdm *MapDataManager) save(db common_declarations.DbcI, waitSlice [maxSaveLen]*MapInfo, num int) {
 	tmp := waitSlice[:num]
-	err := db.Table(mdm.tableName).Save(tmp).Error()
+
+	// MapInfo 字段未导出且无主键，转 DTO 后再写库（见 MapInfoDB）。
+	// 调用方（SaveDo）已 TryLock 各格子，toDB 内部不加锁，避免 RWMutex 重入死锁。
+	dtos := make([]MapInfoDB, 0, num)
+	for _, v := range tmp {
+		dtos = append(dtos, v.toDB())
+	}
+
+	err := db.Table(mdm.tableName).Save(dtos).Error()
 	if err != nil {
 		loggers.Logger.Error("save map data failed", zap.Error(err))
 	}

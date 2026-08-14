@@ -26,6 +26,8 @@ import (
 	vgc "server.slg.com/common/globals/common_globals"
 	"server.slg.com/common/loggers"
 	"server.slg.com/common/servers"
+	"server.slg.com/common/utils/crontabs"
+	"server.slg.com/common/utils/snowflakes"
 	"server.slg.com/services/internal/cores/roles"
 	"server.slg.com/services/worldmap/worldmap_handlers/worldmap_servers"
 	"server.slg.com/services/worldmap/worldmap_handlers/worldmap_streams"
@@ -113,6 +115,9 @@ func main() {
 	servers.NewLifecycle(
 		servers.WithAsyncInit(
 			func() {
+				// 雪花 ID（行军主键由应用层生成，与 game/login 保持一致；须在 DB 初始化前）
+				snowflakes.Init()
+
 				dbconn.MustInitDB("mysql",
 					common_configs.GetConf().DB.Game.Dsn(),
 					common_configs.GetConf().DB.Game.Dsn())
@@ -126,6 +131,20 @@ func main() {
 				// 角色数据 poller：主城落位回写 role_data（须在 DB 初始化后调用）
 				roles.Init(ctx)
 				loggers.Logger.Info("roles poller 初始化完成")
+
+				// 全局定时器：驱动异步保存（行军/地块定时刷盘）；此前全仓库无调用点，
+				// SaveDo 从未真正执行，行军/地块只是停留在内存等待队列
+				crontabs.Start()
+
+				// 地图恢复：DB 动态状态覆盖种子生成的底图（稀疏覆盖模型）
+				if err := engine.InitMapData(); err != nil {
+					loggers.Logger.Error("map data load failed", zap.Error(err))
+				}
+
+				// 行军恢复：从 DB 加载 + 重做 AOI 注册
+				if err := engine.InitMarchs(); err != nil {
+					loggers.Logger.Error("march recovery failed", zap.Error(err))
+				}
 			},
 		),
 
@@ -143,6 +162,8 @@ func main() {
 					engine.Stop()
 					engineStopped = true
 				}
+				// 停止全局定时器（阻塞直到 cron 退出），随后 gRPC 关闭
+				crontabs.ShutDown()
 				loggers.Logger.Info("worldmap 关闭...")
 			},
 		),

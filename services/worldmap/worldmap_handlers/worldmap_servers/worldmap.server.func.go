@@ -9,6 +9,7 @@ import (
 	"server.slg.com/api/protocol/pb/pb_role"
 	"server.slg.com/api/protocol/pb/pb_worldmap"
 	"server.slg.com/common/loggers"
+	"server.slg.com/common/utils/snowflakes"
 	"server.slg.com/services/internal/cores/cores_declarations"
 	"server.slg.com/services/internal/cores/map_aois"
 	"server.slg.com/services/internal/cores/map_datas"
@@ -22,16 +23,10 @@ import (
 
 var WorldMapServerHandler = &WorldMapServer{}
 
-var marchIDCounter cores_declarations.MarchID
-
-func init() {
-	marchIDCounter = cores_declarations.MarchID(time.Now().UnixNano())
-}
-
-// nextMarchID 生成单调递增的行军 ID
+// nextMarchID 生成全局唯一行军 ID（雪花算法，跨重启/多实例稳定）。
+// 依赖 worldmap 启动时 AsyncInit 中的 snowflakes.Init()（gRPC 服务在其后启动，无 nil 风险）。
 func nextMarchID() cores_declarations.MarchID {
-	marchIDCounter++
-	return marchIDCounter
+	return cores_declarations.MarchID(snowflakes.GenUUID())
 }
 
 // WorldMapServer Unary RPC 处理器，实现 WorldMapHandlerServer 接口
@@ -103,11 +98,15 @@ func (s *WorldMapServer) CreateMarch(ctx context.Context, req *pb_worldmap.Creat
 		marchInfo.Team = &marchs.Team{Slots: []*pb_battle.TeamSlotInfo{}}
 	}
 
-	if err := s.engine.MarchInfoManager.CreateMarch(marchInfo); err != nil {
+	// 走 MarchHandler.CreateMarch：严格校验（队伍可战斗/地块存在/攻击目标合法/开发归属）
+	// → 持久化 → 挂 MapAttribute → AOI 注册 → 视野推送。此前直接调 MarchInfoManager.CreateMarch，
+	// 既绕过校验层，也缺 AOI 注册（新行军不出现在任何视野屏幕）。
+	if err := s.engine.MarchHandler.CreateMarch(marchInfo); err != nil {
 		loggers.Logger.Error("CreateMarch failed",
 			zap.Uint64("march_id", marchID.Uint64()),
 			zap.Error(err))
-		return nil, status.Errorf(codes.Internal, "create march failed: %v", err)
+		// MarchHandler.CreateMarch 的返回均来自校验层（空/不可战斗队伍、目标非法等），映射为参数错误
+		return nil, status.Errorf(codes.InvalidArgument, "create march failed: %v", err)
 	}
 
 	loggers.Logger.Info("march created",

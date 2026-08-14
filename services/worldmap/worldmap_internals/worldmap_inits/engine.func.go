@@ -13,12 +13,16 @@ import (
 	"server.slg.com/api/protocol/pb/pb_hero"
 	"server.slg.com/api/protocol/pb/pb_maps_march"
 	"server.slg.com/api/protocol/pb/pb_redis_stream"
+	"server.slg.com/common/conns/dbconn"
 	"server.slg.com/common/conns/rpcconn/rpc_handlers"
 	vgc "server.slg.com/common/globals/common_globals"
 	"server.slg.com/common/loggers"
 	"server.slg.com/common/redisstream"
+	"server.slg.com/common/utils/asyncsave_entity"
+	"server.slg.com/common/utils/crontabs"
 	"server.slg.com/services/internal/cores/cores_declarations"
 	"server.slg.com/services/internal/cores/map_datas"
+	"server.slg.com/services/internal/cores/map_handler"
 	"server.slg.com/services/internal/cores/map_managers"
 	"server.slg.com/services/internal/cores/marchdos/march_factory"
 	"server.slg.com/services/internal/cores/marchs"
@@ -34,6 +38,7 @@ type Engine struct {
 	MapDataManager   *map_datas.MapDataManager
 	MarchInfoManager *marchs.MarchInfoManager
 	MapManager       *map_managers.MapManager
+	MarchHandler     *map_handler.MarchHandler // 行军业务编排（校验 + 持久化 + AOI + 推送）
 
 	battleHub *rpc_handlers.ClientHandler // 战斗节点客户端（battle 结算回调）
 }
@@ -44,8 +49,9 @@ func NewEngine(ctx context.Context) *Engine {
 
 	mapData := map_datas.NewMapDataManager(mapConfig, "map_data")
 
-	// 初始化地图元素（限定元素集合 + 种子确定性生成），保证视野查询有数据、出生点可诞生
-	InitMapElements(mapData, defaultMapSeed)
+	// 初始化地图元素（限定元素集合 + 种子确定性生成），保证视野查询有数据、出生点可诞生。
+	// 种子从配置读取（同种子 → 同底图），DB 动态状态随后由 InitMapData 覆盖加载。
+	InitMapElements(mapData, resolveMapSeed())
 
 	tickerChan := make(chan *marchs.MarchInfo, 1000)
 	marchMgr := marchs.New(tickerChan, "march_info", mapConfig, cores_declarations.MarchTimeTypeStraight)
@@ -77,6 +83,12 @@ func NewEngine(ctx context.Context) *Engine {
 	manager.Start()
 
 	e.MapManager = manager
+
+	// 装配行军业务编排 handler（CreateMarch 等 RPC 走此链路：校验 → 持久化 → AOI → 推送）
+	e.MarchHandler = &map_handler.MarchHandler{
+		Manage: func() *map_managers.MapManager { return manager },
+		March:  func() *marchs.MarchInfoManager { return marchMgr },
+	}
 
 	// 注入战斗结算回调（内部调用 battle 节点 RPC）
 	e.initBattleSettle(manager)
@@ -238,8 +250,41 @@ func (e *Engine) saveBattleRecord(req *pb_battle.BattleSettleReq, rsp *pb_battle
 	}()
 }
 
+// InitMarchs 重启恢复行军：注册异步保存实体 + 从 DB 加载 + 重做 AOI 注册。
+// 必须在 DB 初始化后调用；NewEngine 内的 MapManager.Start() 已先行执行，
+// loopTickAccept 正在消费 TickerChan，因此 Init 内的阻塞发送不会卡死。
+func (e *Engine) InitMarchs() error {
+	// 1. 注册 MarchInfoManager 异步保存实体（幂等；报错仅 warn，不阻断启动）
+	if _, err := asyncsave_entity.NewAsyncSaveEntity(crontabs.Pre1Minutes, e.MarchInfoManager.Tag()); err != nil {
+		loggers.Logger.Warn("march async save entity register failed", zap.Error(err))
+	}
+
+	// 2. 从 DB 恢复行军（内部自动挂 MapAttribute + 推 TickerChan 重挂定时器 + 重建集结）
+	marchList, err := e.MarchInfoManager.Init(dbconn.GetWriteDbConn())
+	if err != nil {
+		return err
+	}
+
+	// 3. 重做 AOI 注册，否则恢复的行军不在任何视野屏幕中，MapData 查不到
+	for _, mi := range marchList {
+		e.MapManager.MarchAOISetupSingle(mi)
+	}
+
+	loggers.Logger.Info("march recovery done", zap.Int("count", len(marchList)))
+	return nil
+}
+
+// InitMapData 启动时从 DB 加载地图动态状态（稀疏覆盖：DB 行覆盖种子生成的底图）。
+// 必须在 DB 初始化后、且 NewEngine 已完成底图生成后调用。
+func (e *Engine) InitMapData() error {
+	return e.MapDataManager.Load(dbconn.GetWriteDbConn())
+}
+
 // Stop 停止引擎
 func (e *Engine) Stop() {
+	// 停机前刷盘，尽量落净待保存的行军/地块（DB 在生命周期关闭期间仍可用）
+	e.MarchInfoManager.SaveDo()
+	e.MapDataManager.SaveDo()
 	e.MapManager.Stop()
 }
 

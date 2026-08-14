@@ -48,6 +48,7 @@ battle_record:
 
 worldmap:
   addr: ":50060"
+  seed: 20260731
 
 login:
   addr: "127.0.0.1:14001"

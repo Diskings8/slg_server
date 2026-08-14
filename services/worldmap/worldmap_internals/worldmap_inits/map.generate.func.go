@@ -3,13 +3,22 @@ package worldmap_inits
 import (
 	"math/rand/v2"
 
+	common_configs "server.slg.com/common/configs"
 	"server.slg.com/services/internal/cores/cores_declarations"
 	"server.slg.com/services/internal/cores/map_datas"
 )
 
-// defaultMapSeed 默认地图生成种子
-// TODO: 接入配置，按区服/赛季固定，保证重启后地图稳定
+// defaultMapSeed 默认地图生成种子（未配置 worldmap.seed 时回落）
 const defaultMapSeed = int64(20260731)
+
+// resolveMapSeed 读取地图生成种子：优先配置（worldmap.seed），未配置/非正回落默认值。
+// 同种子 → 同底图，重启后地图稳定，DB 动态状态才能作为覆盖层正确叠加。
+func resolveMapSeed() int64 {
+	if cfg := common_configs.GetConf(); cfg != nil && cfg.Worldmap.Seed > 0 {
+		return cfg.Worldmap.Seed
+	}
+	return defaultMapSeed
+}
 
 // MapElementConf 地图元素配置（限定地形元素集合的单个元素）
 type MapElementConf struct {

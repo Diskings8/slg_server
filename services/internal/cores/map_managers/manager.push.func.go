@@ -66,6 +66,10 @@ func (mm *MapManager) upMapAsync() {
 		}
 		mm.roleConnectManager.PushToRoleID(pb_protocol.MsgID_PushMapInfo, rolePush, roleID)
 	}
+
+	// 归还对象池：PushToRoleID 内部已同步 Marshal 为字节下发，MapInfo 指针不再被引用。
+	// mapListPB 由 waitUpdateMapID（map 键集合）构造，指针唯一，可安全整体归还。
+	MapPBPut(mapListPB...)
 }
 
 // UpdateMapPush 部分地块更新信息需要下推

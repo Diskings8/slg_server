@@ -189,6 +189,9 @@ func applyDevelopResult(mgr *map_managers.MapManager, info *marchs.MarchInfo) {
 	toMapInfo.AddLevel(developStep)
 	toMapInfo.MarkDeveloped()
 
+	// 持久化等级/开发状态（当前持锁，Save 只标记脏，SaveDo 稍后刷盘）
+	mgr.GetMapDataManager().Save(toMapInfo)
+
 	// 更新视野推送
 	mgr.UpdateMapPush(info.GetToMapID())
 }

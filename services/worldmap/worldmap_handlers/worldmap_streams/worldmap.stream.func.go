@@ -8,6 +8,7 @@ import (
 	"server.slg.com/common/conns/rpcconn/rpc_declarations"
 	"server.slg.com/common/loggers"
 	"server.slg.com/services/internal/cores/cores_declarations"
+	"server.slg.com/services/internal/cores/map_managers"
 	"server.slg.com/services/internal/cores/marchs"
 
 	"go.uber.org/zap"
@@ -87,6 +88,10 @@ func (s *WorldMapStream) recv(stream grpc.ServerStream) error {
 		resp := s.buildCameraMoveResp(mapID)
 		s.engine.MapManager.GetRoleConnectManager().PushToRoleID(
 			pb_protocol.MsgID_GameCameraMove, resp, roleID)
+
+		// 归还对象池：PushToRoleID 已同步 Marshal 完毕，MapInfo 不再被引用。
+		// 仅归还 resp.Map（来自 MapPBGet）；resp.March 是 FormatMarchInfo2Pb 新建，不走池，不可归还。
+		map_managers.MapPBPut(resp.Map...)
 	}
 
 	return nil
