@@ -12,9 +12,9 @@ const role_formation = "role_formation"
 // 英雄槽位复用 maps.march.HeroSlot（proto 定义，前端共用）
 type RoleFormation struct {
 	models.ModelBase
-	RoleID    uint64                    `gorm:"column:role_id;type:bigint(20);not null;index"` // 角色ID
-	CityID    uint64                    `gorm:"column:city_id;type:bigint(20);not null;index"` // 归属城市
-	HeroSlots []*pb_maps_march.HeroSlot `gorm:"serializer:json;type:json;not null"`            // 英雄槽位（数量来自配置，默认3）
+	RoleID    uint64                    `gorm:"column:role_id;type:bigint(20);not null;index;comment:角色ID"` // 角色ID
+	CityID    uint64                    `gorm:"column:city_id;type:bigint(20);not null;index;comment:归属城市ID"` // 归属城市
+	HeroSlots []*pb_maps_march.HeroSlot `gorm:"serializer:json;type:json;not null;comment:英雄槽位(数量来自配置,默认3)"` // 英雄槽位（数量来自配置，默认3）
 }
 
 func (RoleFormation) TableName() string {

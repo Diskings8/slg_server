@@ -120,8 +120,8 @@ func main() {
 				snowflakes.Init()
 
 				dbconn.MustInitDB("mysql",
-					common_configs.GetConf().DB.Game.DsnWithInstance(*vgc.CommonGlobalVarInstance),
-					common_configs.GetConf().DB.Game.DsnWithInstance(*vgc.CommonGlobalVarInstance))
+					common_configs.GetConf().DB.Worldmap.DsnWithInstance(*vgc.CommonGlobalVarInstance),
+					common_configs.GetConf().DB.Worldmap.DsnWithInstance(*vgc.CommonGlobalVarInstance))
 				loggers.Logger.Info("数据库初始化完成")
 
 				// etcd 客户端：SyncInit 里 RegisterServiceByNodeType 依赖它，缺了会 nil panic（对齐 game/battle/battle_record）

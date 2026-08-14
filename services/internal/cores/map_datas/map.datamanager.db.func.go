@@ -14,15 +14,15 @@ import (
 // 因此用独立 DTO 承载需要持久化的动态状态（元素/归属/等级/保护期等）。
 // 锁与指针字段（overlayBuilding/overlayEvent）本轮不持久化，待建筑系统接入后再补。
 type MapInfoDB struct {
-	MapID            int32  `gorm:"column:map_id;primaryKey"`
-	ElementType      int32  `gorm:"column:element_type"`
-	ConfigID         uint32 `gorm:"column:config_id"`
-	Level            int32  `gorm:"column:level"`
-	ServerID         uint32 `gorm:"column:server_id"`
-	OwnerID          uint64 `gorm:"column:owner_id"`
-	IsDeveloped      bool   `gorm:"column:is_developed"`
-	ProtectedEndTime int64  `gorm:"column:protected_end_time"`
-	CoreMapID        int32  `gorm:"column:core_map_id"`
+	MapID            int32  `gorm:"column:map_id;primaryKey;comment:地图格子ID"`
+	ElementType      int32  `gorm:"column:element_type;comment:元素类型(地形/资源)"`
+	ConfigID         uint32 `gorm:"column:config_id;comment:元素配置ID"`
+	Level            int32  `gorm:"column:level;comment:元素等级"`
+	ServerID         uint32 `gorm:"column:server_id;comment:所属服务器ID"`
+	OwnerID          uint64 `gorm:"column:owner_id;comment:归属角色ID(0=无主)"`
+	IsDeveloped      bool   `gorm:"column:is_developed;comment:是否已开发"`
+	ProtectedEndTime int64  `gorm:"column:protected_end_time;comment:保护期结束时间"`
+	CoreMapID        int32  `gorm:"column:core_map_id;comment:所属主城核心格ID"`
 }
 
 func (MapInfoDB) TableName() string { return "map_data" }

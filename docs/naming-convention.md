@@ -66,3 +66,22 @@ march.info.st.go          — 行军 → 信息 → 结构体
 | 文件名 | `{domain}.{concept}.{suffix}.go` |
 | 类型后缀 | `.st` / `.func` / `.var` / `.const` / `.if` |
 | 文件扩展名 | `.go` |
+
+---
+
+## GORM 模型字段注释
+
+**所有 GORM 模型的每个持久化字段，gorm tag 必须带 `comment:`（含义写进 DB 列备注，供 SQL 查询/工具直接可读）。**
+
+```go
+// ✅ 正确
+RoleID uint64 `gorm:"column:role_id;type:bigint(20);not null;comment:角色ID"`
+
+// ❌ 错误：只有 Go 注释、没有 comment:，DB 列无备注
+RoleID uint64 `gorm:"column:role_id;type:bigint(20);not null"` // 角色ID
+```
+
+- 新增字段 / 新模型时**必须同步补 `comment:`**（不能只写 Go `//` 注释）。
+- `models.ModelBase`（id/created_at/updated_at）已带注释，直接内嵌即可。
+- 全大写 `COMMENT:` 与 `comment:` 等价（GORM 会归一化 tag key），统一用 `comment:` 小写。
+- 注意：GORM `AutoMigrate` 不会给**已存在**的列补/改备注——改模型备注后需 DROP 表重建（或手写 `ALTER TABLE ... MODIFY COLUMN ... COMMENT`）。

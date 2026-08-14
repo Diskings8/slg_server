@@ -32,8 +32,8 @@ func NewRecruitData() RoleRecruitData {
 // RoleRecruit 角色抽卡持久化（每角色一行）
 type RoleRecruit struct {
 	models.ModelBase
-	RoleID uint64          `gorm:"column:role_id;type:bigint(20);not null;uniqueIndex:idx_role_recruit"` // 角色ID
-	Data   RoleRecruitData `gorm:"column:data;serializer:json;type:json;not null"`                       // 抽卡数据（整包）
+	RoleID uint64          `gorm:"column:role_id;type:bigint(20);not null;uniqueIndex:idx_role_recruit;comment:角色ID"` // 角色ID
+	Data   RoleRecruitData `gorm:"column:data;serializer:json;type:json;not null;comment:抽卡数据(整包JSON)"`             // 抽卡数据（整包）
 }
 
 func (RoleRecruit) TableName() string {

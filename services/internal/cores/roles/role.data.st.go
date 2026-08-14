@@ -15,14 +15,14 @@ import (
 var _ common_declarations.DataI = &Data{}
 
 type Data struct {
-	RoleID uint64
+	RoleID uint64 `gorm:"primaryKey;comment:角色ID"`
 	// Queue 地图搜索私有队列（运行时缓存，非业务持久化字段）；map 类型 GORM 无法映射为列，
 	// 标记 gorm:"-" 跳过，避免 role_data AutoMigrate/Save 失败
 	Queue map[int32][]*GenerateQueue `gorm:"-"`
 	// Brief 角色简略信息（嵌套 proto 结构，GORM 无法直接映射列）；标记 gorm:"-" 跳过。
 	// loader 总是先 NewRoleDataInfo 初始化，故运行期 Brief 非 nil；跨重启不持久化，由 game 侧同步。
 	Brief           *Brief `gorm:"-"`
-	LastConnectTime int64
+	LastConnectTime int64  `gorm:"comment:最后连接时间"`
 	copyLock        *sync.RWMutex
 	src             *Data
 }

@@ -18,6 +18,20 @@ db:
     port: 3306
     db_name: "game_db" # 基础名，实际库为 game_db_<instance>（见 DsnWithInstance）
     params: "charset=utf8mb4&parseTime=True&loc=Local"
+  worldmap:
+    user: "root"
+    password: "123456"
+    host: "127.0.0.1"
+    port: 3306
+    db_name: "worldmap_db"
+    params: "charset=utf8mb4&parseTime=True&loc=Local"
+  battle_record:
+    user: "root"
+    password: "123456"
+    host: "127.0.0.1"
+    port: 3306
+    db_name: "battle_record_db"
+    params: "charset=utf8mb4&parseTime=True&loc=Local"
 
 cache:
   prefix: "slg-dev"

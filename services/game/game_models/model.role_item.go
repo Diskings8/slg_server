@@ -11,11 +11,11 @@ const role_item = "role_item"
 // RoleItem 角色道具（背包）
 type RoleItem struct {
 	models.ModelBase
-	RoleID      uint64               `gorm:"column:role_id;type:bigint(20);not null;uniqueIndex:idx_role_item,priority:1"`
-	ConfigID    pb_confs.ItemID      `gorm:"column:config_id;type:int(11);not null;uniqueIndex:idx_role_item,priority:2"`
-	ItemType    pb_confs.ItemType    `gorm:"column:item_type;type:int(11);not null;default:0;index"`
-	ItemSubType pb_confs.ItemSubType `gorm:"column:item_sub_type;type:int(11);not null;default:0;index"`
-	Count       int64                `gorm:"column:count;type:bigint(20);not null;default:0"`
+	RoleID      uint64               `gorm:"column:role_id;type:bigint(20);not null;uniqueIndex:idx_role_item,priority:1;comment:角色ID"`
+	ConfigID    pb_confs.ItemID      `gorm:"column:config_id;type:int(11);not null;uniqueIndex:idx_role_item,priority:2;comment:道具配置ID"`
+	ItemType    pb_confs.ItemType    `gorm:"column:item_type;type:int(11);not null;default:0;index;comment:道具类型"`
+	ItemSubType pb_confs.ItemSubType `gorm:"column:item_sub_type;type:int(11);not null;default:0;index;comment:道具子类型"`
+	Count       int64                `gorm:"column:count;type:bigint(20);not null;default:0;comment:数量"`
 }
 
 func (RoleItem) TableName() string {

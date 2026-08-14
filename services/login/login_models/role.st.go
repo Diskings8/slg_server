@@ -8,12 +8,12 @@ const roleTable = "login_role"
 // 游戏内的角色数据（出生点/主城/属性等）在 game_db_0，这里只存"账号 × 区服 × 角色"映射，
 // 供登录构建角色列表、进入区服时校验归属。
 type Role struct {
-	RoleID    uint64 `gorm:"column:role_id;type:bigint(20);primary_key;not null"` // 游戏内角色 id（login 分配，全局唯一）
-	AccountID uint64 `gorm:"column:account_id;type:bigint(20);not null;uniqueIndex:uk_account_server,priority:1;index:idx_account"`
-	ServerID  uint32 `gorm:"column:server_id;type:int(11);not null;uniqueIndex:uk_account_server,priority:2;uniqueIndex:uk_server_name,priority:1"`
-	RoleName  string `gorm:"column:role_name;type:varchar(64);not null;uniqueIndex:uk_server_name,priority:2"`
-	CreatedAt int64  `gorm:"column:created_at;type:bigint(20);not null"`
-	UpdatedAt int64  `gorm:"column:updated_at;type:bigint(20);not null"`
+	RoleID    uint64 `gorm:"column:role_id;type:bigint(20);primary_key;not null;comment:游戏内角色ID(login分配,全局唯一)"` // 游戏内角色 id（login 分配，全局唯一）
+	AccountID uint64 `gorm:"column:account_id;type:bigint(20);not null;uniqueIndex:uk_account_server,priority:1;index:idx_account;comment:账户ID"`
+	ServerID  uint32 `gorm:"column:server_id;type:int(11);not null;uniqueIndex:uk_account_server,priority:2;uniqueIndex:uk_server_name,priority:1;comment:区服ID"`
+	RoleName  string `gorm:"column:role_name;type:varchar(64);not null;uniqueIndex:uk_server_name,priority:2;comment:角色名"`
+	CreatedAt int64  `gorm:"column:created_at;type:bigint(20);not null;comment:创建时间"`
+	UpdatedAt int64  `gorm:"column:updated_at;type:bigint(20);not null;comment:更新时间"`
 }
 
 func (Role) TableName() string { return roleTable }

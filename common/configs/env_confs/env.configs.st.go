@@ -34,10 +34,12 @@ func (d DBInstance) DsnWithInstance(instance string) string {
 	return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?%s", d.User, d.Password, d.Host, d.Port, dbName, d.Params)
 }
 
-// DBConfig 数据库配置
+// DBConfig 数据库配置（每个节点独立库：数据库按服务隔离）
 type DBConfig struct {
-	Common DBInstance `yaml:"common" toml:"common"`
-	Game   DBInstance `yaml:"game" toml:"game"`
+	Common       DBInstance `yaml:"common" toml:"common"`        // login/account
+	Game         DBInstance `yaml:"game" toml:"game"`            // game 节点
+	Worldmap     DBInstance `yaml:"worldmap" toml:"worldmap"`    // worldmap 节点（地图/行军/出生）
+	BattleRecord DBInstance `yaml:"battle_record" toml:"battle_record"` // battle_record 节点（战报）
 }
 
 // ─── 缓存 ────────────────────────────────────────────────────────

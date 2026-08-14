@@ -12,11 +12,11 @@ const accountTable = "login_account"
 // 渠道侧的原生账号（SDK UID / openid 等）记录在 login_channel_account 绑定表，不占用本表。
 type Account struct {
 	models.ModelBase         // ID(account_id) / CreatedAt / UpdatedAt
-	AccountName       string `gorm:"column:account_name;type:varchar(64);not null;uniqueIndex:uk_account_name"`
-	PasswordHash      string `gorm:"column:password_hash;type:varchar(64);not null"`
-	Status            int32  `gorm:"column:status;type:int(11);not null;default:0"`
-	LastLoginServerID uint32 `gorm:"column:last_login_server_id;type:int(11);not null;default:0"`
-	LastLoginRoleID   uint64 `gorm:"column:last_login_role_id;type:bigint(20);not null;default:0"`
+	AccountName       string `gorm:"column:account_name;type:varchar(64);not null;uniqueIndex:uk_account_name;comment:游戏自有账号名(全局唯一)"`
+	PasswordHash      string `gorm:"column:password_hash;type:varchar(64);not null;comment:密码哈希"`
+	Status            int32  `gorm:"column:status;type:int(11);not null;default:0;comment:账号状态"`
+	LastLoginServerID uint32 `gorm:"column:last_login_server_id;type:int(11);not null;default:0;comment:最后登录区服ID"`
+	LastLoginRoleID   uint64 `gorm:"column:last_login_role_id;type:bigint(20);not null;default:0;comment:最后登录角色ID"`
 }
 
 func (Account) TableName() string { return accountTable }

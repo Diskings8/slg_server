@@ -25,6 +25,22 @@ port = 3306
 db_name = "game_db"
 params = "charset=utf8mb4&parseTime=True&loc=Local"
 
+[db.worldmap]
+user = "root"
+password = "123456"
+host = "127.0.0.1"
+port = 3306
+db_name = "worldmap_db"
+params = "charset=utf8mb4&parseTime=True&loc=Local"
+
+[db.battle_record]
+user = "root"
+password = "123456"
+host = "127.0.0.1"
+port = 3306
+db_name = "battle_record_db"
+params = "charset=utf8mb4&parseTime=True&loc=Local"
+
 [cache]
 prefix = "slg-dev"
 address = ["127.0.0.1:6379"]
