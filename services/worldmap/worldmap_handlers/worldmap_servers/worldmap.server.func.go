@@ -98,6 +98,15 @@ func (s *WorldMapServer) CreateMarch(ctx context.Context, req *pb_worldmap.Creat
 		marchInfo.Team = &marchs.Team{Slots: []*pb_battle.TeamSlotInfo{}}
 	}
 
+	// 扫荡行军：出发前记录目标地块的事件ID（到达时校对；无事件则走守军PvE）
+	if marchInfo.MarchType == cores_declarations.MarchTypeSweep {
+		if info, ok := s.engine.MapDataManager.GetMapInfo(marchInfo.ToMapID); ok {
+			if ev := info.GetOverlayEvent(); ev != nil {
+				marchInfo.TargetEventID = ev.EventID
+			}
+		}
+	}
+
 	// 走 MarchHandler.CreateMarch：严格校验（队伍可战斗/地块存在/攻击目标合法/开发归属）
 	// → 持久化 → 挂 MapAttribute → AOI 注册 → 视野推送。此前直接调 MarchInfoManager.CreateMarch，
 	// 既绕过校验层，也缺 AOI 注册（新行军不出现在任何视野屏幕）。

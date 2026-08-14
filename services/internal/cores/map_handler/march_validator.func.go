@@ -2,6 +2,7 @@ package map_handler
 
 import (
 	"errors"
+	"time"
 
 	"server.slg.com/services/internal/cores/cores_declarations"
 	"server.slg.com/services/internal/cores/map_managers"
@@ -47,6 +48,10 @@ func ValidateCreateMarch(mm *map_managers.MapManager, info *marchs.MarchInfo) (*
 		if toInfo.GetOwnerID() == 0 && toInfo.GetOverlayBuilding() == nil {
 			return nil, errors.New("目标地块无效")
 		}
+		// 目标处于保护期内（地块刚被释放）→ 不可攻击
+		if toInfo.GetProtectedEndTime() > time.Now().Unix() {
+			return nil, errors.New("目标地块保护期内")
+		}
 	case cores_declarations.MarchTypeDevelop:
 		// 开发：仅自己的地可开发
 		if toInfo.GetOwnerID() != info.GetFromRoleID() {
@@ -56,7 +61,6 @@ func ValidateCreateMarch(mm *map_managers.MapManager, info *marchs.MarchInfo) (*
 		// 其他类型（assist/sweep/strategy 等）暂不在此强校验
 	}
 
-	// TODO: 检查目标是否在保护期内
 	// TODO: 检查体力
 
 	return &CreateMarchCtx{

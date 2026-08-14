@@ -2,6 +2,7 @@ package battle_record_models
 
 import (
 	"server.slg.com/common/models"
+	_ "server.slg.com/common/utils/gormserializers" // 注册 jsonslice 序列化器
 )
 
 const battleRecordTable = "battle_record"
@@ -17,8 +18,8 @@ type BattleRecord struct {
 	MapID            int32    `gorm:"column:map_id;type:int(11);not null;comment:目标地块"` // 目标地块
 	AttackerRoleID   uint64   `gorm:"column:attacker_role_id;type:bigint(20);not null;comment:攻击方角色ID"`
 	AttackerUnionID  uint64   `gorm:"column:attacker_union_id;type:bigint(20);not null;comment:攻击方联盟ID"`
-	DefenderRoleIDs  []uint64 `gorm:"serializer:json;type:json;not null;comment:防守方角色ID列表(可多个)"` // 可多个防守方
-	DefenderUnionIDs []uint64 `gorm:"serializer:json;type:json;not null;comment:防守方联盟ID列表"`
+	DefenderRoleIDs  []uint64 `gorm:"serializer:jsonslice;type:json;not null;comment:防守方角色ID列表(可多个)"` // 可多个防守方
+	DefenderUnionIDs []uint64 `gorm:"serializer:jsonslice;type:json;not null;comment:防守方联盟ID列表"`
 	AttackerWin      bool     `gorm:"column:attacker_win;type:tinyint(1);not null;default:0;comment:攻击方是否胜利"`
 	IsOccupied       bool     `gorm:"column:is_occupied;type:tinyint(1);not null;default:0;comment:是否占领目标"`
 	BuildingDamage   uint64   `gorm:"column:building_damage;type:bigint(20);not null;default:0;comment:建筑耐久损失"`

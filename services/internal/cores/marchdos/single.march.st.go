@@ -90,7 +90,8 @@ func (m *SingleMarch) Do() error {
 
 // CallBack 召回行军
 //
-// 锁定行军 → 执行回调链 → 推送 → 持久化 → 解锁。
+// 锁定行军 → 执行回调链 → 解锁 → 推送 → 持久化。
+// 注意：必须先解锁再 UpdateMarchPush（其内部对 march RLock，持写锁下会自锁死）。
 func (m *SingleMarch) CallBack() error {
 	if m.single == nil || m.mgr == nil {
 		return nil
@@ -98,9 +99,10 @@ func (m *SingleMarch) CallBack() error {
 	if !m.single.TryLock() {
 		return cores_declarations.ErrLockFailed
 	}
-	defer m.single.Unlock()
 
 	m.BaseMarch.CallBack()
+
+	m.single.Unlock()
 
 	m.mgr.UpdateMarchPush(m.single)
 	m.mgr.GetMarchManage().Save(m.single)

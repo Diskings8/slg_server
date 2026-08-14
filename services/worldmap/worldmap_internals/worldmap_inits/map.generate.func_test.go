@@ -91,14 +91,15 @@ func TestInitMapElements_Distribution(t *testing.T) {
 		return true
 	})
 
+	// 新设计：80% 地形（按权重 45/25/10）+ 20% 资源（四种类型均匀，各 5%）
 	expected := map[int32]float64{
 		5: 45, // Terrain_1
 		6: 25, // Terrain_2
 		7: 10, // Terrain_3
-		1: 8,  // Resources_1
-		2: 6,  // Resources_2
-		3: 4,  // Resources_3
-		4: 2,  // Resources_4
+		1: 5,  // Resources_1
+		2: 5,  // Resources_2
+		3: 5,  // Resources_3
+		4: 5,  // Resources_4
 	}
 	for et, pct := range expected {
 		got := float64(stats[et]) / float64(total) * 100

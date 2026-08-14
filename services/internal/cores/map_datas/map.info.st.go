@@ -60,6 +60,19 @@ func (mi *MapInfo) GetOverlayBuilding() *map_buildings.OverlayBuilding {
 	return mi.overlayBuilding
 }
 
+// SetOverlayEvent 设置/清除地块叠加事件（事件分派清理、"审查"刷事件都走这里）
+func (mi *MapInfo) SetOverlayEvent(ev *map_events.OverlayEvent) {
+	mi.rwLock.Lock()
+	defer mi.rwLock.Unlock()
+	mi.overlayEvent = ev
+}
+
+func (mi *MapInfo) GetOverlayEvent() *map_events.OverlayEvent {
+	mi.rwLock.RLock()
+	defer mi.rwLock.RUnlock()
+	return mi.overlayEvent
+}
+
 func (mi *MapInfo) GetLevel() cores_declarations.MapLevel {
 	mi.rwLock.RLock()
 	defer mi.rwLock.RUnlock()
@@ -90,6 +103,13 @@ func (mi *MapInfo) GetIsDeveloped() bool {
 	mi.rwLock.RLock()
 	defer mi.rwLock.RUnlock()
 	return mi.isDeveloped
+}
+
+// GetProtectedEndTime 保护期结束时间（unix 秒）；0=无保护期
+func (mi *MapInfo) GetProtectedEndTime() int64 {
+	mi.rwLock.RLock()
+	defer mi.rwLock.RUnlock()
+	return mi.protectedEndTime
 }
 
 // MarkDeveloped 标记地块为已开发（开发行军胜利后调用）

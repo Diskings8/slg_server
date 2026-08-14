@@ -14,6 +14,7 @@ package main
 
 import (
 	"encoding/binary"
+	"flag"
 	"fmt"
 	"io"
 	"net"
@@ -31,12 +32,19 @@ import (
 	"server.slg.com/api/protocol/pb/pb_worldmap"
 )
 
-const marchTypeDevelop = 10005 // MarchTypeDevelop：开发自己的地，到达触发 PvE 打守军
+const (
+	marchTypeDevelop = 10005 // MarchTypeDevelop：开发自己的地，到达触发 PvE 打守军
+	marchTypeSweep    = 10003 // MarchTypeSweep：扫荡，到达有事件走事件分支，无事件打守军
+)
 
 func main() {
+	sweepMode := false
+	flag.BoolVar(&sweepMode, "sweep", false, "扫荡模式：目标选等级0格，MarchType=10003")
+	flag.Parse()
+
 	addr := "127.0.0.1:13001"
-	if len(os.Args) > 1 {
-		addr = os.Args[1]
+	if flag.NArg() > 0 {
+		addr = flag.Arg(0)
 	}
 
 	conn, err := net.DialTimeout("tcp", addr, 5*time.Second)
@@ -200,31 +208,49 @@ func main() {
 		os.Exit(1)
 	}
 
-	// 10. 在地图数据里找一块「己方、等级0（可开发，守军 level3 存在）」的格作为开发目标
+	// 10. 在地图数据里找一块「等级0」的格作为目标，优先离主城近的（缩短行程）
+	//    - 开发模式：须己方（可开发）；扫荡模式：任意（有守军即可，打守军PvE）
+	coreX, coreY := coreMapID%1000, coreMapID/1000
 	var toMapID int32
+	bestDist := int32(1<<30)
 	if err := call(conn, next(), uint32(pb_protocol.MsgID_GameMapData),
-		&pb_worldmap.MapDataReq{MapId: coreMapID, Range: 1},
+		&pb_worldmap.MapDataReq{MapId: coreMapID, Range: 2},
 		func(env *pb_common.MessagePacket) error {
 			resp := &pb_worldmap.MapDataRsp{}
 			if err := proto.Unmarshal(env.GetBody(), resp); err != nil {
 				return err
 			}
 			for _, c := range resp.GetCells() {
-				if c.GetOwnerId() == roleID && c.GetLevel() == 0 && c.GetMapId() != coreMapID {
+				if c.GetLevel() != 0 || c.GetMapId() == coreMapID {
+					continue
+				}
+				if !sweepMode && c.GetOwnerId() != roleID {
+					continue // 开发模式须己方
+				}
+				cx, cy := c.GetMapId()%1000, c.GetMapId()/1000
+				d := abs32(cx-coreX) + abs32(cy-coreY)
+				if d < bestDist {
+					bestDist = d
 					toMapID = c.GetMapId()
-					fmt.Printf("[10] 找到可开发目标格 map_id=%d\n", toMapID)
-					return nil
 				}
 			}
-			return fmt.Errorf("3x3 内未找到己方等级0的格子")
+			if toMapID == 0 {
+				return fmt.Errorf("未找到等级0的格子")
+			}
+			fmt.Printf("[10] 找到目标格 map_id=%d 距主城%d格 (sweep=%v)\n", toMapID, bestDist, sweepMode)
+			return nil
 		}); err != nil {
 		fmt.Println("找目标格失败:", err)
 		os.Exit(1)
 	}
 
-	// 11. 开发出征：From=主城核心，To=己方等级0格，MarchType=10005（开发/PvE）
+	// 11. 出征：From=主城核心，To=目标格，MarchType=10005（开发）或 10003（扫荡）
+	marchType := int32(marchTypeDevelop)
+	if sweepMode {
+		marchType = marchTypeSweep
+	}
 	if err := call(conn, next(), uint32(pb_protocol.MsgID_GameMarchCreate),
-		&pb_maps_march.MarchCreateReq{FromMapId: coreMapID, ToMapId: toMapID, MarchType: marchTypeDevelop, FormationId: formationID},
+		&pb_maps_march.MarchCreateReq{FromMapId: coreMapID, ToMapId: toMapID, MarchType: marchType, FormationId: formationID},
 		func(env *pb_common.MessagePacket) error {
 			resp := &pb_maps_march.MarchCreateResp{}
 			if err := proto.Unmarshal(env.GetBody(), resp); err != nil {
@@ -241,6 +267,13 @@ func main() {
 	fmt.Println("[12] 等待行军到达并结算战斗（观察 worldmap/battle 日志）...")
 	time.Sleep(15 * time.Second)
 	fmt.Println("== 流程结束，请检查服务端日志与 battle_record/redis stream")
+}
+
+func abs32(x int32) int32 {
+	if x < 0 {
+		return -x
+	}
+	return x
 }
 
 // packFrame 组 TCP 帧：12 字节头 + body

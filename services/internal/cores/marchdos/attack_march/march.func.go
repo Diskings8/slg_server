@@ -1,6 +1,8 @@
 package attack_march
 
 import (
+	"time"
+
 	"go.uber.org/zap"
 	"server.slg.com/api/protocol/pb/pb_battle"
 	"server.slg.com/api/protocol/pb/pb_maps_march"
@@ -108,7 +110,11 @@ func checkTargetLegality(mgr *map_managers.MapManager, info *marchs.MarchInfo) b
 		return false
 	}
 
-	// TODO: 检查目标是否在保护期内
+	// 目标处于保护期内（地块刚被释放，战乱地外）→ 不可攻击
+	if toMapInfo.GetProtectedEndTime() > time.Now().Unix() {
+		return false
+	}
+
 	// TODO: 校验是否是盟友（需接入联盟数据）
 
 	return true

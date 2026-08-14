@@ -33,7 +33,7 @@ func NewRecruitData() RoleRecruitData {
 type RoleRecruit struct {
 	models.ModelBase
 	RoleID uint64          `gorm:"column:role_id;type:bigint(20);not null;uniqueIndex:idx_role_recruit;comment:角色ID"` // 角色ID
-	Data   RoleRecruitData `gorm:"column:data;serializer:json;type:json;not null;comment:抽卡数据(整包JSON)"`             // 抽卡数据（整包）
+	Data   RoleRecruitData `gorm:"column:data;serializer:jsonslice;type:json;not null;comment:抽卡数据(整包JSON)"`             // 抽卡数据（整包）
 }
 
 func (RoleRecruit) TableName() string {

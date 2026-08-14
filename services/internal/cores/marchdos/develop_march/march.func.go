@@ -113,6 +113,12 @@ func checkDevelopable(mgr *map_managers.MapManager, info *marchs.MarchInfo) bool
 		return false
 	}
 
+	curLevel := int32(toMapInfo.GetLevel())
+	// 仅 lv2~lv4 资源地可开发（开发后统一 +3 → lv5~lv7）；地形(lv0)/lv1/lv5+ 不可开发
+	if curLevel < 2 || curLevel > 4 {
+		return false
+	}
+
 	// 目标等级（当前+3）必须有守军配置 → 可开发
 	guardFunc := mgr.GetGuardConfigFunc()
 	if guardFunc == nil {
@@ -121,7 +127,6 @@ func checkDevelopable(mgr *map_managers.MapManager, info *marchs.MarchInfo) bool
 		return false
 	}
 
-	curLevel := int32(toMapInfo.GetLevel())
 	targetLevel := curLevel + int32(developStep)
 	if slots := guardFunc(cores_declarations.MapLevel(targetLevel)); len(slots) == 0 {
 		return false

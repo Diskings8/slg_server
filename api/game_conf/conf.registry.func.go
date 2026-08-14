@@ -21,6 +21,7 @@ var allTables = []tableReg{
 	{"battle", func(gc *GameConf) table.Table { return gc.Battle }},
 	{"gacha", func(gc *GameConf) table.Table { return gc.Gacha }},
 	{"guard", func(gc *GameConf) table.Table { return gc.Guard }},
+	{"resource", func(gc *GameConf) table.Table { return gc.Resource }},
 	{"soldier", func(gc *GameConf) table.Table { return gc.Soldier }},
 	{"building", func(gc *GameConf) table.Table { return gc.Building }},
 }

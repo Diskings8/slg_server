@@ -8,6 +8,8 @@ import (
 	"server.slg.com/api/protocol/pb/pb_maps_march"
 	"server.slg.com/api/protocol/pb/pb_redis_stream"
 	"server.slg.com/services/internal/cores/cores_declarations"
+
+	_ "server.slg.com/common/utils/gormserializers" // 注册 jsonslice 序列化器
 )
 
 var _ cores_declarations.MarchInfoI = (*MarchInfo)(nil)
@@ -17,7 +19,7 @@ type MarchInfo struct {
 	RwLock          sync.RWMutex                     `gorm:"-"`
 	MarchID         cores_declarations.MarchID       `gorm:"primaryKey;COMMENT:行军ID;"`
 	MarchType       cores_declarations.MarchType     `gorm:"not null;COMMENT:行军类型;"`
-	Team            *Team                            `gorm:"serializer:json;type:json;not null;COMMENT:部队数据;"`
+	Team            *Team                            `gorm:"serializer:jsonslice;type:json;not null;COMMENT:部队数据;"`
 	FromServerID    uint32                           `gorm:"not null;COMMENT:所属服务器;"`
 	ToServerID      uint32                           `gorm:"not null;COMMENT:目标服务器;"`
 	FromRoleID      uint64                           `gorm:"not null;COMMENT:归属者角色ID;"` // 当前归属者角色ID
@@ -26,6 +28,7 @@ type MarchInfo struct {
 	TransitMapID    cores_declarations.MapID         `gorm:"default:-1;COMMENT:本次行军实际出发地（用于召回）；-1 时回退到 SrcFromMapID;"`
 	FromMapID       cores_declarations.MapID         `gorm:"not null;COMMENT:当前行军起始地图ID;"`
 	ToMapID         cores_declarations.MapID         `gorm:"not null;COMMENT:当前行军目标地图ID;"`
+	TargetEventID   uint64                           `gorm:"not null;default:0;COMMENT:扫荡目标事件ID(0=无事件);"` // 扫荡创建时记录目标 overlayEvent 的事件ID，到达时校对
 	MarchState      pb_maps_march.MarchState         `gorm:"not null;COMMENT:行军状态;"`
 	StartTimeUx     int64                            `gorm:"not null;COMMENT:行军开始时间;"`
 	EndTimeUx       int64                            `gorm:"not null;COMMENT:行军结束时间;"`
@@ -33,8 +36,8 @@ type MarchInfo struct {
 	UnionID         uint64                           `gorm:"not null;COMMENT:同盟ID;"`
 	BaseMarchSpeed  uint32                           `gorm:"not null;COMMENT:基础行军速度;"`
 	FinalMarchSpeed uint32                           `gorm:"not null;COMMENT:最后行军速度;"`
-	ActionUse       []cores_declarations.AnyThingUse `gorm:"serializer:json;type:json;not null;COMMENT:行军消耗;"`
-	Path            []cores_declarations.MapID       `gorm:"serializer:json;type:json;not null;COMMENT:路线;"`
+	ActionUse       []cores_declarations.AnyThingUse `gorm:"serializer:jsonslice;type:json;not null;COMMENT:行军消耗;"`
+	Path            []cores_declarations.MapID       `gorm:"serializer:jsonslice;type:json;not null;COMMENT:路线;"`
 	PVPWinCount     uint32                           `gorm:"not null;COMMENT:PVP连胜数量;"`
 	PVEWinCount     uint32                           `gorm:"not null;COMMENT:PVE连胜数量;"`
 	VirtualData     uint64                           `gorm:"not null;COMMENT:虚拟行军数据;"`
@@ -190,6 +193,12 @@ func (mi *MarchInfo) GetMarchState() pb_maps_march.MarchState {
 	mi.RwLock.RLock()
 	defer mi.RwLock.RUnlock()
 	return mi.MarchState
+}
+
+func (mi *MarchInfo) GetTargetEventID() uint64 {
+	mi.RwLock.RLock()
+	defer mi.RwLock.RUnlock()
+	return mi.TargetEventID
 }
 
 func (mi *MarchInfo) GetFromRoleID() uint64 {

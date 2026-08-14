@@ -16,6 +16,7 @@ type CacheI interface {
 	Expire(background context.Context, key string, ttl time.Duration) *redis.BoolCmd
 	Set(background context.Context, key string, b any, ttl time.Duration) *redis.StatusCmd
 	SAdd(background context.Context, key string, member ...any) *redis.IntCmd
+	SRem(background context.Context, key string, members ...any) *redis.IntCmd // poller 写库成功后从脏队列移除
 	Get(background context.Context, key string) *redis.StringCmd
 
 	// Pub/Sub：login 发布进服广播，gateway 订阅踢旧连接

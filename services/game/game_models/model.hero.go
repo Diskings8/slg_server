@@ -5,6 +5,7 @@ import (
 	"server.slg.com/api/protocol/pb/pb_equip"
 	"server.slg.com/api/protocol/pb/pb_skill"
 	"server.slg.com/common/models"
+	_ "server.slg.com/common/utils/gormserializers" // 注册 jsonslice 序列化器
 )
 
 const role_hero = "role_hero"
@@ -18,10 +19,10 @@ type RoleHero struct {
 	Level        uint32  `gorm:"column:level;type:int(11) unsigned;not null;default:1;comment:等级"`
 	Exp          uint32  `gorm:"column:exp;type:int(11) unsigned;not null;default:0;comment:经验"`
 	AttrPoint    uint32  `gorm:"column:attr_point;type:int(11) unsigned;not null;default:0;comment:自由属性点(每10级升级获得)"` // 自由属性点（每10级升级获得）
-	Cultivates   []*pb_cultivate.Cultivate  `gorm:"serializer:json;type:json;not null;comment:养成属性(攻/防/智/移/迁)"`
-	EquipSkills  []*pb_skill.Skill      `gorm:"serializer:json;type:json;not null;comment:已装配技能"`
-	EquipWeapons []*pb_equip.Weapon     `gorm:"serializer:json;type:json;not null;comment:已装配武器"`
-	Troops       []*pb_equip.Troop      `gorm:"serializer:json;type:json;not null;comment:兵种"`
+	Cultivates   []*pb_cultivate.Cultivate  `gorm:"serializer:jsonslice;type:json;not null;comment:养成属性(攻/防/智/移/迁)"`
+	EquipSkills  []*pb_skill.Skill      `gorm:"serializer:jsonslice;type:json;not null;comment:已装配技能"`
+	EquipWeapons []*pb_equip.Weapon     `gorm:"serializer:jsonslice;type:json;not null;comment:已装配武器"`
+	Troops       []*pb_equip.Troop      `gorm:"serializer:jsonslice;type:json;not null;comment:兵种"`
 	CurTroopTypeID int32                `gorm:"column:cur_troop_type_id;type:int(11);not null;default:0;comment:当前兵种类型(基础或已转化派生)"` // 当前兵种类型（基础或已转化派生）
 	IsLocked     bool                   `gorm:"column:is_locked;type:tinyint(1);not null;default:0;comment:是否锁定"`
 	// IsAwakened 英雄是否已觉醒（第三技能槽位解锁条件）

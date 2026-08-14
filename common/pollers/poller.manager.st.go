@@ -15,6 +15,7 @@ import (
 	"server.slg.com/common/loggers"
 	"server.slg.com/common/utils/asyncsave_entity"
 	"server.slg.com/common/utils/hashmaps"
+	"server.slg.com/common/utils/util_jsons"
 	"server.slg.com/common/utils/util_randoms"
 )
 
@@ -115,7 +116,26 @@ func (p *PollerManager[M]) saveToDB() {
 	}
 }
 
+// syncToDB 将脏队列中的一条数据写入数据库。
+//
+// key 是 SaveDo 写入缓存的完整缓存键（形如 prefix:pollers:{tag}:{id}）：
+//  1. 从缓存读回序列化数据
+//  2. 反序列化为 M
+//  3. 调 data.Save(isDelete) 落库（各模块 DBSave 由 M 的实现负责）
+//  4. 写库成功从脏队列 SRem 移除（否则每次 cron 都会重复抽样保存）
 func (p *PollerManager[M]) syncToDB(key string) error {
+	b, err := cacheconn.Get().Get(p.ctx, key).Bytes()
+	if err != nil {
+		return err
+	}
+	data := p.newFunc()
+	if err := util_jsons.Unmarshal(b, data); err != nil {
+		return err
+	}
+	if err := data.Save(data.IsDelete()); err != nil {
+		return err
+	}
+	cacheconn.Get().SRem(p.ctx, p.cacheQueueKey(), key)
 	return nil
 }
 

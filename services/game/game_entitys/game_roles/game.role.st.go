@@ -7,6 +7,7 @@ import (
 
 	"server.slg.com/api/protocol/pb/pb_gateway"
 	"server.slg.com/common/common_declarations"
+	"server.slg.com/common/conns/dbconn"
 	"server.slg.com/common/utils/util_jsons"
 	"server.slg.com/services/game/game_entitys/game_roles/cultivate_costs"
 	"server.slg.com/services/game/game_entitys/game_roles/hero_skillcollections"
@@ -74,7 +75,9 @@ func (r *Role) Save(isDelete bool) error {
 	if isDelete {
 		return nil
 	}
-	return r.DBSave(nil)
+	// 此前传 nil 导致 DBSave 必报 "writeDB is nil" → poller 异步保存/淘汰保存全部失效，
+	// 建角后的改动（抽卡/上阵/建筑）永不落库。这里兜底取全局写库句柄。
+	return r.DBSave(dbconn.GetWriteDbConn())
 }
 
 // IsDelete 是否已标记为删除
