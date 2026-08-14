@@ -8,6 +8,7 @@ import (
 	"server.slg.com/api/protocol/pb/pb_item"
 	"server.slg.com/api/protocol/pb/pb_maps_march"
 	"server.slg.com/api/protocol/pb/pb_protocol"
+	"server.slg.com/api/protocol/pb/pb_review"
 	"server.slg.com/api/protocol/pb/pb_recruit"
 	"server.slg.com/api/protocol/pb/pb_skill"
 	"server.slg.com/api/protocol/pb/pb_worldmap"
@@ -20,6 +21,7 @@ import (
 	"server.slg.com/services/game/game_handlers/game_streams/map_handler"
 	"server.slg.com/services/game/game_handlers/game_streams/march_handler"
 	"server.slg.com/services/game/game_handlers/game_streams/recruit_handler"
+	"server.slg.com/services/game/game_handlers/game_streams/review_handler"
 )
 
 // 协议注册 — 手工维护，后续可由 game_generates 自动生成
@@ -189,5 +191,22 @@ func init() {
 		F:    Wrap(attr_handler.HandlerAttrList),
 		Req:  &pb_attr.AttrListReq{},
 		Resp: &pb_attr.AttrListResp{},
+	})
+
+	// ===== 审查 (1000038~1000039) =====
+	RegisterProto(pb_protocol.MsgID_GameReviewStart, &ProtoHandler{
+		F:    Wrap(review_handler.HandlerReviewStart),
+		Req:  &pb_review.ReviewStartReq{},
+		Resp: &pb_review.ReviewStartResp{},
+	})
+	RegisterProto(pb_protocol.MsgID_GameReviewTaskSelect, &ProtoHandler{
+		F:    Wrap(review_handler.HandlerReviewTaskSelect),
+		Req:  &pb_review.ReviewTaskSelectReq{},
+		Resp: &pb_review.ReviewTaskSelectResp{},
+	})
+	RegisterProto(pb_protocol.MsgID_GameEventClick, &ProtoHandler{
+		F:    Wrap(review_handler.HandlerEventClick),
+		Req:  &pb_worldmap.EventClickReq{},
+		Resp: &pb_worldmap.EventClickRsp{},
 	})
 }

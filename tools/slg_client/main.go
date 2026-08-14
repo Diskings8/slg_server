@@ -29,6 +29,7 @@ import (
 	"server.slg.com/api/protocol/pb/pb_maps_march"
 	"server.slg.com/api/protocol/pb/pb_protocol"
 	"server.slg.com/api/protocol/pb/pb_recruit"
+	"server.slg.com/api/protocol/pb/pb_review"
 	"server.slg.com/api/protocol/pb/pb_worldmap"
 )
 
@@ -39,7 +40,9 @@ const (
 
 func main() {
 	sweepMode := false
+	reviewMode := false
 	flag.BoolVar(&sweepMode, "sweep", false, "扫荡模式：目标选等级0格，MarchType=10003")
+	flag.BoolVar(&reviewMode, "review", false, "审查模式：触发审查 + 选择任务刷事件")
 	flag.Parse()
 
 	addr := "127.0.0.1:13001"
@@ -266,6 +269,65 @@ func main() {
 	// 12. 等待行军到达 + worldmap 自动结算战斗（相邻格耗时 ~10s）
 	fmt.Println("[12] 等待行军到达并结算战斗（观察 worldmap/battle 日志）...")
 	time.Sleep(15 * time.Second)
+
+	// 13. 审查玩法（-review）：触发审查 + 选择任务刷事件
+	if reviewMode {
+		var tasks []*pb_review.ReviewTaskInfo
+		if err := call(conn, next(), uint32(pb_protocol.MsgID_GameReviewStart), &pb_review.ReviewStartReq{},
+			func(env *pb_common.MessagePacket) error {
+				resp := &pb_review.ReviewStartResp{}
+				if err := proto.Unmarshal(env.GetBody(), resp); err != nil {
+					return err
+				}
+				fmt.Printf("[R1] 审查开始 chances=%d exp=%d level=%d expGained=%d leveledUp=%v tasks=%d\n",
+					resp.Chances, resp.Exp, resp.Level, resp.ExpGained, resp.LeveledUp, len(resp.Tasks))
+				tasks = resp.Tasks
+				return nil
+			}); err != nil {
+			fmt.Println("审查失败:", err)
+		}
+
+		// 选一个点击类任务（采集 type=1 / 寻宝 type=3），刷事件后点 4 次完成
+		for _, task := range tasks {
+			if task.EventType == 1 || task.EventType == 3 { // 采集/寻宝 = 点击
+				var clickMapID int32
+				if err := call(conn, next(), uint32(pb_protocol.MsgID_GameReviewTaskSelect),
+					&pb_review.ReviewTaskSelectReq{TaskId: task.TaskId},
+					func(env *pb_common.MessagePacket) error {
+						resp := &pb_review.ReviewTaskSelectResp{}
+						if err := proto.Unmarshal(env.GetBody(), resp); err != nil {
+							return err
+						}
+						clickMapID = resp.MapId
+						fmt.Printf("[R2] 选点击任务 type=%d 刷事件 map_id=%d\n", task.EventType, resp.MapId)
+						return nil
+					}); err != nil {
+					fmt.Println("选择任务失败:", err)
+				}
+				// 点 4 次（每次 +26%，超 100% 完成）
+				if clickMapID != 0 {
+					for i := 0; i < 4; i++ {
+						if err := call(conn, next(), uint32(pb_protocol.MsgID_GameEventClick),
+							&pb_worldmap.EventClickReq{MapId: clickMapID},
+							func(env *pb_common.MessagePacket) error {
+								resp := &pb_worldmap.EventClickRsp{}
+								if err := proto.Unmarshal(env.GetBody(), resp); err != nil {
+									return err
+								}
+								fmt.Printf("[R3] 点击进度=%d completed=%v event_type=%d\n",
+									resp.Progress, resp.Completed, resp.EventType)
+								return nil
+							}); err != nil {
+						fmt.Println("点击失败:", err)
+						break
+						}
+					}
+				}
+				break
+			}
+		}
+	}
+
 	fmt.Println("== 流程结束，请检查服务端日志与 battle_record/redis stream")
 }
 

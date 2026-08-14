@@ -9,6 +9,7 @@ import (
 	"server.slg.com/api/game_conf/hero"
 	"server.slg.com/api/game_conf/item"
 	"server.slg.com/api/game_conf/resource"
+	"server.slg.com/api/game_conf/review"
 	"server.slg.com/api/game_conf/skill"
 	"server.slg.com/api/game_conf/soldier"
 	"server.slg.com/api/game_conf/troop"
@@ -33,6 +34,7 @@ type GameConf struct {
 	Exchange *exchange.Conf
 	Guard    *guard.Conf
 	Resource *resource.Conf
+	Review   *review.Conf
 	Soldier  *soldier.Conf
 	Building *building.Conf
 }

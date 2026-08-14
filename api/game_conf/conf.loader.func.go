@@ -13,6 +13,7 @@ import (
 	"server.slg.com/api/game_conf/hero"
 	"server.slg.com/api/game_conf/item"
 	"server.slg.com/api/game_conf/resource"
+	"server.slg.com/api/game_conf/review"
 	"server.slg.com/api/game_conf/skill"
 	"server.slg.com/api/game_conf/soldier"
 	"server.slg.com/api/game_conf/table"
@@ -34,6 +35,7 @@ func newEmbedded() *GameConf {
 		Exchange: exchange.New(),
 		Guard:    guard.New(),
 		Resource: resource.New(),
+		Review:   review.New(),
 		Soldier:  soldier.New(),
 		Building: building.New(),
 	}

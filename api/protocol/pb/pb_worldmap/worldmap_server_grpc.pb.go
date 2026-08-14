@@ -122,11 +122,13 @@ var WorldMapService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	WorldMapHandler_CreateMarch_FullMethodName = "/pb_worldmap.WorldMapHandler/CreateMarch"
-	WorldMapHandler_CancelMarch_FullMethodName = "/pb_worldmap.WorldMapHandler/CancelMarch"
-	WorldMapHandler_MarchInfo_FullMethodName   = "/pb_worldmap.WorldMapHandler/MarchInfo"
-	WorldMapHandler_MapData_FullMethodName     = "/pb_worldmap.WorldMapHandler/MapData"
-	WorldMapHandler_CreateRole_FullMethodName  = "/pb_worldmap.WorldMapHandler/CreateRole"
+	WorldMapHandler_CreateMarch_FullMethodName      = "/pb_worldmap.WorldMapHandler/CreateMarch"
+	WorldMapHandler_CancelMarch_FullMethodName      = "/pb_worldmap.WorldMapHandler/CancelMarch"
+	WorldMapHandler_MarchInfo_FullMethodName        = "/pb_worldmap.WorldMapHandler/MarchInfo"
+	WorldMapHandler_MapData_FullMethodName          = "/pb_worldmap.WorldMapHandler/MapData"
+	WorldMapHandler_CreateRole_FullMethodName       = "/pb_worldmap.WorldMapHandler/CreateRole"
+	WorldMapHandler_SpawnReviewEvent_FullMethodName = "/pb_worldmap.WorldMapHandler/SpawnReviewEvent"
+	WorldMapHandler_EventClick_FullMethodName       = "/pb_worldmap.WorldMapHandler/EventClick"
 )
 
 // WorldMapHandlerClient is the client API for WorldMapHandler service.
@@ -143,6 +145,10 @@ type WorldMapHandlerClient interface {
 	MapData(ctx context.Context, in *MapDataReq, opts ...grpc.CallOption) (*MapDataRsp, error)
 	// 角色
 	CreateRole(ctx context.Context, in *CreateRoleReq, opts ...grpc.CallOption) (*CreateRoleRsp, error)
+	// 审查：在主城 5×5 外圈刷出事件（扫荡行军可处理）
+	SpawnReviewEvent(ctx context.Context, in *SpawnReviewEventReq, opts ...grpc.CallOption) (*SpawnReviewEventRsp, error)
+	// 审查：气泡点击事件（采集/寻宝），+进度，超 100% 完成
+	EventClick(ctx context.Context, in *EventClickReq, opts ...grpc.CallOption) (*EventClickRsp, error)
 }
 
 type worldMapHandlerClient struct {
@@ -203,6 +209,26 @@ func (c *worldMapHandlerClient) CreateRole(ctx context.Context, in *CreateRoleRe
 	return out, nil
 }
 
+func (c *worldMapHandlerClient) SpawnReviewEvent(ctx context.Context, in *SpawnReviewEventReq, opts ...grpc.CallOption) (*SpawnReviewEventRsp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SpawnReviewEventRsp)
+	err := c.cc.Invoke(ctx, WorldMapHandler_SpawnReviewEvent_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *worldMapHandlerClient) EventClick(ctx context.Context, in *EventClickReq, opts ...grpc.CallOption) (*EventClickRsp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(EventClickRsp)
+	err := c.cc.Invoke(ctx, WorldMapHandler_EventClick_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // WorldMapHandlerServer is the server API for WorldMapHandler service.
 // All implementations must embed UnimplementedWorldMapHandlerServer
 // for forward compatibility.
@@ -217,6 +243,10 @@ type WorldMapHandlerServer interface {
 	MapData(context.Context, *MapDataReq) (*MapDataRsp, error)
 	// 角色
 	CreateRole(context.Context, *CreateRoleReq) (*CreateRoleRsp, error)
+	// 审查：在主城 5×5 外圈刷出事件（扫荡行军可处理）
+	SpawnReviewEvent(context.Context, *SpawnReviewEventReq) (*SpawnReviewEventRsp, error)
+	// 审查：气泡点击事件（采集/寻宝），+进度，超 100% 完成
+	EventClick(context.Context, *EventClickReq) (*EventClickRsp, error)
 	mustEmbedUnimplementedWorldMapHandlerServer()
 }
 
@@ -241,6 +271,12 @@ func (UnimplementedWorldMapHandlerServer) MapData(context.Context, *MapDataReq) 
 }
 func (UnimplementedWorldMapHandlerServer) CreateRole(context.Context, *CreateRoleReq) (*CreateRoleRsp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateRole not implemented")
+}
+func (UnimplementedWorldMapHandlerServer) SpawnReviewEvent(context.Context, *SpawnReviewEventReq) (*SpawnReviewEventRsp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SpawnReviewEvent not implemented")
+}
+func (UnimplementedWorldMapHandlerServer) EventClick(context.Context, *EventClickReq) (*EventClickRsp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method EventClick not implemented")
 }
 func (UnimplementedWorldMapHandlerServer) mustEmbedUnimplementedWorldMapHandlerServer() {}
 func (UnimplementedWorldMapHandlerServer) testEmbeddedByValue()                         {}
@@ -353,6 +389,42 @@ func _WorldMapHandler_CreateRole_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WorldMapHandler_SpawnReviewEvent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SpawnReviewEventReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorldMapHandlerServer).SpawnReviewEvent(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorldMapHandler_SpawnReviewEvent_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorldMapHandlerServer).SpawnReviewEvent(ctx, req.(*SpawnReviewEventReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WorldMapHandler_EventClick_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EventClickReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorldMapHandlerServer).EventClick(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorldMapHandler_EventClick_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorldMapHandlerServer).EventClick(ctx, req.(*EventClickReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // WorldMapHandler_ServiceDesc is the grpc.ServiceDesc for WorldMapHandler service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -379,6 +451,14 @@ var WorldMapHandler_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateRole",
 			Handler:    _WorldMapHandler_CreateRole_Handler,
+		},
+		{
+			MethodName: "SpawnReviewEvent",
+			Handler:    _WorldMapHandler_SpawnReviewEvent_Handler,
+		},
+		{
+			MethodName: "EventClick",
+			Handler:    _WorldMapHandler_EventClick_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

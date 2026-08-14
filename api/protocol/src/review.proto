@@ -1,0 +1,39 @@
+syntax = "proto3";
+package pb_review;
+option go_package = "server.slg.com/api/protocol/pb/pb_review";
+
+// ItemReward 道具奖励
+message ItemReward {
+    int32 item_id = 1;
+    int32 count   = 2;
+}
+
+// ReviewTaskInfo 审查任务
+message ReviewTaskInfo {
+    int64  task_id              = 1;
+    int32  event_type           = 2;  // 事件类型（map_events.EventType：采集/打怪/寻宝）
+    repeated ItemReward rewards = 3;  // 任务奖励道具
+}
+
+// ReviewStartReq 触发审查（消耗次数生成任务）
+message ReviewStartReq {}
+
+// ReviewStartResp 审查结果
+message ReviewStartResp {
+    int32  chances              = 1;  // 剩余审查次数
+    int32  exp                  = 2;  // 当前审查经验
+    int32  level                = 3;  // 当前审查等级
+    int32  exp_gained           = 4;  // 本次获得经验
+    bool   leveled_up           = 5;  // 本次是否升级
+    repeated ReviewTaskInfo tasks = 6; // 生成的任务列表
+}
+
+// ReviewTaskSelectReq 选择任务执行（在主城周围刷出事件）
+message ReviewTaskSelectReq {
+    int64 task_id = 1;
+}
+
+// ReviewTaskSelectResp 任务执行结果
+message ReviewTaskSelectResp {
+    int32 map_id = 1;  // 刷出事件的地图ID（0=未找到合适位置）
+}

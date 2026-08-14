@@ -54,6 +54,24 @@ func (c *Client) CreateMarch(ctx context.Context, req *pb_worldmap.CreateMarchRe
 	return cli.CreateMarch(ctx, req)
 }
 
+// SpawnReviewEvent 审查任务刷事件（worldmap 在主城 5×5 外圈生成 OverlayEvent）
+func (c *Client) SpawnReviewEvent(ctx context.Context, req *pb_worldmap.SpawnReviewEventReq) (*pb_worldmap.SpawnReviewEventRsp, error) {
+	cli := c.hub.GetWorldMapHandlerClient()
+	if cli == nil {
+		return nil, fmt.Errorf("worldmap not connected")
+	}
+	return cli.SpawnReviewEvent(ctx, req)
+}
+
+// EventClick 气泡点击事件（采集/寻宝）：+进度，超 100% 完成（worldmap 返回事件类型供发奖）
+func (c *Client) EventClick(ctx context.Context, req *pb_worldmap.EventClickReq) (*pb_worldmap.EventClickRsp, error) {
+	cli := c.hub.GetWorldMapHandlerClient()
+	if cli == nil {
+		return nil, fmt.Errorf("worldmap not connected")
+	}
+	return cli.EventClick(ctx, req)
+}
+
 // CreateRole 创建角色主城（分配出生点并落主城）
 func (c *Client) CreateRole(ctx context.Context, req *pb_worldmap.CreateRoleReq) (*pb_worldmap.CreateRoleRsp, error) {
 	cli := c.hub.GetWorldMapHandlerClient()

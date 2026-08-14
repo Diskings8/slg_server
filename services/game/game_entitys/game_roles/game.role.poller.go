@@ -19,6 +19,7 @@ import (
 	"server.slg.com/services/game/game_entitys/game_roles/role_heroes"
 	"server.slg.com/services/game/game_entitys/game_roles/role_items"
 	"server.slg.com/services/game/game_entitys/game_roles/role_recruits"
+	"server.slg.com/services/game/game_entitys/game_roles/role_reviews"
 )
 
 var (
@@ -130,6 +131,7 @@ func Init(ctx context.Context, writeDB common_declarations.DbcI) {
 	role_formations.Init(writeDB)
 	role_recruits.Init(writeDB)
 	role_attrs.Init(writeDB)
+	role_reviews.Init(writeDB)
 
 	// 初始化轮询管理器
 	initPoller(ctx)

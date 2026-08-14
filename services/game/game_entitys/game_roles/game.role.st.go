@@ -18,6 +18,7 @@ import (
 	"server.slg.com/services/game/game_entitys/game_roles/role_heroes"
 	"server.slg.com/services/game/game_entitys/game_roles/role_items"
 	"server.slg.com/services/game/game_entitys/game_roles/role_recruits"
+	"server.slg.com/services/game/game_entitys/game_roles/role_reviews"
 )
 
 var _ common_declarations.DataI = new(Role)
@@ -48,6 +49,7 @@ type Role struct {
 	Formations       *role_formations.RoleFormations             `json:"formations,omitempty"`
 	Recruits         *role_recruits.RoleRecruits                 `json:"recruits,omitempty"`
 	Attr             *role_attrs.RoleAttrs                       `json:"attr,omitempty"`
+	Reviews          *role_reviews.RoleReviews                   `json:"reviews,omitempty"`
 }
 
 // UniqueID 唯一 id
@@ -146,6 +148,7 @@ func (r *Role) New() {
 	r.Formations = role_formations.NewRoleFormations(roleID)
 	r.Recruits = role_recruits.NewRoleRecruits(roleID)
 	r.Attr = role_attrs.NewRoleAttrs(roleID)
+	r.Reviews = role_reviews.NewRoleReviews(roleID)
 }
 
 // SetStatus 设置状态
@@ -290,6 +293,17 @@ func (r *Role) GetRecruits() *role_recruits.RoleRecruits {
 		r.Recruits.Init()
 	}
 	return r.Recruits
+}
+
+// GetReviews 获取审查模块
+func (r *Role) GetReviews() *role_reviews.RoleReviews {
+	if !r.IsCopy() {
+		return r.Reviews
+	}
+	if r.Reviews == nil {
+		r.Reviews = role_reviews.NewRoleReviews(r.ID)
+	}
+	return r.Reviews
 }
 
 // GetAttr 获取属性模块

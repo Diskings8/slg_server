@@ -13,6 +13,7 @@ import (
 	"server.slg.com/services/internal/cores/cores_declarations"
 	"server.slg.com/services/internal/cores/map_aois"
 	"server.slg.com/services/internal/cores/map_datas"
+	"server.slg.com/services/internal/cores/map_datas/map_events"
 	"server.slg.com/services/internal/cores/marchs"
 	"server.slg.com/services/worldmap/worldmap_internals/worldmap_inits"
 
@@ -281,6 +282,93 @@ func (s *WorldMapServer) CreateRole(ctx context.Context, req *pb_worldmap.Create
 	}
 
 	return &pb_worldmap.CreateRoleRsp{MapId: coreMapID.Int32()}, nil
+}
+
+// SpawnReviewEvent 审查任务刷事件：在主城 5×5 外圈（12 格）找非建筑、非已有事件地块刷出 OverlayEvent
+func (s *WorldMapServer) SpawnReviewEvent(ctx context.Context, req *pb_worldmap.SpawnReviewEventReq) (*pb_worldmap.SpawnReviewEventRsp, error) {
+	if s.engine == nil {
+		return nil, status.Error(codes.Internal, "engine not initialized")
+	}
+	core := cores_declarations.MapID(req.GetCoreMapId())
+	if core.IsInvalid() {
+		return nil, status.Error(codes.InvalidArgument, "invalid core_map_id")
+	}
+
+	scope := s.engine.Config.MapScope()
+	cx, cy := s.engine.Config.MapID2XY(core)
+	eventType := map_events.EventType(req.GetEventType())
+
+	// 5×5 外圈：|dx|,|dy| ≤ 2 且非内圈 3×3（主城建筑格）
+	var spawned int32
+	for dy := int32(-2); dy <= 2 && spawned == 0; dy++ {
+		for dx := int32(-2); dx <= 2; dx++ {
+			if abs(dx) <= 1 && abs(dy) <= 1 {
+				continue // 内圈 3×3 = 主城建筑格，跳过
+			}
+			tx, ty := cx+dx, cy+dy
+			if tx < 0 || tx >= scope || ty < 0 || ty >= scope {
+				continue // 越界
+			}
+			mid := s.engine.Config.XY2MapID(tx, ty)
+			info, ok := s.engine.MapDataManager.GetMapInfo(mid)
+			if !ok || info == nil {
+				continue
+			}
+			if info.GetOverlayBuilding() != nil || info.GetOverlayEvent() != nil {
+				continue // 建筑格 / 已有事件
+			}
+
+			info.SetOverlayEvent(&map_events.OverlayEvent{
+				EventID:     snowflakes.GenUUID(),
+				EventType:   eventType,
+				Interaction: eventType.Interaction(), // 寻宝/采集=点击；打怪=行军
+				Progress:    0,
+				ExpireTime:  time.Now().Add(time.Hour).Unix(), // 事件有效期 1 小时
+			})
+			spawned = int32(mid)
+		}
+	}
+
+	loggers.Logger.Info("review event spawned",
+		zap.Uint64("role_id", req.GetRoleId()),
+		zap.Int32("core_map_id", int32(core)),
+		zap.Int32("map_id", spawned),
+		zap.Int32("event_type", int32(eventType)))
+	return &pb_worldmap.SpawnReviewEventRsp{MapId: spawned}, nil
+}
+
+// EventClick 气泡点击事件（采集/寻宝）：每次 +进度，超 100% 完成并清除事件
+func (s *WorldMapServer) EventClick(ctx context.Context, req *pb_worldmap.EventClickReq) (*pb_worldmap.EventClickRsp, error) {
+	if s.engine == nil {
+		return nil, status.Error(codes.Internal, "engine not initialized")
+	}
+	mid := cores_declarations.MapID(req.GetMapId())
+	if mid.IsInvalid() {
+		return nil, status.Error(codes.InvalidArgument, "invalid map_id")
+	}
+	info, ok := s.engine.MapDataManager.GetMapInfo(mid)
+	if !ok || info == nil {
+		return nil, status.Error(codes.InvalidArgument, "地块不存在")
+	}
+	ev := info.GetOverlayEvent()
+	if ev == nil {
+		return nil, status.Error(codes.InvalidArgument, "该地块无事件")
+	}
+	if ev.Interaction != map_events.EventInteractionClick {
+		return nil, status.Error(codes.InvalidArgument, "该事件需行军处理")
+	}
+
+	ev.Progress += map_events.EventClickProgressStep
+	completed := ev.Progress > 100
+	if completed {
+		info.SetOverlayEvent(nil) // 完成清除事件
+	}
+	loggers.Logger.Info("review event click",
+		zap.Uint64("role_id", req.GetRoleId()),
+		zap.Int32("map_id", req.GetMapId()),
+		zap.Int32("progress", ev.Progress),
+		zap.Bool("completed", completed))
+	return &pb_worldmap.EventClickRsp{Progress: ev.Progress, Completed: completed, EventType: int32(ev.EventType)}, nil
 }
 
 // buildMapCellInfo 组装地块数据

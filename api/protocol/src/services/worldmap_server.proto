@@ -25,6 +25,12 @@ service WorldMapHandler {
 
     // 角色
     rpc CreateRole(CreateRoleReq) returns (CreateRoleRsp);
+
+    // 审查：在主城 5×5 外圈刷出事件（扫荡行军可处理）
+    rpc SpawnReviewEvent(SpawnReviewEventReq) returns (SpawnReviewEventRsp);
+
+    // 审查：气泡点击事件（采集/寻宝），+进度，超 100% 完成
+    rpc EventClick(EventClickReq) returns (EventClickRsp);
 }
 
 // ---------- 行军 ----------
@@ -120,4 +126,31 @@ message CreateRoleReq {
 // CreateRoleRsp 创建结果
 message CreateRoleRsp {
     int32 map_id = 1;  // 主城核心格 MapID
+}
+
+// ---------- 审查刷事件 ----------
+
+// SpawnReviewEventReq 审查任务在主城周围刷出事件
+message SpawnReviewEventReq {
+    uint64 role_id     = 1;  // 角色ID
+    int32  core_map_id = 2;  // 主城核心格 MapID
+    int32  event_type  = 3;  // 事件类型（map_events.EventType）
+}
+
+// SpawnReviewEventRsp 刷事件结果
+message SpawnReviewEventRsp {
+    int32 map_id = 1;  // 刷出事件的地图ID（0=未找到合适位置）
+}
+
+// EventClickReq 气泡点击事件（采集/寻宝）
+message EventClickReq {
+    uint64 role_id = 1;
+    int32  map_id  = 2;
+}
+
+// EventClickRsp 点击结果
+message EventClickRsp {
+    int32 progress   = 1;  // 点击后进度 0~100+
+    bool  completed  = 2;  // 是否完成（超 100%）
+    int32 event_type = 3;  // 完成时返回事件类型（游戏侧按类型发奖）
 }

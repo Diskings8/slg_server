@@ -37,6 +37,9 @@ enum MsgID {
     GameCurrencyExchange            = 1000035;  // 货币兑换（一级→二级）
     GameBuildingUpgrade             = 1000036;  // 升级建筑
     GameBuildingGet                 = 1000037;  // 查询单个建筑
+    GameReviewStart                 = 1000038;  // 触发审查（消耗次数生成任务）
+    GameReviewTaskSelect            = 1000039;  // 选择审查任务执行（刷事件）
+    GameEventClick                  = 1000040;  // 气泡点击事件（采集/寻宝，+进度）
 
     // ---------------- Login 登录协议 (2000001~) ----------------//
     LoginCreateAccount = 2000001;  // 注册账号

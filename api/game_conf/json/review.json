@@ -1,0 +1,20 @@
+{
+  "daily_chances": 1,
+  "max_chances": 5,
+  "tasks_per_review": 4,
+  "exp_per_review_min": 4,
+  "exp_per_review_max": 5,
+  "season_days": 45,
+  "level_up_bonus_chances": 9,
+  "levels": [
+    {"level": 1, "exp_required": 6,  "rewards": [{"item_id": 1001, "count": 5}]},
+    {"level": 2, "exp_required": 11, "rewards": [{"item_id": 1001, "count": 10}]},
+    {"level": 3, "exp_required": 16, "rewards": [{"item_id": 1001, "count": 15}]},
+    {"level": 4, "exp_required": 21, "rewards": [{"item_id": 1002, "count": 5}]},
+    {"level": 5, "exp_required": 26, "rewards": [{"item_id": 1002, "count": 10}]},
+    {"level": 6, "exp_required": 31, "rewards": [{"item_id": 1002, "count": 15}]},
+    {"level": 7, "exp_required": 36, "rewards": [{"item_id": 1003, "count": 5}]},
+    {"level": 8, "exp_required": 41, "rewards": [{"item_id": 1003, "count": 10}]},
+    {"level": 9, "exp_required": 46, "rewards": [{"item_id": 1003, "count": 15}]}
+  ]
+}
