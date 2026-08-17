@@ -89,6 +89,11 @@ func init() {
 		Req:  &pb_hero.HeroTroopUnlockReq{},
 		Resp: &pb_hero.HeroTroopUnlockResp{},
 	})
+	RegisterProto(pb_protocol.MsgID_GameHeroAwaken, &ProtoHandler{
+		F:    Wrap(hero_handler.HandlerHeroAwaken),
+		Req:  &pb_hero.HeroAwakenReq{},
+		Resp: &pb_hero.HeroAwakenResp{},
+	})
 
 	// ===== 道具 (1000005 / 1000042) =====
 	RegisterProto(pb_protocol.MsgID_GameUseItem, &ProtoHandler{

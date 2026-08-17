@@ -1,6 +1,7 @@
 package game_logics
 
 import (
+	"server.slg.com/api/game_conf"
 	"server.slg.com/api/protocol/pb/pb_city"
 	"server.slg.com/api/protocol/pb/pb_error_code"
 	"server.slg.com/api/protocol/pb/pb_maps_march"
@@ -9,8 +10,13 @@ import (
 	"server.slg.com/services/game/game_models"
 )
 
-// maxFormationSlots 编队英雄槽位上限（TODO: 接入配置，默认 3）
-const maxFormationSlots = 3
+// maxFormationSlots 编队英雄槽位上限（配置 formation.max_slots，默认 3）
+func maxFormationSlots() int {
+	if c := game_conf.Load().Formation; c != nil && c.MaxSlots > 0 {
+		return c.MaxSlots
+	}
+	return 3
+}
 
 // FormationFieldHero 上阵英雄到队列
 //
@@ -91,7 +97,7 @@ func FormationListPb(role *game_roles.Role, cityID uint64) []*pb_maps_march.Form
 // 0=大营，1=1号位，2=2号位。槽位是固定位置模型：中间空位用 nil 占位，位置不位移。
 func setHeroSlot(slots []*pb_maps_march.HeroSlot, slotPos int, heroID uint64, soldierNum uint32) []*pb_maps_march.HeroSlot {
 	pos := slotPos
-	if pos < 0 || pos >= maxFormationSlots {
+	if pos < 0 || pos >= maxFormationSlots() {
 		return nil
 	}
 	for len(slots) <= pos {

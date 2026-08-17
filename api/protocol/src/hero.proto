@@ -66,6 +66,17 @@ message HeroCultivateResp {
     uint32 attr_point        = 4;  // 加点后的剩余自由属性点
 }
 
+// HeroAwakenReq 英雄觉醒请求（解锁第三技能槽）
+message HeroAwakenReq {
+    uint64 hero_id = 1;
+}
+
+// HeroAwakenResp 英雄觉醒响应
+message HeroAwakenResp {
+    uint64 hero_id = 1;  // 觉醒英雄ID
+    bool awakened  = 2;  // 觉醒后状态（true）
+}
+
 // HeroTroopTransform 兵种转化（x 等级后选择已解锁派生类型，消耗资源）
 message HeroTroopTransformReq {
     uint64 hero_id      = 1;

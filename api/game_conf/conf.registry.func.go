@@ -25,6 +25,7 @@ var allTables = []tableReg{
 	{"review", func(gc *GameConf) table.Table { return gc.Review }},
 	{"soldier", func(gc *GameConf) table.Table { return gc.Soldier }},
 	{"building", func(gc *GameConf) table.Table { return gc.Building }},
+	{"formation", func(gc *GameConf) table.Table { return gc.Formation }},
 }
 
 // battleTables battle 节点子集（battle 规则 + 技能表）。

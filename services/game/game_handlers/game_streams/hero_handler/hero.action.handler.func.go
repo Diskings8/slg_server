@@ -68,6 +68,34 @@ func HandlerHeroUpgradeStar(ctx context.Context, roleID uint64, req *pb_hero.Her
 	return nil
 }
 
+// HandlerHeroAwaken 英雄觉醒 (1000043)
+//
+// 消耗觉醒资源 → 置 IsAwakened，解锁第三技能槽（等级不足/已觉醒返回专属错误码）。
+func HandlerHeroAwaken(ctx context.Context, roleID uint64, req *pb_hero.HeroAwakenReq, resp *pb_hero.HeroAwakenResp) rpc_results.ResultI {
+	poller, role, err := game_roles.GetRole(roleID)
+	if err != nil {
+		return err
+	}
+	defer poller.Release()
+
+	hero := role.GetHeroes().GetHero(req.GetHeroId())
+	if hero == nil {
+		return rpc_results.Error(pb_error_code.ErrorCode_ParamError, "hero not found")
+	}
+
+	if logicErr := game_logics.HeroAwaken(role, hero); logicErr != nil {
+		if r, ok := logicErr.(rpc_results.ResultI); ok {
+			return r // 已觉醒/等级不足等专属错误码透传
+		}
+		return rpc_results.Error(pb_error_code.ErrorCode_Failed, fmt.Sprintf("awaken failed: %s", logicErr.Error()))
+	}
+
+	poller.Save()
+	resp.HeroId = req.GetHeroId()
+	resp.Awakened = hero.GetIsAwakened()
+	return nil
+}
+
 // HandlerHeroLock 锁定英雄 (1000020)
 //
 // 锁定后英雄不可被消耗（如作为升星消耗卡）。

@@ -27,6 +27,8 @@ enum ErrorCode {
     // ── 英雄养成 (30~) ──
     HeroStarFull      = 30;  // 英雄满星
     HeroNoConsumeCard = 31;  // 无同配置可消耗英雄卡
+    HeroAlreadyAwakened = 32;  // 英雄已觉醒
+    HeroAwakenLevelNotEnough = 33;  // 英雄等级未达觉醒门槛
 
     // ── 道具效果 (40~) ──
     ItemEffectConfNotFound  = 40;  // 道具效果配置不存在

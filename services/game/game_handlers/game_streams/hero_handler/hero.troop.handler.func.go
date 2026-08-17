@@ -26,8 +26,11 @@ func HandlerHeroTroopTransform(ctx context.Context, roleID uint64, req *pb_hero.
 		return rpc_results.Error(pb_error_code.ErrorCode_ParamError, "hero not found")
 	}
 
-	logicErr := game_logics.HeroTroopTransform(hero, req.GetTroopTypeId())
+	logicErr := game_logics.HeroTroopTransform(role, hero, req.GetTroopTypeId())
 	if logicErr != nil {
+		if r, ok := logicErr.(rpc_results.ResultI); ok {
+			return r // 资源不足等专属错误码透传
+		}
 		return rpc_results.Error(pb_error_code.ErrorCode_ParamError, fmt.Sprintf("transform failed: %s", logicErr.Error()))
 	}
 

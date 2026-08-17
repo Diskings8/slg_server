@@ -1,6 +1,11 @@
 // Package hero 英雄配置表（Go 内嵌占位数据，后续可迁 JSON）
 package hero
 
+import (
+	"server.slg.com/api/protocol/pb_confs"
+	"server.slg.com/common/common_declarations"
+)
+
 // HeroAttr 英雄战斗属性（无战力聚合，直接使用真实属性参与战斗）
 type HeroAttr struct {
 	Attack       uint32 `json:"attack"`       // 攻击
@@ -25,6 +30,8 @@ type Conf struct {
 	MaxStarStage    int32    // 星级上限
 	StarPointPer    uint32   // 每升 1 星发放的自由属性点（星级不直接乘属性，改发点由玩家分配）
 	ExpNeed         []uint32 // 逐级升级经验表（index=level-1）
+	AwakenLevel     uint32   // 觉醒等级门槛（达级后可觉醒，解锁第三技能槽）
+	AwakenCost      []common_declarations.ItemUse // 觉醒消耗（资源混搭，走 ItemChange）
 
 	heroes  map[int32]HeroConf // 每英雄属性表
 	version string             // 内容版本（JSON 加载后为内容 hash；内嵌为 ""）
@@ -37,6 +44,13 @@ func New() *Conf {
 		FreePointPer10L: 5,
 		MaxStarStage:    5,
 		StarPointPer:    5,
+		AwakenLevel:     20,
+		AwakenCost: []common_declarations.ItemUse{
+			{ItemID: pb_confs.ResourceWoodConfID, ItemType: pb_confs.ItemTypeResource, Count: 500},
+			{ItemID: pb_confs.ResourceStoneConfID, ItemType: pb_confs.ItemTypeResource, Count: 500},
+			{ItemID: pb_confs.ResourceFoodConfID, ItemType: pb_confs.ItemTypeResource, Count: 500},
+			{ItemID: pb_confs.ResourceIronConfID, ItemType: pb_confs.ItemTypeResource, Count: 300},
+		},
 	}
 	// 占位经验曲线：从 level 升到 level+1 需 (level)*100，后续直接替换表数据
 	c.ExpNeed = make([]uint32, c.MaxLevel)

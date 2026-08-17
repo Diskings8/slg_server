@@ -84,10 +84,10 @@ func HeroTroopUnlock(role *game_roles.Role, hero *role_heroes.RoleHero, troopTyp
 
 // HeroTroopTransform 兵种转化：x 等级后选择已解锁派生类型（消耗资源）
 //
-//   - 需要等级 ≥ troopTransformLevel（配置）
+//   - 需要等级 ≥ troop.TransformLevel（配置）
 //   - 目标必须是已解锁的派生类型
-//   - 转化消耗资源（配置，当前占位不扣）
-func HeroTroopTransform(hero *role_heroes.RoleHero, troopTypeID int32) error {
+//   - 转化消耗 troop.TransformCost（资源混搭，走 ItemChange 统一扣除）
+func HeroTroopTransform(role *game_roles.Role, hero *role_heroes.RoleHero, troopTypeID int32) error {
 	ensureBaseTroop(hero)
 
 	if hero.GetLevel() < game_conf.Load().Troop.TransformLevel {
@@ -100,7 +100,18 @@ func HeroTroopTransform(hero *role_heroes.RoleHero, troopTypeID int32) error {
 		return errors.New("troop not unlocked, use item to unlock first")
 	}
 
-	// TODO 配置：转化消耗资源（接入配置表后调用 ItemChange 扣除）
+	cost := game_conf.Load().Troop.TransformCost
+	if err := ItemChange(role, nil, cost, common_declarations.ReasonTroop); err != nil {
+		return err
+	}
+
+	// 记录养成消耗（本次转化消耗的资源）
+	costs := make([]*pb_common.Int32KV, 0, len(cost))
+	for _, c := range cost {
+		costs = append(costs, &pb_common.Int32KV{Key: int32(c.ItemID), Val: int32(c.Count)})
+	}
+	role.GetCultivateCosts().AddCost(pb_cultivate.CultivateType_CultivateTroop, costs)
+
 	hero.SetCurTroopTypeID(troopTypeID)
 	return nil
 }

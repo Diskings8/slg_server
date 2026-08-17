@@ -4,6 +4,7 @@ import (
 	"server.slg.com/api/game_conf/battle"
 	"server.slg.com/api/game_conf/building"
 	"server.slg.com/api/game_conf/exchange"
+	"server.slg.com/api/game_conf/formation"
 	"server.slg.com/api/game_conf/gacha"
 	"server.slg.com/api/game_conf/guard"
 	"server.slg.com/api/game_conf/hero"
@@ -25,18 +26,19 @@ type GameConf struct {
 	tableVersions map[string]string // 表名 → 内容 hash（仅 JSON 加载的表有值）
 	battleOnly    bool              // battle 节点子集标记（仅加载 battle+skill）
 
-	Battle   *battle.Conf
-	Hero     *hero.Conf
-	Skill    *skill.Conf
-	Item     *item.Conf
-	Troop    *troop.Conf
-	Gacha    *gacha.Conf
-	Exchange *exchange.Conf
-	Guard    *guard.Conf
-	Resource *resource.Conf
-	Review   *review.Conf
-	Soldier  *soldier.Conf
-	Building *building.Conf
+	Battle    *battle.Conf
+	Hero      *hero.Conf
+	Skill     *skill.Conf
+	Item      *item.Conf
+	Troop     *troop.Conf
+	Gacha     *gacha.Conf
+	Exchange  *exchange.Conf
+	Guard     *guard.Conf
+	Resource  *resource.Conf
+	Review    *review.Conf
+	Soldier   *soldier.Conf
+	Building  *building.Conf
+	Formation *formation.Conf
 }
 
 // Version 全局配置版本（内嵌基线=1；JSON 加载/热更每次成功 +1）。
