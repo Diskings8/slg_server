@@ -35,11 +35,31 @@ func buildBattleSettleReq(mgr *map_managers.MapManager, attacker *marchs.MarchIn
 	}
 
 	// 建筑耐久（攻城区分：有建筑→攻城，无建筑→PvE）
-	if toMapInfo, ok := mgr.GetMapDataManager().GetMapInfo(toMapID); ok && toMapInfo != nil {
+	toMapInfo, ok := mgr.GetMapDataManager().GetMapInfo(toMapID)
+	if ok && toMapInfo != nil {
 		if overlay := toMapInfo.GetOverlayBuilding(); overlay != nil {
 			if building := overlay.GetBuilding(); building != nil {
 				req.HasBuilding = true
 				req.BuildingHp = building.GetBuildingsCurHp()
+			}
+		}
+	}
+
+	// 中立野地（无驻军/停留防守、无建筑）：按地块等级打守军 PvE，胜利即占领空地
+	if !req.HasBuilding && len(req.DefenderGroups[0].Marches) == 0 && len(req.DefenderGroups[1].Marches) == 0 {
+		guardFunc := mgr.GetGuardConfigFunc()
+		if guardFunc != nil && ok && toMapInfo != nil {
+			slots := guardFunc(cores_declarations.MapLevel(int32(toMapInfo.GetLevel())))
+			if len(slots) > 0 {
+				req.DefenderGroups = append(req.DefenderGroups, &pb_battle.DefenderGroup{
+					GroupType: pb_battle.DefenderGroupType_DEFENDER_GROUP_STAY_IDLE,
+					Marches: []*pb_battle.DefenderMarch{
+						{
+							RoleId: 0, // NPC 守军
+							Team:   &pb_battle.TeamInfo{SlotInfo: slots},
+						},
+					},
+				})
 			}
 		}
 	}

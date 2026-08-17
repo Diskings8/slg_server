@@ -40,6 +40,8 @@ enum MsgID {
     GameReviewStart                 = 1000038;  // 触发审查（消耗次数生成任务）
     GameReviewTaskSelect            = 1000039;  // 选择审查任务执行（刷事件）
     GameEventClick                  = 1000040;  // 气泡点击事件（采集/寻宝，+进度）
+    GameTileAbandon                 = 1000041;  // 放弃已占领地块
+    GameItemList                    = 1000042;  // 查询背包（道具/货币/资源）
 
     // ---------------- Login 登录协议 (2000001~) ----------------//
     LoginCreateAccount = 2000001;  // 注册账号

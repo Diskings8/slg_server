@@ -433,6 +433,89 @@ func (x *CurrencyExchangeResp) GetObtain() *ItemUse {
 	return nil
 }
 
+// ItemListReq 背包查询请求（道具/货币/资源）
+type ItemListReq struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *ItemListReq) Reset() {
+	*x = ItemListReq{}
+	mi := &file_item_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ItemListReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ItemListReq) ProtoMessage() {}
+
+func (x *ItemListReq) ProtoReflect() protoreflect.Message {
+	mi := &file_item_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ItemListReq.ProtoReflect.Descriptor instead.
+func (*ItemListReq) Descriptor() ([]byte, []int) {
+	return file_item_proto_rawDescGZIP(), []int{6}
+}
+
+// ItemListResp 背包查询响应
+type ItemListResp struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Items []*ItemUse `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"` // 全部道具/货币/资源（按 ConfigID）
+}
+
+func (x *ItemListResp) Reset() {
+	*x = ItemListResp{}
+	mi := &file_item_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ItemListResp) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ItemListResp) ProtoMessage() {}
+
+func (x *ItemListResp) ProtoReflect() protoreflect.Message {
+	mi := &file_item_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ItemListResp.ProtoReflect.Descriptor instead.
+func (*ItemListResp) Descriptor() ([]byte, []int) {
+	return file_item_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *ItemListResp) GetItems() []*ItemUse {
+	if x != nil {
+		return x.Items
+	}
+	return nil
+}
+
 var File_item_proto protoreflect.FileDescriptor
 
 var file_item_proto_rawDesc = []byte{
@@ -479,10 +562,15 @@ var file_item_proto_rawDesc = []byte{
 	0x2e, 0x69, 0x74, 0x65, 0x6d, 0x2e, 0x49, 0x74, 0x65, 0x6d, 0x55, 0x73, 0x65, 0x52, 0x06, 0x72,
 	0x65, 0x6d, 0x61, 0x69, 0x6e, 0x12, 0x25, 0x0a, 0x06, 0x6f, 0x62, 0x74, 0x61, 0x69, 0x6e, 0x18,
 	0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0d, 0x2e, 0x69, 0x74, 0x65, 0x6d, 0x2e, 0x49, 0x74, 0x65,
-	0x6d, 0x55, 0x73, 0x65, 0x52, 0x06, 0x6f, 0x62, 0x74, 0x61, 0x69, 0x6e, 0x42, 0x28, 0x5a, 0x26,
-	0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x2e, 0x73, 0x6c, 0x67, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x61,
-	0x70, 0x69, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x6f, 0x6c, 0x2f, 0x70, 0x62, 0x2f, 0x70,
-	0x62, 0x5f, 0x69, 0x74, 0x65, 0x6d, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x6d, 0x55, 0x73, 0x65, 0x52, 0x06, 0x6f, 0x62, 0x74, 0x61, 0x69, 0x6e, 0x22, 0x0d, 0x0a, 0x0b,
+	0x49, 0x74, 0x65, 0x6d, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x65, 0x71, 0x22, 0x33, 0x0a, 0x0c, 0x49,
+	0x74, 0x65, 0x6d, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x65, 0x73, 0x70, 0x12, 0x23, 0x0a, 0x05, 0x69,
+	0x74, 0x65, 0x6d, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x0d, 0x2e, 0x69, 0x74, 0x65,
+	0x6d, 0x2e, 0x49, 0x74, 0x65, 0x6d, 0x55, 0x73, 0x65, 0x52, 0x05, 0x69, 0x74, 0x65, 0x6d, 0x73,
+	0x42, 0x28, 0x5a, 0x26, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x2e, 0x73, 0x6c, 0x67, 0x2e, 0x63,
+	0x6f, 0x6d, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x6f, 0x6c, 0x2f,
+	0x70, 0x62, 0x2f, 0x70, 0x62, 0x5f, 0x69, 0x74, 0x65, 0x6d, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x33,
 }
 
 var (
@@ -497,7 +585,7 @@ func file_item_proto_rawDescGZIP() []byte {
 	return file_item_proto_rawDescData
 }
 
-var file_item_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_item_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_item_proto_goTypes = []any{
 	(*ItemChangeLog)(nil),        // 0: item.ItemChangeLog
 	(*ItemUse)(nil),              // 1: item.ItemUse
@@ -505,17 +593,20 @@ var file_item_proto_goTypes = []any{
 	(*UseItemResp)(nil),          // 3: item.UseItemResp
 	(*CurrencyExchangeReq)(nil),  // 4: item.CurrencyExchangeReq
 	(*CurrencyExchangeResp)(nil), // 5: item.CurrencyExchangeResp
+	(*ItemListReq)(nil),          // 6: item.ItemListReq
+	(*ItemListResp)(nil),         // 7: item.ItemListResp
 }
 var file_item_proto_depIdxs = []int32{
 	1, // 0: item.UseItemReq.item:type_name -> item.ItemUse
 	1, // 1: item.UseItemResp.remain:type_name -> item.ItemUse
 	1, // 2: item.CurrencyExchangeResp.remain:type_name -> item.ItemUse
 	1, // 3: item.CurrencyExchangeResp.obtain:type_name -> item.ItemUse
-	4, // [4:4] is the sub-list for method output_type
-	4, // [4:4] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	1, // 4: item.ItemListResp.items:type_name -> item.ItemUse
+	5, // [5:5] is the sub-list for method output_type
+	5, // [5:5] is the sub-list for method input_type
+	5, // [5:5] is the sub-list for extension type_name
+	5, // [5:5] is the sub-list for extension extendee
+	0, // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_item_proto_init() }
@@ -533,7 +624,7 @@ func file_item_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_item_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

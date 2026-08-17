@@ -42,8 +42,13 @@ func (gs *GameStream) gateConnectDo(roleID uint64, stream pb_game.GameService_St
 	mainCityMapID := int32(0)
 	if poller, role, err := game_roles.GetRole(roleID); err == nil {
 		role.Login()
-		// 登录惰性结算：建造/升级到期的建筑置为 Completed（城市完成→落校场+同步队列）
-		if game_logics.SettleBuildings(role, roleID) {
+		// 登录惰性结算：建造/升级到期的建筑置为 Completed（城市完成→落校场+同步队列）；
+		// 资源地产出也在此补结算（跨会话离线产出入账）
+		settled := game_logics.SettleBuildings(role, roleID)
+		if game_logics.SettleRoleResources(role, roleID) {
+			settled = true
+		}
+		if settled {
 			poller.Save()
 		}
 		if main := role.GetBuildings().GetMainCity(); main != nil {

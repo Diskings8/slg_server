@@ -371,6 +371,15 @@ func (e *Engine) OnMarchArrived(marchInfo *marchs.MarchInfo) {
 		teamInfo = team.Format2Pb()
 	}
 
+	// 目标地块结算后状态（资源地产出快照同步用）：回城/召回事件不带（tile 状态不变）
+	var tileLevel, tileElement int32
+	if eventType == pb_redis_stream.MarchEventType_MARCH_EVENT_ARRIVED {
+		if toInfo, ok := e.MapDataManager.GetMapInfo(toMapID); ok && toInfo != nil {
+			tileLevel = int32(toInfo.GetLevel())
+			tileElement = int32(toInfo.GetElementType())
+		}
+	}
+
 	publishMarchEvent(e.ctx, &pb_redis_stream.MarchEvent{
 		Type:         eventType,
 		MarchId:      marchInfo.GetMarchID().Uint64(),
@@ -381,6 +390,29 @@ func (e *Engine) OnMarchArrived(marchInfo *marchs.MarchInfo) {
 		Ts:           time.Now().Unix(),
 		BattleResult: marchInfo.BattleResult, // 攻击行军携带战果（英雄经验）回传 game
 		TeamInfo:     teamInfo,
+		TileLevel:    tileLevel,
+		TileElement:  tileElement,
+		PrevOwner:    marchInfo.PrevOwnerID, // 攻占夺地原归属者（清理原主资源地快照）
+	})
+}
+
+// OnTileReleased 地块被放弃：发布释放事件（game 侧移除资源地快照，停止产出）
+func (e *Engine) OnTileReleased(roleID uint64, mapID cores_declarations.MapID) {
+	loggers.Logger.Info("tile released",
+		zap.Uint64("role_id", roleID),
+		zap.Int32("map_id", mapID.Int32()))
+
+	var tileElement int32
+	if toInfo, ok := e.MapDataManager.GetMapInfo(mapID); ok && toInfo != nil {
+		tileElement = int32(toInfo.GetElementType())
+	}
+
+	publishMarchEvent(e.ctx, &pb_redis_stream.MarchEvent{
+		Type:        pb_redis_stream.MarchEventType_MARCH_EVENT_TILE_RELEASED,
+		RoleId:      roleID,
+		ToMapId:     mapID.Int32(),
+		TileElement: tileElement,
+		Ts:          time.Now().Unix(),
 	})
 }
 

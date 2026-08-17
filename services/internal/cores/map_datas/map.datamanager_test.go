@@ -72,7 +72,7 @@ func addBornBlock(mdm *MapDataManager, bornMgr *map_borns.BigMapBornBlockManager
 	bornMgr.Store(blockID, seeds)
 }
 
-// newTestMDM 构建测试地图：区块 1/2 各挂可出生种子（后续出生点分配从区块 1 开始）。
+// newTestMDM 构建测试地图：区块 1/2 各挂可出生种子（分配时块序随机洗牌，两个块都可能命中）。
 func newTestMDM(t *testing.T) *MapDataManager {
 	t.Helper()
 	mdm := NewMapDataManager(testMapConfig{}, "map_data")
@@ -83,8 +83,8 @@ func newTestMDM(t *testing.T) *MapDataManager {
 	return mdm
 }
 
-// TestGetFreeBorn_AllocatesNineCells 出生点分配：拿到完整 9 格、核心格在 3×3 中心、全可出生，
-// 且 Use 生效后二次调用回落下一区块。
+// TestGetFreeBorn_AllocatesNineCells 出生点分配：拿到完整 9 格、核心格在 3×3 中心、全可出生。
+// 块序随机洗牌，命中任一已 Store 的合法块均可；块不整块 Use，二次调用应仍能成功分配。
 func TestGetFreeBorn_AllocatesNineCells(t *testing.T) {
 	mdm := newTestMDM(t)
 
@@ -95,8 +95,8 @@ func TestGetFreeBorn_AllocatesNineCells(t *testing.T) {
 	if len(mapIDs) != cores_declarations.HallCoverCount {
 		t.Fatalf("got %d cells, want %d", len(mapIDs), cores_declarations.HallCoverCount)
 	}
-	if bornID != 1 {
-		t.Fatalf("bornID = %d, want 1", bornID)
+	if bornID != 1 && bornID != 2 {
+		t.Fatalf("bornID = %d, want 1 or 2", bornID)
 	}
 	if coreMapID != mapIDs[cores_declarations.Land3CoverBaseKey] {
 		t.Fatalf("coreMapID = %d, want mapIDs[%d]=%d",
@@ -114,13 +114,20 @@ func TestGetFreeBorn_AllocatesNineCells(t *testing.T) {
 		}
 	}
 
-	// 区块 1 已 Use，二次调用应回落区块 2
-	_, ls2, bornID2, _, _, err := mdm.GetFreeBorn()
+	// 块不再整块 Use（3×3 独占即可），二次调用应仍能成功分配 9 格，可命中任一合法块
+	mapIDs2, ls2, bornID2, coreMapID2, _, err := mdm.GetFreeBorn()
 	if err != nil {
 		t.Fatalf("second GetFreeBorn err: %v", err)
 	}
-	if bornID2 != 2 {
-		t.Fatalf("second bornID = %d, want 2", bornID2)
+	if bornID2 != 1 && bornID2 != 2 {
+		t.Fatalf("second bornID = %d, want 1 or 2", bornID2)
+	}
+	if len(mapIDs2) != cores_declarations.HallCoverCount {
+		t.Fatalf("second got %d cells, want %d", len(mapIDs2), cores_declarations.HallCoverCount)
+	}
+	if coreMapID2 != mapIDs2[cores_declarations.Land3CoverBaseKey] {
+		t.Fatalf("second coreMapID = %d, want mapIDs2[%d]=%d",
+			coreMapID2, cores_declarations.Land3CoverBaseKey, mapIDs2[cores_declarations.Land3CoverBaseKey])
 	}
 	ls2.Unlock()
 }

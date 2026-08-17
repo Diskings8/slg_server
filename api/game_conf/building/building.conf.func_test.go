@@ -55,26 +55,45 @@ func TestQueueNumAtLevel(t *testing.T) {
 // TestUpgradeCost 升级消耗曲线 base × growth^(curLevel-1)，ceil
 func TestUpgradeCost(t *testing.T) {
 	c := New()
-	// 主城 1→2：500 × 1.6^0 = 500
+	// 主城 1→2：四项资源各 500/500/500/300（木/石/粮/铁），× 1.6^0
 	cost, ok := c.UpgradeCost(pb_city.BuildingType_RoleMainCity, 1)
-	if !ok || len(cost) != 1 {
+	if !ok || len(cost) != 4 {
 		t.Fatalf("UpgradeCost(main,1) failed ok=%v len=%d", ok, len(cost))
 	}
-	if cost[0].Count != 500 {
-		t.Errorf("main 1→2 cost = %d, want 500", cost[0].Count)
+	want := []int64{500, 500, 500, 300}
+	for i := range want {
+		if cost[i].ItemType != pb_confs.ItemTypeResource {
+			t.Errorf("cost[%d] type = %d, want ItemTypeResource", i, cost[i].ItemType)
+		}
+		if cost[i].Count != want[i] {
+			t.Errorf("cost[%d] = %d, want %d", i, cost[i].Count, want[i])
+		}
 	}
-	// 主城 2→3：500 × 1.6^1 = 800
+	// 主城 2→3：每项 × 1.6^1 = 800/800/800/480
 	cost, _ = c.UpgradeCost(pb_city.BuildingType_RoleMainCity, 2)
-	if cost[0].Count != 800 {
-		t.Errorf("main 2→3 cost = %d, want 800", cost[0].Count)
+	if cost[0].Count != 800 || cost[3].Count != 480 {
+		t.Errorf("main 2→3 cost = %v, want 800/800/800/480", costCounts(cost))
 	}
-	// 兵营 1→2：300 × 1.5^0 = 300
+	// 兵营 1→2：300/300/200/150
 	cost, _ = c.UpgradeCost(pb_city.BuildingType_RoleBarracks, 1)
-	if cost[0].Count != 300 {
-		t.Errorf("barracks 1→2 cost = %d, want 300", cost[0].Count)
+	if cost[0].Count != 300 || cost[2].Count != 200 {
+		t.Errorf("barracks 1→2 cost = %v, want 300/300/200/150", costCounts(cost))
 	}
-	_ = common_declarations.ItemUse{}
-	_ = pb_confs.Currency2ConfID
+	// 资源建筑：不消耗自身产出（farm 升级不含粮）
+	farmCost, _ := c.UpgradeCost(pb_city.BuildingType_RoleFarm, 1)
+	for _, uc := range farmCost {
+		if uc.ItemID == pb_confs.ResourceFoodConfID {
+			t.Error("farm upgrade should not cost food (produces food)")
+		}
+	}
+}
+
+func costCounts(cost []common_declarations.ItemUse) []int64 {
+	out := make([]int64, len(cost))
+	for i, c := range cost {
+		out[i] = c.Count
+	}
+	return out
 }
 
 // TestValidate_Invalid 校验失败场景

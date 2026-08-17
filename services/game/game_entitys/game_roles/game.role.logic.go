@@ -65,11 +65,11 @@ func (r *Role) IsCrossServerMap() bool {
 
 // CheckItemEnough 检查道具是否充足
 //
-// 普通道具与货币（一级/二级）统一走背包(role_items)按 ConfigID 校验。
+// 普通道具、货币（一级/二级）、资源统一走背包(role_items)按 ConfigID 校验。
 func (r *Role) CheckItemEnough(checkItems []common_declarations.ItemUse) pb_error_code.ErrorCode {
 	for _, oneItem := range checkItems {
 		switch oneItem.ItemType {
-		case pb_confs.ItemTypeNormal, pb_confs.ItemTypeCurrency1, pb_confs.ItemTypeCurrency2:
+		case pb_confs.ItemTypeNormal, pb_confs.ItemTypeCurrency1, pb_confs.ItemTypeCurrency2, pb_confs.ItemTypeResource:
 			return r.GetItems().CheckItemEnough(oneItem)
 		}
 	}
@@ -77,15 +77,21 @@ func (r *Role) CheckItemEnough(checkItems []common_declarations.ItemUse) pb_erro
 }
 
 // AddItem 获得道具
+//
+// 普通道具与货币不设限；资源（ItemTypeResource）钳制到仓库上限（见 addResource）。
 func (r *Role) AddItem(addItems []common_declarations.ItemUse, optID, reason string, optTimeUx int64) []*pb_item.ItemChangeLog {
 	var vet []*pb_item.ItemChangeLog
-	var curCount int64
+	var curCount, change int64
 	for _, oneItem := range addItems {
+		change = oneItem.Count
 		switch oneItem.ItemType {
 		case pb_confs.ItemTypeNormal, pb_confs.ItemTypeCurrency1, pb_confs.ItemTypeCurrency2:
 			curCount = r.GetItems().AddItem(oneItem, optTimeUx)
+		case pb_confs.ItemTypeResource:
+			// 资源被 cap 钳制后，ChangeLog 记录实际入账量（而非请求量）
+			curCount, change = r.addResource(oneItem, optTimeUx)
 		}
-		oneLog := oneItem.Format2ChangeLogPb(optID, r.ID, oneItem.Count, curCount, optTimeUx, reason)
+		oneLog := oneItem.Format2ChangeLogPb(optID, r.ID, change, curCount, optTimeUx, reason)
 		vet = append(vet, oneLog)
 	}
 	return vet
@@ -97,7 +103,7 @@ func (r *Role) ReduceItem(useItems []common_declarations.ItemUse, optID, reason 
 	var curCount int64
 	for _, oneItem := range useItems {
 		switch oneItem.ItemType {
-		case pb_confs.ItemTypeNormal, pb_confs.ItemTypeCurrency1, pb_confs.ItemTypeCurrency2:
+		case pb_confs.ItemTypeNormal, pb_confs.ItemTypeCurrency1, pb_confs.ItemTypeCurrency2, pb_confs.ItemTypeResource:
 			curCount = r.GetItems().ReduceItem(oneItem.ItemID, oneItem.Count)
 		}
 		oneLog := oneItem.Format2ChangeLogPb(optID, r.ID, -oneItem.Count, curCount, optTimeUx, reason)

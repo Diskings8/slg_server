@@ -129,6 +129,7 @@ const (
 	WorldMapHandler_CreateRole_FullMethodName       = "/pb_worldmap.WorldMapHandler/CreateRole"
 	WorldMapHandler_SpawnReviewEvent_FullMethodName = "/pb_worldmap.WorldMapHandler/SpawnReviewEvent"
 	WorldMapHandler_EventClick_FullMethodName       = "/pb_worldmap.WorldMapHandler/EventClick"
+	WorldMapHandler_AbandonTile_FullMethodName      = "/pb_worldmap.WorldMapHandler/AbandonTile"
 )
 
 // WorldMapHandlerClient is the client API for WorldMapHandler service.
@@ -149,6 +150,8 @@ type WorldMapHandlerClient interface {
 	SpawnReviewEvent(ctx context.Context, in *SpawnReviewEventReq, opts ...grpc.CallOption) (*SpawnReviewEventRsp, error)
 	// 审查：气泡点击事件（采集/寻宝），+进度，超 100% 完成
 	EventClick(ctx context.Context, in *EventClickReq, opts ...grpc.CallOption) (*EventClickRsp, error)
+	// 地块：放弃已占领地块（释放归属，停止产出）
+	AbandonTile(ctx context.Context, in *AbandonTileReq, opts ...grpc.CallOption) (*AbandonTileRsp, error)
 }
 
 type worldMapHandlerClient struct {
@@ -229,6 +232,16 @@ func (c *worldMapHandlerClient) EventClick(ctx context.Context, in *EventClickRe
 	return out, nil
 }
 
+func (c *worldMapHandlerClient) AbandonTile(ctx context.Context, in *AbandonTileReq, opts ...grpc.CallOption) (*AbandonTileRsp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AbandonTileRsp)
+	err := c.cc.Invoke(ctx, WorldMapHandler_AbandonTile_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // WorldMapHandlerServer is the server API for WorldMapHandler service.
 // All implementations must embed UnimplementedWorldMapHandlerServer
 // for forward compatibility.
@@ -247,6 +260,8 @@ type WorldMapHandlerServer interface {
 	SpawnReviewEvent(context.Context, *SpawnReviewEventReq) (*SpawnReviewEventRsp, error)
 	// 审查：气泡点击事件（采集/寻宝），+进度，超 100% 完成
 	EventClick(context.Context, *EventClickReq) (*EventClickRsp, error)
+	// 地块：放弃已占领地块（释放归属，停止产出）
+	AbandonTile(context.Context, *AbandonTileReq) (*AbandonTileRsp, error)
 	mustEmbedUnimplementedWorldMapHandlerServer()
 }
 
@@ -277,6 +292,9 @@ func (UnimplementedWorldMapHandlerServer) SpawnReviewEvent(context.Context, *Spa
 }
 func (UnimplementedWorldMapHandlerServer) EventClick(context.Context, *EventClickReq) (*EventClickRsp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method EventClick not implemented")
+}
+func (UnimplementedWorldMapHandlerServer) AbandonTile(context.Context, *AbandonTileReq) (*AbandonTileRsp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AbandonTile not implemented")
 }
 func (UnimplementedWorldMapHandlerServer) mustEmbedUnimplementedWorldMapHandlerServer() {}
 func (UnimplementedWorldMapHandlerServer) testEmbeddedByValue()                         {}
@@ -425,6 +443,24 @@ func _WorldMapHandler_EventClick_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WorldMapHandler_AbandonTile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AbandonTileReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorldMapHandlerServer).AbandonTile(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorldMapHandler_AbandonTile_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorldMapHandlerServer).AbandonTile(ctx, req.(*AbandonTileReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // WorldMapHandler_ServiceDesc is the grpc.ServiceDesc for WorldMapHandler service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -459,6 +495,10 @@ var WorldMapHandler_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "EventClick",
 			Handler:    _WorldMapHandler_EventClick_Handler,
+		},
+		{
+			MethodName: "AbandonTile",
+			Handler:    _WorldMapHandler_AbandonTile_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

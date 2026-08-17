@@ -8,10 +8,11 @@ import "battle.proto";
 
 // MarchEventType 行军事件类型
 enum MarchEventType {
-    MARCH_EVENT_UNKNOWN     = 0;
-    MARCH_EVENT_ARRIVED     = 1;  // 行军到达（目标点结算，如占领/采集/驻守）
-    MARCH_EVENT_CANCELED    = 2;  // 行军取消
-    MARCH_EVENT_BACKARRIVED = 3;  // 行军回城到站
+    MARCH_EVENT_UNKNOWN      = 0;
+    MARCH_EVENT_ARRIVED      = 1;  // 行军到达（目标点结算，如占领/采集/驻守）
+    MARCH_EVENT_CANCELED     = 2;  // 行军取消
+    MARCH_EVENT_BACKARRIVED  = 3;  // 行军回城到站
+    MARCH_EVENT_TILE_RELEASED = 4;  // 地块被放弃（释放归属，停止产出）
 }
 
 // MarchEvent 行军事件 — worldmap → game，经由 Redis Stream 投递
@@ -25,6 +26,9 @@ message MarchEvent {
     int32 state         = 7;  // 结算后行军状态 (pb_maps_march.MarchState): 驻留=6, 回城=5
     MarchBattleResult battle_result = 8;  // 战斗结果（仅攻击行军 ARRIVED 携带）
     battle.TeamInfo team_info = 9;  // 队伍快照（战后存活兵力）；BACKARRIVED 携带供 game 写回 formation
+    int32 tile_level   = 10;  // 目标地块结算后等级（开发升级/攻占后；回城/取消为 0）
+    int32 tile_element = 11;  // 目标地块元素类型（Resources_1~4；0=非资源）
+    uint64 prev_owner  = 12;  // 攻占夺地时的原归属者（>0 且 ≠ role_id 时，game 清理原主资源地快照）
 }
 
 // MarchBattleResult 战斗结果（worldmap → game，供经验发放）

@@ -371,6 +371,38 @@ func (s *WorldMapServer) EventClick(ctx context.Context, req *pb_worldmap.EventC
 	return &pb_worldmap.EventClickRsp{Progress: ev.Progress, Completed: completed, EventType: int32(ev.EventType)}, nil
 }
 
+// AbandonTile 放弃已占领地块：释放归属（owner=0、标记未开发），停止资源地产出
+func (s *WorldMapServer) AbandonTile(ctx context.Context, req *pb_worldmap.AbandonTileReq) (*pb_worldmap.AbandonTileRsp, error) {
+	if s.engine == nil {
+		return nil, status.Error(codes.Internal, "engine not initialized")
+	}
+	mid := cores_declarations.MapID(req.GetMapId())
+	if mid.IsInvalid() {
+		return nil, status.Error(codes.InvalidArgument, "invalid map_id")
+	}
+	info, ok := s.engine.MapDataManager.GetMapInfo(mid)
+	if !ok || info == nil {
+		return nil, status.Error(codes.NotFound, "地块不存在")
+	}
+	if info.GetOwnerID() != req.GetRoleId() {
+		return nil, status.Error(codes.InvalidArgument, "非本人地块")
+	}
+	if info.GetOverlayBuilding() != nil {
+		return nil, status.Error(codes.InvalidArgument, "建筑地块不可放弃")
+	}
+
+	// 释放归属（内部加写锁 + 保存）；同时保护期/未开发标记随 freeLocked 复位
+	s.engine.MapDataManager.Free(info, true, time.Now())
+
+	// AOI 视野推送归属变更
+	s.engine.MapManager.UpdateMapPush(mid)
+
+	// 通知 game 移除资源地快照（停止产出）
+	s.engine.OnTileReleased(req.GetRoleId(), mid)
+
+	return &pb_worldmap.AbandonTileRsp{}, nil
+}
+
 // buildMapCellInfo 组装地块数据
 func buildMapCellInfo(info *map_datas.MapInfo) *pb_worldmap.MapCellInfo {
 	return &pb_worldmap.MapCellInfo{

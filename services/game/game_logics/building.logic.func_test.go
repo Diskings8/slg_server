@@ -12,13 +12,18 @@ import (
 	"server.slg.com/services/game/game_entitys/game_roles"
 )
 
-// buildingRole 构造测试角色并注入二级货币（金币）
-func buildingRole(t *testing.T, gold int64) *game_roles.Role {
+// buildingRole 构造测试角色并注入各资源（木/石/粮/铁）各 res 量
+func buildingRole(t *testing.T, res int64) *game_roles.Role {
 	t.Helper()
 	role := game_roles.NewTest(60002)
-	role.GetItems().AddItem(common_declarations.ItemUse{
-		ItemID: pb_confs.Currency2ConfID, ItemType: pb_confs.ItemTypeCurrency2, Count: gold,
-	}, time.Now().Unix())
+	for _, id := range []pb_confs.ItemID{
+		pb_confs.ResourceWoodConfID, pb_confs.ResourceStoneConfID,
+		pb_confs.ResourceFoodConfID, pb_confs.ResourceIronConfID,
+	} {
+		role.GetItems().AddItem(common_declarations.ItemUse{
+			ItemID: id, ItemType: pb_confs.ItemTypeResource, Count: res,
+		}, time.Now().Unix())
+	}
 	return role
 }
 
@@ -68,15 +73,17 @@ func TestBuildingBuild_WithDuration(t *testing.T) {
 	if b.EndTimeUx <= time.Now().Unix() {
 		t.Errorf("EndTimeUx=%d should be in future", b.EndTimeUx)
 	}
-	// 资源已扣除（兵营 build_cost=200）
-	remain := role.GetItems().GetItemCount(int32(pb_confs.Currency2ConfID))
-	if remain != 100000-200 {
-		t.Errorf("gold remain=%d, want %d", remain, 100000-200)
+	// 资源已扣除（兵营 build_cost：木200/石200/粮150/铁100）
+	if got := role.GetItems().GetItemCount(int32(pb_confs.ResourceWoodConfID)); got != 100000-200 {
+		t.Errorf("wood remain=%d, want %d", got, 100000-200)
+	}
+	if got := role.GetItems().GetItemCount(int32(pb_confs.ResourceFoodConfID)); got != 100000-150 {
+		t.Errorf("food remain=%d, want %d", got, 100000-150)
 	}
 }
 
-// TestBuildingBuild_NoGold 资源不足
-func TestBuildingBuild_NoGold(t *testing.T) {
+// TestBuildingBuild_NoRes 资源不足
+func TestBuildingBuild_NoRes(t *testing.T) {
 	role := buildingRole(t, 0)
 	roleID := role.ID
 	_, result := BuildingBuild(role, roleID, &pb_city.BuildingBuildReq{
@@ -85,7 +92,7 @@ func TestBuildingBuild_NoGold(t *testing.T) {
 		MapId:  200,
 	})
 	if result == nil {
-		t.Fatal("want error for no gold, got nil")
+		t.Fatal("want error for no resources, got nil")
 	}
 	if res, ok := result.(rpc_results.ResultI); ok {
 		if res.Code() == pb_error_code.ErrorCode_NoneErr {
@@ -134,10 +141,12 @@ func TestBuildingUpgrade_Success(t *testing.T) {
 	if b.State != pb_city.BuildingState_Constructing || b.NextLevel != 2 {
 		t.Errorf("after upgrade state=%v next=%d, want Constructing/2", b.State, b.NextLevel)
 	}
-	// 消耗 = upgrade_cost_base 300
-	remain := role.GetItems().GetItemCount(int32(pb_confs.Currency2ConfID))
-	if remain != 100000-200-300 {
-		t.Errorf("gold remain=%d, want %d", remain, 100000-200-300)
+	// 消耗 = build(木200) + upgrade_base(木300) = 木 500；粮 = 150 + 200 = 350
+	if got := role.GetItems().GetItemCount(int32(pb_confs.ResourceWoodConfID)); got != 100000-200-300 {
+		t.Errorf("wood remain=%d, want %d", got, 100000-200-300)
+	}
+	if got := role.GetItems().GetItemCount(int32(pb_confs.ResourceFoodConfID)); got != 100000-150-200 {
+		t.Errorf("food remain=%d, want %d", got, 100000-150-200)
 	}
 }
 

@@ -107,3 +107,12 @@ func (c *Client) MapData(ctx context.Context, req *pb_worldmap.MapDataReq) (*pb_
 	}
 	return cli.MapData(ctx, req)
 }
+
+// AbandonTile 放弃已占领地块（释放归属，停止产出）
+func (c *Client) AbandonTile(ctx context.Context, req *pb_worldmap.AbandonTileReq) (*pb_worldmap.AbandonTileRsp, error) {
+	cli := c.hub.GetWorldMapHandlerClient()
+	if cli == nil {
+		return nil, fmt.Errorf("worldmap not connected")
+	}
+	return cli.AbandonTile(ctx, req)
+}

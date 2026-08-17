@@ -140,6 +140,8 @@ func tryOccupy(mgr *map_managers.MapManager, attacker *marchs.MarchInfo, rsp *pb
 	if currentOwner > 0 && currentOwner != attacker.GetFromRoleID() {
 		mgr.GetMarchManage().MapAttributeMarchDelete(attacker)
 		mgr.GetMarchManage().MapAttributeMarchCreate(attacker)
+		// 记录原归属者（瞬态），到达事件回传 game 清理原主资源地快照
+		attacker.PrevOwnerID = currentOwner
 	}
 
 	toMapInfo.Occupy(attacker.GetFromRoleID())

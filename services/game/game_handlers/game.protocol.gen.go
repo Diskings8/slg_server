@@ -90,11 +90,16 @@ func init() {
 		Resp: &pb_hero.HeroTroopUnlockResp{},
 	})
 
-	// ===== 道具 (1000005) =====
+	// ===== 道具 (1000005 / 1000042) =====
 	RegisterProto(pb_protocol.MsgID_GameUseItem, &ProtoHandler{
 		F:    Wrap(item_handler.HandlerUseItem),
 		Req:  &pb_item.UseItemReq{},
 		Resp: &pb_item.UseItemResp{},
+	})
+	RegisterProto(pb_protocol.MsgID_GameItemList, &ProtoHandler{
+		F:    Wrap(item_handler.HandlerItemList),
+		Req:  &pb_item.ItemListReq{},
+		Resp: &pb_item.ItemListResp{},
 	})
 
 	// ===== 货币兑换 (1000035) =====
@@ -208,5 +213,12 @@ func init() {
 		F:    Wrap(review_handler.HandlerEventClick),
 		Req:  &pb_worldmap.EventClickReq{},
 		Resp: &pb_worldmap.EventClickRsp{},
+	})
+
+	// ===== 地块 (1000041) =====
+	RegisterProto(pb_protocol.MsgID_GameTileAbandon, &ProtoHandler{
+		F:    Wrap(march_handler.HandlerTileAbandon),
+		Req:  &pb_worldmap.AbandonTileReq{},
+		Resp: &pb_worldmap.AbandonTileRsp{},
 	})
 }

@@ -18,6 +18,7 @@ import (
 	"server.slg.com/services/game/game_entitys/game_roles/role_heroes"
 	"server.slg.com/services/game/game_entitys/game_roles/role_items"
 	"server.slg.com/services/game/game_entitys/game_roles/role_recruits"
+	"server.slg.com/services/game/game_entitys/game_roles/role_resource_tiles"
 	"server.slg.com/services/game/game_entitys/game_roles/role_reviews"
 )
 
@@ -50,6 +51,7 @@ type Role struct {
 	Recruits         *role_recruits.RoleRecruits                 `json:"recruits,omitempty"`
 	Attr             *role_attrs.RoleAttrs                       `json:"attr,omitempty"`
 	Reviews          *role_reviews.RoleReviews                   `json:"reviews,omitempty"`
+	ResourceTiles    *role_resource_tiles.RoleResourceTiles       `json:"resource_tiles,omitempty"`
 }
 
 // UniqueID 唯一 id
@@ -149,6 +151,7 @@ func (r *Role) New() {
 	r.Recruits = role_recruits.NewRoleRecruits(roleID)
 	r.Attr = role_attrs.NewRoleAttrs(roleID)
 	r.Reviews = role_reviews.NewRoleReviews(roleID)
+	r.ResourceTiles = role_resource_tiles.NewRoleResourceTiles(roleID)
 }
 
 // SetStatus 设置状态
@@ -304,6 +307,23 @@ func (r *Role) GetReviews() *role_reviews.RoleReviews {
 		r.Reviews = role_reviews.NewRoleReviews(r.ID)
 	}
 	return r.Reviews
+}
+
+// GetResourceTiles 获取资源地产出快照模块
+func (r *Role) GetResourceTiles() *role_resource_tiles.RoleResourceTiles {
+	if !r.IsCopy() {
+		return r.ResourceTiles
+	}
+	if r.ResourceTiles == nil {
+		r.ResourceTiles = role_resource_tiles.NewRoleResourceTiles(r.ID)
+		if r.src.ResourceTiles != nil {
+			r.copyLock.RLock()
+			r.ResourceTiles.Copy(r.src.ResourceTiles)
+			r.copyLock.RUnlock()
+		}
+		r.ResourceTiles.Init()
+	}
+	return r.ResourceTiles
 }
 
 // GetAttr 获取属性模块

@@ -3,7 +3,8 @@ package main
 // slg_client — 模拟 SLG 客户端，连 gateway 打通完整流程：
 //
 //	创建账号 → 登录 → 区服列表 → 进服建角 → 抽卡 → 上阵编队
-//	→ 查主城坐标 → 开发出征（PvE）→ 等 worldmap 自动结算战斗
+//	→ 查主城坐标 → 攻占中立资源地（打守军→占领）→ 开发升级（+3）
+//	→ 查资源余额（惰性产出）→ 放弃地块
 //
 // 帧格式（与 common/conns/netconn/tcp_conn 对等）：
 //
@@ -26,22 +27,23 @@ import (
 	"server.slg.com/api/protocol/pb/pb_city"
 	"server.slg.com/api/protocol/pb/pb_common"
 	"server.slg.com/api/protocol/pb/pb_hero"
+	"server.slg.com/api/protocol/pb/pb_item"
 	"server.slg.com/api/protocol/pb/pb_maps_march"
 	"server.slg.com/api/protocol/pb/pb_protocol"
 	"server.slg.com/api/protocol/pb/pb_recruit"
 	"server.slg.com/api/protocol/pb/pb_review"
 	"server.slg.com/api/protocol/pb/pb_worldmap"
+	"server.slg.com/api/protocol/pb_confs"
 )
 
 const (
-	marchTypeDevelop = 10005 // MarchTypeDevelop：开发自己的地，到达触发 PvE 打守军
-	marchTypeSweep    = 10003 // MarchTypeSweep：扫荡，到达有事件走事件分支，无事件打守军
+	marchTypeAttack   = 10001 // MarchTypeAttack：攻占（打守军 PvE → 胜利占领）
+	marchTypeDevelop  = 10005 // MarchTypeDevelop：开发自己的地（lv2~4 → +3）
+	marchTypeSweep    = 10003 // MarchTypeSweep：扫荡（保留，未在本流程使用）
 )
 
 func main() {
-	sweepMode := false
 	reviewMode := false
-	flag.BoolVar(&sweepMode, "sweep", false, "扫荡模式：目标选等级0格，MarchType=10003")
 	flag.BoolVar(&reviewMode, "review", false, "审查模式：触发审查 + 选择任务刷事件")
 	flag.Parse()
 
@@ -211,24 +213,26 @@ func main() {
 		os.Exit(1)
 	}
 
-	// 10. 在地图数据里找一块「等级0」的格作为目标，优先离主城近的（缩短行程）
-	//    - 开发模式：须己方（可开发）；扫荡模式：任意（有守军即可，打守军PvE）
+	// 10. 在地图数据里找一块中立资源地（无主、lv2~4、资源元素）作为攻占目标
 	coreX, coreY := coreMapID%1000, coreMapID/1000
 	var toMapID int32
-	bestDist := int32(1<<30)
+	bestDist := int32(1 << 30)
 	if err := call(conn, next(), uint32(pb_protocol.MsgID_GameMapData),
-		&pb_worldmap.MapDataReq{MapId: coreMapID, Range: 2},
+		&pb_worldmap.MapDataReq{MapId: coreMapID, Range: 3},
 		func(env *pb_common.MessagePacket) error {
 			resp := &pb_worldmap.MapDataRsp{}
 			if err := proto.Unmarshal(env.GetBody(), resp); err != nil {
 				return err
 			}
 			for _, c := range resp.GetCells() {
-				if c.GetLevel() != 0 || c.GetMapId() == coreMapID {
+				if c.GetMapId() == coreMapID || c.GetOwnerId() != 0 {
 					continue
 				}
-				if !sweepMode && c.GetOwnerId() != roleID {
-					continue // 开发模式须己方
+				if c.GetElementType() < 1 || c.GetElementType() > 4 {
+					continue // 非资源元素（地形）
+				}
+				if c.GetLevel() < 2 || c.GetLevel() > 4 {
+					continue // 可攻占 + 可开发区间
 				}
 				cx, cy := c.GetMapId()%1000, c.GetMapId()/1000
 				d := abs32(cx-coreX) + abs32(cy-coreY)
@@ -238,37 +242,100 @@ func main() {
 				}
 			}
 			if toMapID == 0 {
-				return fmt.Errorf("未找到等级0的格子")
+				return fmt.Errorf("附近未找到中立资源地（无主 lv2~4 资源元素）")
 			}
-			fmt.Printf("[10] 找到目标格 map_id=%d 距主城%d格 (sweep=%v)\n", toMapID, bestDist, sweepMode)
+			fmt.Printf("[10] 找到中立资源地 map_id=%d 距主城%d格\n", toMapID, bestDist)
 			return nil
 		}); err != nil {
-		fmt.Println("找目标格失败:", err)
+		fmt.Println("找目标资源地失败:", err)
 		os.Exit(1)
 	}
 
-	// 11. 出征：From=主城核心，To=目标格，MarchType=10005（开发）或 10003（扫荡）
-	marchType := int32(marchTypeDevelop)
-	if sweepMode {
-		marchType = marchTypeSweep
-	}
+	// 行军耗时 ≈ 距离×1000/速度(100) 秒，加缓冲
+	marchWait := time.Duration(bestDist*10+8) * time.Second
+
+	// 11. 攻占：MarchType=10001（攻击，打守军 PvE → 胜利占领空地）
 	if err := call(conn, next(), uint32(pb_protocol.MsgID_GameMarchCreate),
-		&pb_maps_march.MarchCreateReq{FromMapId: coreMapID, ToMapId: toMapID, MarchType: marchType, FormationId: formationID},
+		&pb_maps_march.MarchCreateReq{FromMapId: coreMapID, ToMapId: toMapID, MarchType: int32(marchTypeAttack), FormationId: formationID},
 		func(env *pb_common.MessagePacket) error {
 			resp := &pb_maps_march.MarchCreateResp{}
 			if err := proto.Unmarshal(env.GetBody(), resp); err != nil {
 				return err
 			}
-			fmt.Printf("[11] 出征成功 march_id=%d end_time=%d\n", resp.GetMarchId(), resp.GetEndTime())
+			fmt.Printf("[11] 攻占出征 march_id=%d end_time=%d\n", resp.GetMarchId(), resp.GetEndTime())
 			return nil
 		}); err != nil {
-		fmt.Println("出征失败:", err)
+		fmt.Println("攻占出征失败:", err)
 		os.Exit(1)
 	}
 
-	// 12. 等待行军到达 + worldmap 自动结算战斗（相邻格耗时 ~10s）
-	fmt.Println("[12] 等待行军到达并结算战斗（观察 worldmap/battle 日志）...")
-	time.Sleep(15 * time.Second)
+	// 12. 等待攻占行军到达 + 战斗 + 占领（观察 worldmap/battle 日志）
+	fmt.Printf("[12] 等待攻占行军到达并结算（约 %s）...\n", marchWait)
+	time.Sleep(marchWait)
+
+	// 13. 复查目标格归属
+	occupied := false
+	if err := call(conn, next(), uint32(pb_protocol.MsgID_GameMapData),
+		&pb_worldmap.MapDataReq{MapId: toMapID, Range: 0},
+		func(env *pb_common.MessagePacket) error {
+			resp := &pb_worldmap.MapDataRsp{}
+			if err := proto.Unmarshal(env.GetBody(), resp); err != nil {
+				return err
+			}
+			for _, c := range resp.GetCells() {
+				if c.GetMapId() == toMapID && c.GetOwnerId() == roleID {
+					occupied = true
+				}
+			}
+			return nil
+		}); err != nil {
+		fmt.Println("复查目标格失败:", err)
+		os.Exit(1)
+	}
+	if occupied {
+		fmt.Println("[13] 攻占成功！地块已归己，开始产出")
+	} else {
+		fmt.Println("[13] 攻占可能未生效（战败/时间不足），后续开发可能失败，请检查 worldmap 日志")
+	}
+
+	// 14. 开发：MarchType=10005（自有 lv2~4 → +3 级，提升产量）
+	if err := call(conn, next(), uint32(pb_protocol.MsgID_GameMarchCreate),
+		&pb_maps_march.MarchCreateReq{FromMapId: coreMapID, ToMapId: toMapID, MarchType: int32(marchTypeDevelop), FormationId: formationID},
+		func(env *pb_common.MessagePacket) error {
+			resp := &pb_maps_march.MarchCreateResp{}
+			if err := proto.Unmarshal(env.GetBody(), resp); err != nil {
+				return err
+			}
+			fmt.Printf("[14] 开发出征 march_id=%d end_time=%d\n", resp.GetMarchId(), resp.GetEndTime())
+			return nil
+		}); err != nil {
+		fmt.Println("开发出征失败:", err)
+		os.Exit(1)
+	}
+	fmt.Printf("[14] 等待开发行军到达（地块升级 +3，约 %s）...\n", marchWait)
+	time.Sleep(marchWait)
+
+	// 15. 查询资源余额（先惰性结算产出，看经济闭环）
+	if err := call(conn, next(), uint32(pb_protocol.MsgID_GameItemList), &pb_item.ItemListReq{},
+		func(env *pb_common.MessagePacket) error {
+			resp := &pb_item.ItemListResp{}
+			if err := proto.Unmarshal(env.GetBody(), resp); err != nil {
+				return err
+			}
+			fmt.Printf("[15] 资源余额: %s\n", formatResources(resp.GetItems()))
+			return nil
+		}); err != nil {
+		fmt.Println("查背包失败:", err)
+	}
+
+	// 16. 放弃地块（释放归属，停止产出）
+	if err := call(conn, next(), uint32(pb_protocol.MsgID_GameTileAbandon),
+		&pb_worldmap.AbandonTileReq{MapId: toMapID},
+		nil); err != nil {
+		fmt.Println("放弃地块失败:", err)
+		os.Exit(1)
+	}
+	fmt.Println("[16] 放弃地块成功（观察 worldmap 释放事件 / game 快照移除）")
 
 	// 13. 审查玩法（-review）：触发审查 + 选择任务刷事件
 	if reviewMode {
@@ -336,6 +403,21 @@ func abs32(x int32) int32 {
 		return -x
 	}
 	return x
+}
+
+// formatResources 格式化资源/货币余额（按 ConfigID：粮/木/石/铁/金币/钻石）
+func formatResources(items []*pb_item.ItemUse) string {
+	bal := map[int32]int64{}
+	for _, it := range items {
+		bal[it.GetConfId()] = it.GetCount()
+	}
+	return fmt.Sprintf("粮=%d 木=%d 石=%d 铁=%d 金币=%d 钻石=%d",
+		bal[int32(pb_confs.ResourceFoodConfID)],
+		bal[int32(pb_confs.ResourceWoodConfID)],
+		bal[int32(pb_confs.ResourceStoneConfID)],
+		bal[int32(pb_confs.ResourceIronConfID)],
+		bal[int32(pb_confs.Currency2ConfID)],
+		bal[int32(pb_confs.Currency1ConfID)])
 }
 
 // packFrame 组 TCP 帧：12 字节头 + body

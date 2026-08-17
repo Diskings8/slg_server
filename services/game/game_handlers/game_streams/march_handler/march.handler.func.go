@@ -50,3 +50,17 @@ func HandlerMarchCreate(ctx context.Context, roleID uint64, req *pb_maps_march.M
 	resp.EndTime = createRsp.GetEndTime()
 	return nil
 }
+
+// HandlerTileAbandon 放弃已占领地块 (1000041)
+//
+// 释放归属由 worldmap 处理（校验归属/建筑格 → Free → AOI 推送 → 事件通知 game 移除资源地快照）。
+func HandlerTileAbandon(ctx context.Context, roleID uint64, req *pb_worldmap.AbandonTileReq, resp *pb_worldmap.AbandonTileRsp) rpc_results.ResultI {
+	if req.GetMapId() < 0 {
+		return rpc_results.Error(pb_error_code.ErrorCode_ParamError, "invalid map_id")
+	}
+	req.RoleId = roleID
+	if _, err := game_rpc_clients.WorldMap().AbandonTile(ctx, req); err != nil {
+		return rpc_results.Error(pb_error_code.ErrorCode_Failed, fmt.Sprintf("abandon tile failed: %s", err.Error()))
+	}
+	return nil
+}

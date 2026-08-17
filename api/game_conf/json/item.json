@@ -4,6 +4,10 @@
     {"conf_id": 2001, "effect": {"type": 1, "target": 0, "value": 100}},
     {"conf_id": 2002, "effect": {"type": 2, "target": 100002, "value": 1000}},
     {"conf_id": 2003, "effect": {"type": 3, "target": 2001, "value": 5}},
-    {"conf_id": 2004, "effect": {"type": 0, "target": 0, "value": 0}}
+    {"conf_id": 2004, "effect": {"type": 0, "target": 0, "value": 0}},
+    {"conf_id": 100003, "effect": {"type": 0, "target": 0, "value": 0}},
+    {"conf_id": 100004, "effect": {"type": 0, "target": 0, "value": 0}},
+    {"conf_id": 100005, "effect": {"type": 0, "target": 0, "value": 0}},
+    {"conf_id": 100006, "effect": {"type": 0, "target": 0, "value": 0}}
   ]
 }

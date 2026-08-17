@@ -45,6 +45,12 @@ func New() *Conf {
 			2002: {ConfID: 2002, Effect: ItemEffect{Type: EffectAddCurrency, Target: int32(pb_confs.Currency2ConfID), Value: 1000}}, // 金币礼包
 			2003: {ConfID: 2003, Effect: ItemEffect{Type: EffectAddItem, Target: 2001, Value: 5}},                                   // 资源包：5 张经验书
 			2004: {ConfID: 2004, Effect: ItemEffect{Type: EffectNone}},                                                              // 抽卡券（无效果，仅消耗）
+
+			// ── 资源（背包存储，受仓库上限约束；无使用效果） ──
+			pb_confs.ResourceFoodConfID:  {ConfID: pb_confs.ResourceFoodConfID, Effect: ItemEffect{Type: EffectNone}},  // 粮食
+			pb_confs.ResourceWoodConfID:  {ConfID: pb_confs.ResourceWoodConfID, Effect: ItemEffect{Type: EffectNone}},  // 木材
+			pb_confs.ResourceStoneConfID: {ConfID: pb_confs.ResourceStoneConfID, Effect: ItemEffect{Type: EffectNone}}, // 石料
+			pb_confs.ResourceIronConfID:  {ConfID: pb_confs.ResourceIronConfID, Effect: ItemEffect{Type: EffectNone}},  // 铁矿
 		},
 	}
 }

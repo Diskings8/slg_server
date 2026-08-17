@@ -52,6 +52,7 @@ type MarchInfo struct {
 	AoiBlock        []cores_declarations.AoiScreenI  `gorm:"-"`
 	PassingAoiBlock []cores_declarations.AoiScreenI  `gorm:"-"`
 	BattleResult    *pb_redis_stream.MarchBattleResult `gorm:"-" json:"-"` // 瞬态战斗结果（到达后经事件回传 game）
+	PrevOwnerID     uint64                             `gorm:"-" json:"-"` // 瞬态原归属者（攻占夺地后回传 game 清理原主快照）
 }
 
 func (mi *MarchInfo) GetRelocationVal() uint64 {

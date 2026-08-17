@@ -3,22 +3,10 @@ package role_buildings
 import (
 	"go.uber.org/zap"
 	"server.slg.com/api/protocol/pb/pb_city"
-	"server.slg.com/common/common_declarations"
 	"server.slg.com/common/loggers"
 	"server.slg.com/common/utils/util_jsons"
 	"server.slg.com/services/game/game_models"
 )
-
-// BuildingCostI 建筑建造/升级的资源消耗接口（预留）
-//
-// 货币类道具引入后实现具体消耗逻辑（CheckCost/DeductCost）。
-// TODO: 接入货币道具后提供默认实现。
-type BuildingCostI interface {
-	// CheckCost 检查资源是否足够（预留）
-	CheckCost(role common_declarations.DataI) error
-	// DeductCost 扣除资源（预留）
-	DeductCost(role common_declarations.DataI) error
-}
 
 func NewRoleBuildings(roleID uint64) *RoleBuildings {
 	return &RoleBuildings{

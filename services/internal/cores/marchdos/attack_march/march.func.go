@@ -106,8 +106,9 @@ func checkTargetLegality(mgr *map_managers.MapManager, info *marchs.MarchInfo) b
 		return false
 	}
 
+	// 中立野地（无归属、无建筑）：仅资源格可攻占（打守军 PvE → 占领空地）
 	if toMapInfo.GetOwnerID() == 0 && toMapInfo.GetOverlayBuilding() == nil {
-		return false
+		return toMapInfo.GetElementType().IsResource()
 	}
 
 	// 目标处于保护期内（地块刚被释放，战乱地外）→ 不可攻击

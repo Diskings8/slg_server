@@ -46,3 +46,12 @@ message CurrencyExchangeResp {
     ItemUse remain = 1;  // 兑换后来源货币剩余
     ItemUse obtain = 2;  // 本次获得的目标货币
 }
+
+// ItemListReq 背包查询请求（道具/货币/资源）
+message ItemListReq {
+}
+
+// ItemListResp 背包查询响应
+message ItemListResp {
+    repeated ItemUse items = 1;  // 全部道具/货币/资源（按 ConfigID）
+}
