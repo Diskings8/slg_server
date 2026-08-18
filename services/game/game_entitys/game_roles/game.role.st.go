@@ -20,6 +20,7 @@ import (
 	"server.slg.com/services/game/game_entitys/game_roles/role_recruits"
 	"server.slg.com/services/game/game_entitys/game_roles/role_resource_tiles"
 	"server.slg.com/services/game/game_entitys/game_roles/role_reviews"
+	"server.slg.com/services/game/game_entitys/game_roles/role_unions"
 )
 
 var _ common_declarations.DataI = new(Role)
@@ -52,6 +53,7 @@ type Role struct {
 	Attr             *role_attrs.RoleAttrs                       `json:"attr,omitempty"`
 	Reviews          *role_reviews.RoleReviews                   `json:"reviews,omitempty"`
 	ResourceTiles    *role_resource_tiles.RoleResourceTiles       `json:"resource_tiles,omitempty"`
+	RoleUnion        *role_unions.RoleUnions                     `json:"role_union,omitempty"`
 }
 
 // UniqueID 唯一 id
@@ -152,6 +154,7 @@ func (r *Role) New() {
 	r.Attr = role_attrs.NewRoleAttrs(roleID)
 	r.Reviews = role_reviews.NewRoleReviews(roleID)
 	r.ResourceTiles = role_resource_tiles.NewRoleResourceTiles(roleID)
+	r.RoleUnion = role_unions.NewRoleUnions(roleID)
 }
 
 // SetStatus 设置状态
@@ -324,6 +327,23 @@ func (r *Role) GetResourceTiles() *role_resource_tiles.RoleResourceTiles {
 		r.ResourceTiles.Init()
 	}
 	return r.ResourceTiles
+}
+
+// GetRoleUnion 获取联盟快照模块
+func (r *Role) GetRoleUnion() *role_unions.RoleUnions {
+	if !r.IsCopy() {
+		return r.RoleUnion
+	}
+	if r.RoleUnion == nil {
+		r.RoleUnion = role_unions.NewRoleUnions(r.ID)
+		if r.src.RoleUnion != nil {
+			r.copyLock.RLock()
+			r.RoleUnion.Copy(r.src.RoleUnion)
+			r.copyLock.RUnlock()
+		}
+		r.RoleUnion.Init()
+	}
+	return r.RoleUnion
 }
 
 // GetAttr 获取属性模块

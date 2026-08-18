@@ -13,6 +13,9 @@ import (
 // ErrStreamNotSupported 缓存实例不支持 Stream 操作
 var ErrStreamNotSupported = errors.New("cache instance does not support stream operations")
 
+// streamMaxLen stream 近似裁剪长度（防止无限增长；消费游标持久化后旧消息不会再被重读）
+const streamMaxLen = 1000
+
 // streamXAdder Redis XADD 接口
 type streamXAdder interface {
 	XAdd(ctx context.Context, a *redis.XAddArgs) *redis.StringCmd
@@ -33,6 +36,8 @@ func ProtoXAdd(parentCtx context.Context, streamKey string, data []byte) error {
 
 	return pub.XAdd(ctx, &redis.XAddArgs{
 		Stream: streamKey,
+		MaxLen: streamMaxLen, // 近似裁剪旧消息，防止 stream 无限增长
+		Approx: true,
 		Values: []string{"data", string(data)},
 	}).Err()
 }

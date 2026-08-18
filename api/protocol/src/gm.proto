@@ -1,0 +1,16 @@
+syntax = "proto3";
+package gm;
+option go_package = "server.slg.com/api/protocol/pb/pb_gm";
+
+// GmReq 通用 GM 请求（节点收到后按 cmd 分发到对应功能的 GM 方法）
+message GmReq {
+    uint64 role_id      = 1;  // 目标角色ID（0=当前操作角色）
+    string cmd          = 2;  // 命令字，如 "hero.set_level"
+    repeated string args = 3; // 命令参数（各 cmd 按约定自行解析）
+}
+
+// GmResp 通用 GM 响应
+message GmResp {
+    string cmd = 1;  // 原样回显
+    string msg = 2;  // 结果文本（成功描述 / 错误说明）
+}

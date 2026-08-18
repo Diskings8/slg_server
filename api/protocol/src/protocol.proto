@@ -43,6 +43,15 @@ enum MsgID {
     GameTileAbandon                 = 1000041;  // 放弃已占领地块
     GameItemList                    = 1000042;  // 查询背包（道具/货币/资源）
     GameHeroAwaken                  = 1000043;  // 英雄觉醒（解锁第三技能槽）
+    GameUnionCreate                 = 1000044;  // 创建联盟
+    GameUnionJoin                   = 1000045;  // 加入联盟
+    GameUnionLeave                  = 1000046;  // 退出联盟
+    GameUnionKick                   = 1000047;  // 踢出成员
+    GameUnionTransfer               = 1000048;  // 转让盟主
+    GameUnionDissolve               = 1000049;  // 解散联盟
+    GameUnionInfo                   = 1000050;  // 查询联盟信息
+    GameUnionMemberList             = 1000051;  // 查询联盟成员列表
+    GameGm                         = 1000052;  // GM：通用 GM 指令（按 cmd 分发）
 
     // ---------------- Login 登录协议 (2000001~) ----------------//
     LoginCreateAccount = 2000001;  // 注册账号

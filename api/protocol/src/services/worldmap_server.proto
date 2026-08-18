@@ -34,6 +34,9 @@ service WorldMapHandler {
 
     // 地块：放弃已占领地块（释放归属，停止产出）
     rpc AbandonTile(AbandonTileReq) returns (AbandonTileRsp);
+
+    // 联盟：角色联盟归属变更同步（game → worldmap 维护 RoleUnionIndex）
+    rpc SyncRoleUnion(SyncRoleUnionReq) returns (SyncRoleUnionRsp);
 }
 
 // ---------- 行军 ----------
@@ -168,4 +171,16 @@ message AbandonTileReq {
 
 // AbandonTileRsp 放弃结果
 message AbandonTileRsp {
+}
+
+// ---------- 联盟索引同步 ----------
+
+// SyncRoleUnionReq 角色联盟归属变更
+message SyncRoleUnionReq {
+    uint64 role_id  = 1;
+    uint64 union_id = 2;  // 0=退出/被踢/解散（移除索引）
+}
+
+// SyncRoleUnionRsp 同步结果
+message SyncRoleUnionRsp {
 }

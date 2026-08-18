@@ -68,13 +68,13 @@ func resolveDefendersLayers(req *pb_battle.BattleSettleReq, attackerSlots []*pb_
 	return defeated, false
 }
 
-// baseDeadAfter 战后队伍快照中攻/守方大营(slot0)有效兵力是否归零
+// baseDeadAfter 战后队伍快照中攻/守方大营(slot1)有效兵力是否归零
 func baseDeadAfter(side *pb_battle.BattleSide) bool {
 	if side == nil || side.GetTeamInfo() == nil {
 		return true
 	}
 	for _, s := range side.GetTeamInfo().GetSlotInfo() {
-		if s.GetSlotId() == 0 {
+		if s.GetSlotId() == 1 { // 大营
 			return slotAliveNum(s) == 0
 		}
 	}

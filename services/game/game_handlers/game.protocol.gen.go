@@ -4,6 +4,7 @@ import (
 	"server.slg.com/api/protocol/pb/pb_attr"
 	"server.slg.com/api/protocol/pb/pb_battle_record"
 	"server.slg.com/api/protocol/pb/pb_city"
+	"server.slg.com/api/protocol/pb/pb_gm"
 	"server.slg.com/api/protocol/pb/pb_hero"
 	"server.slg.com/api/protocol/pb/pb_item"
 	"server.slg.com/api/protocol/pb/pb_maps_march"
@@ -11,17 +12,20 @@ import (
 	"server.slg.com/api/protocol/pb/pb_review"
 	"server.slg.com/api/protocol/pb/pb_recruit"
 	"server.slg.com/api/protocol/pb/pb_skill"
+	"server.slg.com/api/protocol/pb/pb_union"
 	"server.slg.com/api/protocol/pb/pb_worldmap"
 	"server.slg.com/services/game/game_handlers/game_streams/attr_handler"
 	"server.slg.com/services/game/game_handlers/game_streams/battle_record_handler"
 	"server.slg.com/services/game/game_handlers/game_streams/building_handler"
 	"server.slg.com/services/game/game_handlers/game_streams/formation_handler"
+	"server.slg.com/services/game/game_handlers/game_streams/gm_handler"
 	"server.slg.com/services/game/game_handlers/game_streams/hero_handler"
 	"server.slg.com/services/game/game_handlers/game_streams/item_handler"
 	"server.slg.com/services/game/game_handlers/game_streams/map_handler"
 	"server.slg.com/services/game/game_handlers/game_streams/march_handler"
 	"server.slg.com/services/game/game_handlers/game_streams/recruit_handler"
 	"server.slg.com/services/game/game_handlers/game_streams/review_handler"
+	"server.slg.com/services/game/game_handlers/game_streams/union_handler"
 )
 
 // 协议注册 — 手工维护，后续可由 game_generates 自动生成
@@ -225,5 +229,55 @@ func init() {
 		F:    Wrap(march_handler.HandlerTileAbandon),
 		Req:  &pb_worldmap.AbandonTileReq{},
 		Resp: &pb_worldmap.AbandonTileRsp{},
+	})
+
+	// ===== 联盟 (1000044~1000051) =====
+	RegisterProto(pb_protocol.MsgID_GameUnionCreate, &ProtoHandler{
+		F:    Wrap(union_handler.HandlerUnionCreate),
+		Req:  &pb_union.UnionCreateReq{},
+		Resp: &pb_union.UnionCreateResp{},
+	})
+	RegisterProto(pb_protocol.MsgID_GameUnionJoin, &ProtoHandler{
+		F:    Wrap(union_handler.HandlerUnionJoin),
+		Req:  &pb_union.UnionJoinReq{},
+		Resp: &pb_union.UnionJoinResp{},
+	})
+	RegisterProto(pb_protocol.MsgID_GameUnionLeave, &ProtoHandler{
+		F:    Wrap(union_handler.HandlerUnionLeave),
+		Req:  &pb_union.UnionLeaveReq{},
+		Resp: &pb_union.UnionLeaveResp{},
+	})
+	RegisterProto(pb_protocol.MsgID_GameUnionKick, &ProtoHandler{
+		F:    Wrap(union_handler.HandlerUnionKick),
+		Req:  &pb_union.UnionKickReq{},
+		Resp: &pb_union.UnionKickResp{},
+	})
+	RegisterProto(pb_protocol.MsgID_GameUnionTransfer, &ProtoHandler{
+		F:    Wrap(union_handler.HandlerUnionTransfer),
+		Req:  &pb_union.UnionTransferReq{},
+		Resp: &pb_union.UnionTransferResp{},
+	})
+	RegisterProto(pb_protocol.MsgID_GameUnionDissolve, &ProtoHandler{
+		F:    Wrap(union_handler.HandlerUnionDissolve),
+		Req:  &pb_union.UnionDissolveReq{},
+		Resp: &pb_union.UnionDissolveResp{},
+	})
+	RegisterProto(pb_protocol.MsgID_GameUnionInfo, &ProtoHandler{
+		F:    Wrap(union_handler.HandlerUnionInfo),
+		Req:  &pb_union.UnionInfoReq{},
+		Resp: &pb_union.UnionInfoResp{},
+	})
+	RegisterProto(pb_protocol.MsgID_GameUnionMemberList, &ProtoHandler{
+		F:    Wrap(union_handler.HandlerUnionMemberList),
+		Req:  &pb_union.UnionMemberListReq{},
+		Resp: &pb_union.UnionMemberListResp{},
+	})
+
+	// ===== GM (1000052) =====
+	// 通用 GM 入口：HandlerGm 按 req.cmd 分发到各功能 GM 方法
+	RegisterProto(pb_protocol.MsgID_GameGm, &ProtoHandler{
+		F:    Wrap(gm_handler.HandlerGm),
+		Req:  &pb_gm.GmReq{},
+		Resp: &pb_gm.GmResp{},
 	})
 }

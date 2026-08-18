@@ -49,10 +49,11 @@ func (t *Team) GetMaxCount() uint64 {
 	return sum
 }
 
+// CheckCanFight 队伍可战斗判定：大营(slot 1)必须有可战斗武将（战斗胜负以"大营有效兵力==0 → 该方败"为准）。
 func (t *Team) CheckCanFight() bool {
 	for _, v := range t.Slots {
 		if v.GetSlotId() == cores_declarations.TeamSlot1 {
-			return v.GetHeroInfo().GetCurStatus() != pb_hero.Status_Injured
+			return v.GetHeroInfo() != nil && v.GetHeroInfo().GetCurStatus() != pb_hero.Status_Injured
 		}
 	}
 	return false

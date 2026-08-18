@@ -1,0 +1,97 @@
+syntax = "proto3";
+package union;
+option go_package = "server.slg.com/api/protocol/pb/pb_union";
+
+// 联盟职位
+enum UnionPosition {
+    UNION_POSITION_NONE    = 0;  // 无/未知
+    UNION_POSITION_LEADER  = 1;  // 盟主
+    UNION_POSITION_OFFICER = 2;  // 官员
+    UNION_POSITION_MEMBER  = 3;  // 成员
+}
+
+// UnionBrief 联盟简要信息（角色侧快照 / 列表展示）
+message UnionBrief {
+    uint64 union_id     = 1;
+    string name         = 2;
+    uint64 leader_id    = 3;  // 盟主角色ID
+    uint32 member_count = 4;  // 成员数
+    string notice       = 5;  // 公告
+}
+
+// RoleUnionInfo 角色侧联盟信息（role_union 快照，含额外信息）
+message RoleUnionInfo {
+    UnionBrief brief    = 1;  // union proto 简要信息
+    int32 position      = 2;  // 职位（UnionPosition）
+    int64 join_ux       = 3;  // 加入时间
+}
+
+// UnionMember 联盟成员
+message UnionMember {
+    uint64 role_id   = 1;
+    int32  position  = 2;  // 职位（UnionPosition）
+    string role_name = 3;  // 角色名（简要）
+    int32  level     = 4;  // 角色/英雄等级（简要）
+}
+
+// UnionInfo 完整联盟信息
+message UnionInfo {
+    UnionBrief brief           = 1;
+    repeated UnionMember members = 2;
+}
+
+// ---- 建盟 ----
+message UnionCreateReq {
+    string name = 1;  // 联盟名（服内唯一）
+}
+message UnionCreateResp {
+    RoleUnionInfo role_union = 1;  // 建盟后角色侧联盟快照
+}
+
+// ---- 加入 ----
+message UnionJoinReq {
+    uint64 union_id = 1;
+}
+message UnionJoinResp {
+    RoleUnionInfo role_union = 1;
+}
+
+// ---- 退出 ----
+message UnionLeaveReq {
+}
+message UnionLeaveResp {
+}
+
+// ---- 踢人 ----
+message UnionKickReq {
+    uint64 role_id = 1;  // 被踢角色
+}
+message UnionKickResp {
+}
+
+// ---- 转让盟主 ----
+message UnionTransferReq {
+    uint64 role_id = 1;  // 新盟主
+}
+message UnionTransferResp {
+}
+
+// ---- 解散 ----
+message UnionDissolveReq {
+}
+message UnionDissolveResp {
+}
+
+// ---- 查询 ----
+message UnionInfoReq {
+    uint64 union_id = 1;
+}
+message UnionInfoResp {
+    UnionInfo union = 1;
+}
+
+message UnionMemberListReq {
+}
+message UnionMemberListResp {
+    repeated UnionMember members = 1;
+}

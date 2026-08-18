@@ -4,8 +4,10 @@ package attack_march
 // 战斗计算在 battle 节点完成，这里负责把结果写回 worldmap 侧运行时（伤亡/状态/占城/建筑耐久）。
 
 import (
+	"go.uber.org/zap"
 	"server.slg.com/api/protocol/pb/pb_battle"
 	"server.slg.com/api/protocol/pb/pb_maps_march"
+	"server.slg.com/common/loggers"
 	"server.slg.com/services/internal/cores/cores_declarations"
 	"server.slg.com/services/internal/cores/map_managers"
 	"server.slg.com/services/internal/cores/marchs"
@@ -18,12 +20,19 @@ func applyBattleSettleRsp(mgr *map_managers.MapManager, attacker *marchs.MarchIn
 		return
 	}
 
+	loggers.Logger.Info("applySettle step1 start", zap.Uint64("march_id", attacker.GetMarchID().Uint64())) // TODO debug remove
 	applyAttackerCasualties(attacker, rsp)  // 1. 攻击方伤亡写回
+	loggers.Logger.Info("applySettle step2", zap.Uint64("march_id", attacker.GetMarchID().Uint64())) // TODO debug remove
 	updateAttackerState(attacker, rsp)      // 2. 状态：Stay / Back
+	loggers.Logger.Info("applySettle step3", zap.Uint64("march_id", attacker.GetMarchID().Uint64()), zap.Int32("defenders", int32(len(rsp.GetDefeatedDefenders())))) // TODO debug remove
 	processDefeatedDefenders(mgr, rsp)      // 3. 防守方：回城 + AssistCallBack + push
+	loggers.Logger.Info("applySettle step4", zap.Uint64("march_id", attacker.GetMarchID().Uint64())) // TODO debug remove
 	applyBuildingDamage(mgr, attacker, rsp) // 4. 攻城耐久回写
+	loggers.Logger.Info("applySettle step5", zap.Uint64("march_id", attacker.GetMarchID().Uint64())) // TODO debug remove
 	tryOccupy(mgr, attacker, rsp)           // 5. 占领
+	loggers.Logger.Info("applySettle step6", zap.Uint64("march_id", attacker.GetMarchID().Uint64())) // TODO debug remove
 	updateWinStreak(attacker, rsp)          // 6. 连胜（占位）
+	loggers.Logger.Info("applySettle done", zap.Uint64("march_id", attacker.GetMarchID().Uint64())) // TODO debug remove
 }
 
 // applyAttackerCasualties 用最后一层攻击方队伍快照覆盖 MarchInfo.Team
@@ -131,12 +140,15 @@ func tryOccupy(mgr *map_managers.MapManager, attacker *marchs.MarchInfo, rsp *pb
 		return
 	}
 
+	// 归属在抢写锁前读：GetOwnerID 走 RLock，不能与下方 TryLock 的写锁同 goroutine 重入
+	// （sync.RWMutex 不可重入，持写锁再 RLock 会自锁死锁，Do 内的 Getter 同理）。
+	currentOwner := toMapInfo.GetOwnerID()
+
 	if !toMapInfo.TryLock() {
 		return
 	}
 	defer toMapInfo.UnLock()
 
-	currentOwner := toMapInfo.GetOwnerID()
 	if currentOwner > 0 && currentOwner != attacker.GetFromRoleID() {
 		mgr.GetMarchManage().MapAttributeMarchDelete(attacker)
 		mgr.GetMarchManage().MapAttributeMarchCreate(attacker)

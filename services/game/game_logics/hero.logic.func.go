@@ -5,6 +5,8 @@ import (
 
 	"server.slg.com/api/game_conf"
 	"server.slg.com/api/protocol/pb/pb_cultivate"
+	"server.slg.com/api/protocol/pb/pb_error_code"
+	"server.slg.com/common/conns/rpcconn/rpc_results"
 	"server.slg.com/services/game/game_entitys/game_roles/role_heroes"
 )
 
@@ -49,6 +51,18 @@ func HeroAddExp(hero *role_heroes.RoleHero, exp uint32) (uint32, error) {
 	hero.RefreshCurVal() // 升级后按新等级重算 cur_val（battle 快照用）
 
 	return level, nil
+}
+
+// GmSetHeroLevel GM：设置英雄等级（传高于当前值即提升），经验清零并重算战斗属性。
+// 供测试/运营调试用，非玩家路径。
+func GmSetHeroLevel(hero *role_heroes.RoleHero, level uint32) error {
+	if level < 1 || level > game_conf.Load().Hero.MaxLevel {
+		return rpc_results.Error(pb_error_code.ErrorCode_ParamError, "level out of range")
+	}
+	hero.SetLevel(level)
+	hero.SetExp(0)
+	hero.RefreshCurVal() // 按新等级重算 cur_val（battle 快照用）
+	return nil
 }
 
 // HeroCultivate 英雄加点

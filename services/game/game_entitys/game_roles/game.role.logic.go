@@ -28,10 +28,9 @@ func (r *Role) Level() int32 {
 	return 1 // TODO 接入 builds 子模块后替换为实际实现
 }
 
-// UnionID 获取联盟ID
-// 当子模块 role_union 存在后，委派给 r.GetRoleUnion().UnionID
+// UnionID 获取联盟ID（委派 role_union 快照；0=无联盟）
 func (r *Role) UnionID() uint64 {
-	return 0 // TODO 接入 role_union 子模块后替换
+	return r.GetRoleUnion().UnionID()
 }
 
 // VIPLevel 获取VIP等级（已过期返回 0）

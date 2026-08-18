@@ -44,9 +44,11 @@ func ValidateCreateMarch(mm *map_managers.MapManager, info *marchs.MarchInfo) (*
 	// 按行军类型分流目标合法性校验
 	switch info.MarchType {
 	case cores_declarations.MarchTypeAttack:
-		// 攻击：目标有归属或有建筑（可攻占）
+		// 攻击：目标有归属或有建筑（可攻占）；或中立资源地（打守军 PvE 占领空地）
 		if toInfo.GetOwnerID() == 0 && toInfo.GetOverlayBuilding() == nil {
-			return nil, errors.New("目标地块无效")
+			if !toInfo.GetElementType().IsResource() {
+				return nil, errors.New("目标地块无效")
+			}
 		}
 		// 目标处于保护期内（地块刚被释放）→ 不可攻击
 		if toInfo.GetProtectedEndTime() > time.Now().Unix() {

@@ -403,6 +403,28 @@ func (s *WorldMapServer) AbandonTile(ctx context.Context, req *pb_worldmap.Aband
 	return &pb_worldmap.AbandonTileRsp{}, nil
 }
 
+// SyncRoleUnion 角色联盟归属变更同步：维护 RoleUnionIndex（领地/驻军 P2 使用）
+func (s *WorldMapServer) SyncRoleUnion(ctx context.Context, req *pb_worldmap.SyncRoleUnionReq) (*pb_worldmap.SyncRoleUnionRsp, error) {
+	if s.engine == nil {
+		return nil, status.Error(codes.Internal, "engine not initialized")
+	}
+	if req.GetRoleId() == 0 {
+		return nil, status.Error(codes.InvalidArgument, "invalid role_id")
+	}
+
+	idx := s.engine.RoleUnionIndex
+	if req.GetUnionId() > 0 {
+		idx.SetUnionID(req.GetRoleId(), req.GetUnionId())
+	} else {
+		idx.Remove(req.GetRoleId())
+	}
+
+	loggers.Logger.Info("role union synced",
+		zap.Uint64("role_id", req.GetRoleId()),
+		zap.Uint64("union_id", req.GetUnionId()))
+	return &pb_worldmap.SyncRoleUnionRsp{}, nil
+}
+
 // buildMapCellInfo 组装地块数据
 func buildMapCellInfo(info *map_datas.MapInfo) *pb_worldmap.MapCellInfo {
 	return &pb_worldmap.MapCellInfo{

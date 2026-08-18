@@ -7,8 +7,8 @@ import (
 	"server.slg.com/services/game/game_entitys/game_roles"
 )
 
-// TestMarchBuildTeamZeroBasedSlots 出征队伍槽位 0 基（0=大营）+ 攻击距离从配置填充
-func TestMarchBuildTeamZeroBasedSlots(t *testing.T) {
+// TestMarchBuildTeamOneBasedSlots 出征队伍槽位 1 基（1=大营）+ 攻击距离从配置填充
+func TestMarchBuildTeamOneBasedSlots(t *testing.T) {
 	role := game_roles.NewTest(60001)
 	hero := role.GetHeroes().AddHero(1) // 英雄配置1：AttackRange=3
 	formation := role.GetFormations().CreateFormation(role.ID, 0)
@@ -24,12 +24,12 @@ func TestMarchBuildTeamZeroBasedSlots(t *testing.T) {
 	if len(slots) != 2 {
 		t.Fatalf("期望 2 个槽位，实际 %d", len(slots))
 	}
-	// 0 基槽位：0=大营
-	if slots[0].GetSlotId() != 0 {
-		t.Errorf("slot[0] = %d, want 0（大营）", slots[0].GetSlotId())
+	// 1 基槽位：1=大营
+	if slots[0].GetSlotId() != 1 {
+		t.Errorf("slot[0] = %d, want 1（大营）", slots[0].GetSlotId())
 	}
-	if slots[1].GetSlotId() != 1 {
-		t.Errorf("slot[1] = %d, want 1", slots[1].GetSlotId())
+	if slots[1].GetSlotId() != 2 {
+		t.Errorf("slot[1] = %d, want 2", slots[1].GetSlotId())
 	}
 	// 攻击距离从 hero 配置填充（写入 HeroInfo）
 	if slots[0].GetHeroInfo().GetAttackRange() != 3 {

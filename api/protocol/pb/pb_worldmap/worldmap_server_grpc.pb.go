@@ -130,6 +130,7 @@ const (
 	WorldMapHandler_SpawnReviewEvent_FullMethodName = "/pb_worldmap.WorldMapHandler/SpawnReviewEvent"
 	WorldMapHandler_EventClick_FullMethodName       = "/pb_worldmap.WorldMapHandler/EventClick"
 	WorldMapHandler_AbandonTile_FullMethodName      = "/pb_worldmap.WorldMapHandler/AbandonTile"
+	WorldMapHandler_SyncRoleUnion_FullMethodName    = "/pb_worldmap.WorldMapHandler/SyncRoleUnion"
 )
 
 // WorldMapHandlerClient is the client API for WorldMapHandler service.
@@ -152,6 +153,8 @@ type WorldMapHandlerClient interface {
 	EventClick(ctx context.Context, in *EventClickReq, opts ...grpc.CallOption) (*EventClickRsp, error)
 	// 地块：放弃已占领地块（释放归属，停止产出）
 	AbandonTile(ctx context.Context, in *AbandonTileReq, opts ...grpc.CallOption) (*AbandonTileRsp, error)
+	// 联盟：角色联盟归属变更同步（game → worldmap 维护 RoleUnionIndex）
+	SyncRoleUnion(ctx context.Context, in *SyncRoleUnionReq, opts ...grpc.CallOption) (*SyncRoleUnionRsp, error)
 }
 
 type worldMapHandlerClient struct {
@@ -242,6 +245,16 @@ func (c *worldMapHandlerClient) AbandonTile(ctx context.Context, in *AbandonTile
 	return out, nil
 }
 
+func (c *worldMapHandlerClient) SyncRoleUnion(ctx context.Context, in *SyncRoleUnionReq, opts ...grpc.CallOption) (*SyncRoleUnionRsp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SyncRoleUnionRsp)
+	err := c.cc.Invoke(ctx, WorldMapHandler_SyncRoleUnion_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // WorldMapHandlerServer is the server API for WorldMapHandler service.
 // All implementations must embed UnimplementedWorldMapHandlerServer
 // for forward compatibility.
@@ -262,6 +275,8 @@ type WorldMapHandlerServer interface {
 	EventClick(context.Context, *EventClickReq) (*EventClickRsp, error)
 	// 地块：放弃已占领地块（释放归属，停止产出）
 	AbandonTile(context.Context, *AbandonTileReq) (*AbandonTileRsp, error)
+	// 联盟：角色联盟归属变更同步（game → worldmap 维护 RoleUnionIndex）
+	SyncRoleUnion(context.Context, *SyncRoleUnionReq) (*SyncRoleUnionRsp, error)
 	mustEmbedUnimplementedWorldMapHandlerServer()
 }
 
@@ -295,6 +310,9 @@ func (UnimplementedWorldMapHandlerServer) EventClick(context.Context, *EventClic
 }
 func (UnimplementedWorldMapHandlerServer) AbandonTile(context.Context, *AbandonTileReq) (*AbandonTileRsp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AbandonTile not implemented")
+}
+func (UnimplementedWorldMapHandlerServer) SyncRoleUnion(context.Context, *SyncRoleUnionReq) (*SyncRoleUnionRsp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SyncRoleUnion not implemented")
 }
 func (UnimplementedWorldMapHandlerServer) mustEmbedUnimplementedWorldMapHandlerServer() {}
 func (UnimplementedWorldMapHandlerServer) testEmbeddedByValue()                         {}
@@ -461,6 +479,24 @@ func _WorldMapHandler_AbandonTile_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WorldMapHandler_SyncRoleUnion_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SyncRoleUnionReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorldMapHandlerServer).SyncRoleUnion(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorldMapHandler_SyncRoleUnion_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorldMapHandlerServer).SyncRoleUnion(ctx, req.(*SyncRoleUnionReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // WorldMapHandler_ServiceDesc is the grpc.ServiceDesc for WorldMapHandler service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -499,6 +535,10 @@ var WorldMapHandler_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AbandonTile",
 			Handler:    _WorldMapHandler_AbandonTile_Handler,
+		},
+		{
+			MethodName: "SyncRoleUnion",
+			Handler:    _WorldMapHandler_SyncRoleUnion_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

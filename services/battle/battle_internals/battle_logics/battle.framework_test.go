@@ -18,7 +18,7 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-// testSlot 构造战斗槽位（槽位0=大营；属性/实例ID/兵力/攻击距离由 HeroInfo 快照携带）
+// testSlot 构造战斗槽位（槽位1=大营；属性/实例ID/兵力/攻击距离由 HeroInfo 快照携带）
 func testSlot(slot int32, heroID uint64, alive uint32, mov, atk, def, intel, rng uint32, skills ...*pb_skill.Skill) *pb_battle.TeamSlotInfo {
 	return &pb_battle.TeamSlotInfo{
 		SlotId: slot,
@@ -43,7 +43,7 @@ func testSlot(slot int32, heroID uint64, alive uint32, mov, atk, def, intel, rng
 }
 
 func testSlot0(heroID uint64, alive uint32, mov, atk, def, intel, rng uint32, skills ...*pb_skill.Skill) *pb_battle.TeamSlotInfo {
-	return testSlot(0, heroID, alive, mov, atk, def, intel, rng, skills...)
+	return testSlot(1, heroID, alive, mov, atk, def, intel, rng, skills...) // 大营 = slot 1
 }
 
 // TestRunBattle_AttackerWins 攻方先手击杀守方大营；守方战后伤兵+死亡
@@ -105,11 +105,11 @@ func TestRunBattle_Draw(t *testing.T) {
 func TestRunBattle_SameRoundMutual(t *testing.T) {
 	attacker := []*pb_battle.TeamSlotInfo{
 		testSlot0(1001, 100, 50, 100, 80, 60, 5),          // 大营 先手
-		testSlot(2, 1002, 100, 30, 100, 80, 60, 5),        // 2号 后手
+		testSlot(3,1002, 100, 30, 100, 80, 60, 5),        // 2号 后手
 	}
 	defender := []*pb_battle.TeamSlotInfo{
 		testSlot0(2001, 100, 40, 100, 80, 60, 5),          // 大营
-		testSlot(2, 2002, 100, 35, 100, 80, 60, 5),        // 2号 先于攻方2号行动
+		testSlot(3,2002, 100, 35, 100, 80, 60, 5),        // 2号 先于攻方2号行动
 	}
 
 	r := runBattle(attacker, defender)
@@ -166,12 +166,12 @@ func TestRunBattle_NormalAttackRange(t *testing.T) {
 	}
 
 	// 射程足够：攻2号位 rng3（距离守大营 3）→ 能打到守大营
-	attackerNear := []*pb_battle.TeamSlotInfo{testSlot(2, 1001, 100, 50, 100, 80, 60, 3)}
+	attackerNear := []*pb_battle.TeamSlotInfo{testSlot(3, 1001, 100, 50, 100, 80, 60, 3)}
 	r2 := runBattle(attackerNear, defender)
 	hit := false
 	for _, br := range r2.GetRounds() {
 		for _, a := range br.GetActions() {
-			if isAttackAction(a) && a.GetTargetSlot() == 0 {
+			if isAttackAction(a) && a.GetTargetSlot() == 1 { // 大营
 				hit = true
 			}
 		}

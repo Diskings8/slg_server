@@ -5,11 +5,13 @@ import (
 
 	"server.slg.com/common/conns/dbconn"
 	"server.slg.com/services/game/game_entitys/game_roles"
+	"server.slg.com/services/game/game_entitys/game_unions"
 )
 
 // Init 初始化实体数据层（子模块 AutoMigrate + PollerManager）
 func Init(ctx context.Context) {
 	game_roles.Init(ctx, dbconn.GetWriteDbConn())
+	game_unions.Init(dbconn.GetWriteDbConn())
 }
 
 // ShutDown 关闭实体数据层（关闭 PollerManager）

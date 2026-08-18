@@ -69,4 +69,14 @@ enum ErrorCode {
     BuildingAlreadyExists  = 92;  // 同类型建筑已存在（附属类同城市唯一）
     BuildingConstructing   = 93;  // 建筑建造/升级中，不可再次升级
     BuildingMaxLevel       = 94;  // 建筑已达等级上限
+
+    // ── 联盟 (95~) ──
+    UnionNotFound     = 95;  // 联盟不存在
+    UnionNameExists   = 96;  // 联盟名已存在（服内唯一）
+    UnionNameInvalid  = 97;  // 联盟名非法（空/超长）
+    UnionAlreadyIn    = 98;  // 已在联盟
+    UnionNotIn        = 99;  // 不在联盟
+    UnionNoPermission = 100; // 无权限（非盟主/官员）
+    UnionIsLeader     = 101; // 盟主不可退出/被踢
+    UnionFull         = 102; // 联盟成员已满
 }

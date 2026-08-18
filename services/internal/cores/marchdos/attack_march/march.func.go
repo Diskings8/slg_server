@@ -55,6 +55,7 @@ func New(mm *map_managers.MapManager, marchInfo *marchs.MarchInfo) cores_declara
 			return // 战前校验失败已召回
 		}
 
+		loggers.Logger.Info("attack Do opt enter", zap.Uint64("march_id", info.GetMarchID().Uint64()), zap.Int32("to", info.GetToMapID().Int32())) // TODO debug remove
 		settle := mgr.GetBattleSettleFunc()
 		if settle == nil {
 			loggers.Logger.Warn("battle settle func not injected",
@@ -75,11 +76,15 @@ func New(mm *map_managers.MapManager, marchInfo *marchs.MarchInfo) cores_declara
 
 		battleRsp = rsp
 		applyBattleSettleRsp(mgr, info, rsp)
+		loggers.Logger.Info("attack Do applied settle", zap.Uint64("march_id", info.GetMarchID().Uint64()),
+			zap.Bool("win", rsp.GetAttackerWin()), zap.Int32("state", int32(info.GetMarchState()))) // TODO debug remove
 
 		// 战败 → 优先返回当前的 TransitMapID
 		if !rsp.GetAttackerWin() {
 			m.DefeatRecall(mgr)
 		}
+		loggers.Logger.Info("attack Do opt end", zap.Uint64("march_id", info.GetMarchID().Uint64()),
+			zap.Int32("state", int32(info.GetMarchState()))) // TODO debug remove
 	})
 
 	// ---- Finish：战报推送 + 事件触发 ----

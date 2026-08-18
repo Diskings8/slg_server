@@ -46,6 +46,12 @@ func (mm *MarchInfoManager) Init(dbc common_declarations.DbcI) ([]*MarchInfo, er
 		}
 
 		mm.allMarch[marchInfo.MarchID] = marchInfo
+
+		// 终态驻留行军（已处理）：恢复内存但跳过 TickerChan，重启不重放 Do。
+		// IsProcessed 为新写入标记；state∈{Stay,Station} 兜底覆盖加字段前的存量数据。
+		if marchInfo.GetIsProcessed() || marchInfo.IsTerminalState() {
+			continue
+		}
 		mm.TickerChan <- marchInfo
 	}
 	mm.allMarchLock.Unlock()

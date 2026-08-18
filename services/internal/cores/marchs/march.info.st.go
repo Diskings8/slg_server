@@ -44,6 +44,7 @@ type MarchInfo struct {
 	isVirtual       bool                             `gorm:"not null;COMMENT:是否为虚拟行军;"`
 	IsStay          bool                             `gorm:"not null;default:false;COMMENT:到达后停留;"`
 	StayEndTimeUx   int64                            `gorm:"not null;default:0;COMMENT:停留结束时间;"`
+	IsProcessed     bool                             `gorm:"not null;default:false;COMMENT:到达处理是否已完成(终态驻留,重启跳过重放);"`
 	isNeedSave      atomic.Bool                      `gorm:"-"`
 	isNeedDelete    atomic.Bool                      `gorm:"-"`
 	isMock          atomic.Bool                      `gorm:"-"`
@@ -136,6 +137,30 @@ func (mi *MarchInfo) IsSaving() bool {
 
 func (mi *MarchInfo) IsMarchTypeAssist() bool {
 	return mi.MarchType == cores_declarations.MarchTypeAssist
+}
+
+// GetIsProcessed 返回到达处理是否已完成（终态驻留，重启跳过 Do 重放）
+func (mi *MarchInfo) GetIsProcessed() bool {
+	mi.RwLock.RLock()
+	defer mi.RwLock.RUnlock()
+	return mi.IsProcessed
+}
+
+// SetIsProcessed 标记到达处理完成
+func (mi *MarchInfo) SetIsProcessed(v bool) {
+	mi.RwLock.Lock()
+	defer mi.RwLock.Unlock()
+	mi.IsProcessed = v
+}
+
+// IsTerminalState 是否处于终态驻留（Stay/Station）。
+// 重启恢复时终态行军只恢复内存/驻军，不推 TickerChan 重放 Do（避免重复战斗结算）。
+// state 判断兜底覆盖加字段前的存量数据（存量 Stay/Station 行军 IsProcessed 默认 false）。
+func (mi *MarchInfo) IsTerminalState() bool {
+	mi.RwLock.RLock()
+	defer mi.RwLock.RUnlock()
+	return mi.MarchState == pb_maps_march.MarchState_Stay ||
+		mi.MarchState == pb_maps_march.MarchState_Station
 }
 
 //--------------------------Get----------------------//

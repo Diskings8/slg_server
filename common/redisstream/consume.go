@@ -12,6 +12,9 @@ import (
 	"go.uber.org/zap"
 )
 
+// dedupTTL 幂等去重标记 TTL：覆盖"处理完成但游标未持久化"的重启窗口（MAXLEN 裁剪后旧消息不会重读）
+const dedupTTL = 24 * time.Hour
+
 // Message 封装一条 Redis Stream 消息
 type Message struct {
 	ID     string
@@ -103,9 +106,13 @@ func consume(ctx context.Context, streamKey string, handler Handler, opts *Consu
 	opts.fillDefaults()
 
 	log := opts.Logger
-	lastID := "0"
-
-	log.Info("redis stream consumer started", zap.String("stream", streamKey))
+	// 从持久化游标续读（无则 "0" 从头）；配合 per-message 幂等去重，保证重启重放不重复应用
+	lastID := loadCursor(ctx, streamKey)
+	if lastID != "0" {
+		log.Info("redis stream consumer resumed from cursor", zap.String("stream", streamKey), zap.String("last_id", lastID))
+	} else {
+		log.Info("redis stream consumer started", zap.String("stream", streamKey))
+	}
 
 	for {
 		select {
@@ -133,6 +140,13 @@ func consume(ctx context.Context, streamKey string, handler Handler, opts *Consu
 
 		for _, msg := range msgs {
 			lastID = msg.ID
+			// 幂等去重：已处理过的消息（重投/重启重放）跳过
+			if !dedupAcquire(ctx, streamKey, msg.ID) {
+				log.Debug("redis stream duplicate message skipped",
+					zap.String("stream", streamKey),
+					zap.String("msg_id", msg.ID))
+				continue
+			}
 			if err := handler(ctx, msg); err != nil {
 				log.Warn("redis stream handler error",
 					zap.String("stream", streamKey),
@@ -140,5 +154,47 @@ func consume(ctx context.Context, streamKey string, handler Handler, opts *Consu
 					zap.Error(err))
 			}
 		}
+
+		// 每批处理完后持久化游标，重启从断点续读（避免全量重放）
+		saveCursor(ctx, streamKey, lastID)
 	}
+}
+
+// consumeCursorKey 消费游标 key（每 stream 一个）
+func consumeCursorKey(streamKey string) string {
+	return cacheconn.Key("stream", "consume", "cursor", streamKey)
+}
+
+// dedupKey 消息幂等去重 key
+func dedupKey(streamKey, msgID string) string {
+	return cacheconn.Key("stream", "consume", "dedup", streamKey, msgID)
+}
+
+// loadCursor 加载持久化游标（无则 "0" 从头读）
+func loadCursor(ctx context.Context, streamKey string) string {
+	v, err := cacheconn.Get().Get(ctx, consumeCursorKey(streamKey)).Result()
+	if err != nil || v == "" {
+		return "0"
+	}
+	return v
+}
+
+// saveCursor 持久化游标（永久不过期）
+func saveCursor(ctx context.Context, streamKey, lastID string) {
+	if err := cacheconn.Get().Set(ctx, consumeCursorKey(streamKey), lastID, 0).Err(); err != nil {
+		loggers.Logger.Warn("save stream cursor failed",
+			zap.String("stream", streamKey), zap.String("last_id", lastID), zap.Error(err))
+	}
+}
+
+// dedupAcquire 尝试标记消息已处理；返回 false 表示重复（已处理过）。
+// 标记失败时放行（宁可处理，不因去重误丢消息）。
+func dedupAcquire(ctx context.Context, streamKey, msgID string) bool {
+	ok, err := cacheconn.Get().SetNX(ctx, dedupKey(streamKey, msgID), "1", dedupTTL).Result()
+	if err != nil {
+		loggers.Logger.Warn("stream dedup check failed",
+			zap.String("stream", streamKey), zap.String("msg_id", msgID), zap.Error(err))
+		return true
+	}
+	return ok
 }

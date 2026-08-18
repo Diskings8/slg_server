@@ -48,7 +48,7 @@ func MarchBuildTeam(role *game_roles.Role, req *pb_maps_march.MarchCreateReq) ([
 		}
 
 		teamSlots = append(teamSlots, &pb_battle.TeamSlotInfo{
-			SlotId:   int32(i), // 0 基：0=大营，1=1号位，2=2号位
+			SlotId:   int32(i) + 1, // 1 基：1=大营，2=1号位，3=2号位
 			HeroInfo: heroInfo,
 		})
 	}

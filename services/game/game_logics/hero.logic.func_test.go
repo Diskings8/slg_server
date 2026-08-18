@@ -7,6 +7,32 @@ import (
 	"server.slg.com/services/game/game_entitys/game_roles"
 )
 
+// TestGmSetHeroLevel GM：设等级生效 + 经验清零 + 重算属性
+func TestGmSetHeroLevel(t *testing.T) {
+	hero := game_roles.NewTest(50001).GetHeroes().AddHero(1)
+
+	if err := GmSetHeroLevel(hero, 20); err != nil {
+		t.Fatalf("GmSetHeroLevel failed: %v", err)
+	}
+	if hero.GetLevel() != 20 {
+		t.Errorf("level = %d, want 20", hero.GetLevel())
+	}
+	if hero.GetExp() != 0 {
+		t.Errorf("exp = %d, want 0 (cleared)", hero.GetExp())
+	}
+	// cur_val 已按 20 级重算（攻击 = base + growth×19）
+	conf, _ := game_conf.Load().Hero.HeroConf(1)
+	wantAtk := conf.Base.Attack + conf.Growth.Attack*19
+	if got := hero.Cultivates[0].GetCurVal(); got != wantAtk {
+		t.Errorf("attack cur_val = %d, want %d", got, wantAtk)
+	}
+
+	// 超上限 → 拒绝
+	if err := GmSetHeroLevel(hero, 101); err == nil {
+		t.Fatal("want error for level > max")
+	}
+}
+
 // TestHeroAddExp_LevelUp 恰跨 1 级：level1 + 100exp → level2（NeedExp(1)=100 恰好消耗）
 func TestHeroAddExp_LevelUp(t *testing.T) {
 	hero := game_roles.NewTest(50001).GetHeroes().AddHero(1) // 默认 level1

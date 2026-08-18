@@ -1,7 +1,7 @@
 # map_datas — 地图格子数据（核心数据层）
 
 > 路径: `services/internal/cores/map_datas/`  
-> 文件: `map.info.st.go` · `map.datamanager.st.go` · `map.datamanager.func.go` · `datamanager.born.func.go` · `map.union.func.go`  
+> 文件: `map.info.st.go` · `map.datamanager.st.go` · `map.datamanager.func.go` · `datamanager.born.func.go` · `role.union.index.func.go`  
 > 子包: `map_buildings/` · `map_events/`
 
 ---
@@ -140,12 +140,12 @@ func (l LockMapSlice) Data() []*MapInfo // 获取数据
 
 ---
 
-## 3. UnionMemberMapIDs — 联盟成员地图索引
+## 3. RoleUnionIndex — 联盟成员地图索引
 
-**文件**: `map.union.func.go`
+**文件**: `role.union.index.func.go`
 
 ```go
-type UnionMemberMapIDs struct {
+type RoleUnionIndex struct {
     unionRoleMapID map[uint64]map[uint64]cores_declarations.MapID
     roleUnionID    map[uint64]uint64
     roleMap        map[uint64]cores_declarations.MapID

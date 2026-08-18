@@ -4,14 +4,14 @@ package battle_logics
 //
 // 框架（用户设计）：
 //   - 战前准备：属性分层求和（Cultivate 组件 → 有效攻/防/智/移/拆 + 攻击距离）+ 技能加载
-//   - 每方最多 3 英雄（大营 slot0 / 1号位 / 2号位），站位 [0,1,2,2,1,0]
+//   - 每方最多 3 英雄（大营 slot1 / 1号位 / 2号位），站位 [1,2,3,3,2,1]（槽位 1 基）
 //   - 8 回合，每回合 开始→行动→结算；存活英雄按移动(速度)降序行动，每人每回合一次
 //   - 行动序列：主动技能 → 普攻 → 追击技能（追击按技能配置概率触发）
 //   - 普攻/技能目标：攻击范围内（"到对方大营距离 ≤ D"）随机单个
 //   - 伤害：物理 攻击²/(攻击+防御×收敛系数)×当前有效兵力；法术用双方智力同式
 //   - 伤兵：伤害按受伤比例(第1回合85%，每回合-10%)拆死亡+伤兵；伤兵不计有效兵力；
 //     回合结算阶段每回合 10% 当前伤兵转死亡；技能可恢复伤兵
-//   - 胜负：大营(slot0)有效兵力==0 → 该方败；同回合同归于尽；8 回合平局
+//   - 胜负：大营(slot1)有效兵力==0 → 该方败；同回合同归于尽；8 回合平局
 
 import (
 	"server.slg.com/api/game_conf"
@@ -22,13 +22,13 @@ import (
 	"server.slg.com/api/protocol/pb/pb_skill"
 )
 
-// stanceIndex 某侧某槽位的站位索引（站位 [0,1,2,2,1,0]：攻大营/攻1号/攻2号/守2号/守1号/守大营）
-// 攻方槽位 0,1,2 → 索引 0,1,2；守方槽位 0,1,2 → 索引 5,4,3
+// stanceIndex 某侧某槽位的站位索引（站位 [1,2,3,3,2,1]：攻大营/攻1号/攻2号/守2号/守1号/守大营）
+// 攻方槽位 1,2,3 → 索引 0,1,2；守方槽位 1,2,3 → 索引 5,4,3
 func stanceIndex(side, slot int32) int32 {
 	if side == 0 {
-		return slot
+		return slot - 1
 	}
-	return 5 - slot
+	return 6 - slot
 }
 
 // stanceDistance 攻守两个单位间的站位距离
@@ -42,7 +42,7 @@ func stanceDistance(aSide int, aSlot int32, bSide int, bSlot int32) int32 {
 
 // battleUnit 战前准备后的单个战斗单位（有效属性 + 兵力状态）
 type battleUnit struct {
-	slot        int32  // 槽位（0=大营）
+	slot        int32  // 槽位（1=大营，2/3=1/2号位）
 	side        int    // 0=攻 1=守
 	heroID      uint64 // 英雄实例ID
 	level       uint32 // 当前等级（经验/战报用）
@@ -264,7 +264,7 @@ func (b *battleCtx) pickTarget(actor *battleUnit, tt skill.TargetType) *battleUn
 	switch tt {
 	case skill.TargetBase:
 		for _, u := range reachable {
-			if u.slot == 0 {
+			if u.slot == 1 { // 大营
 				return u
 			}
 		}
@@ -409,10 +409,10 @@ func (b *battleCtx) checkFinish() {
 	}
 }
 
-// baseDead 该方大营(slot0)有效兵力是否归零（无大营按败）
+// baseDead 该方大营(slot1)有效兵力是否归零（无大营按败）
 func baseDead(units []*battleUnit) bool {
 	for _, u := range units {
-		if u.slot == 0 {
+		if u.slot == 1 { // 大营
 			return u.alive == 0
 		}
 	}

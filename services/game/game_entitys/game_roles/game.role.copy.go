@@ -50,4 +50,5 @@ func (r *Role) Reset() {
 	r.Recruits = nil
 	r.Attr = nil
 	r.ResourceTiles = nil
+	r.RoleUnion = nil
 }

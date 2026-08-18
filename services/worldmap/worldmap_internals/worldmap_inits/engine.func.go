@@ -39,6 +39,7 @@ type Engine struct {
 	MarchInfoManager *marchs.MarchInfoManager
 	MapManager       *map_managers.MapManager
 	MarchHandler     *map_handler.MarchHandler // 行军业务编排（校验 + 持久化 + AOI + 推送）
+	RoleUnionIndex   *map_datas.RoleUnionIndex // 角色↔联盟成员关系索引（game 成员变更同步；领地/驻军 P2 用）
 
 	battleHub *rpc_handlers.ClientHandler // 战斗节点客户端（battle 结算回调）
 }
@@ -61,6 +62,7 @@ func NewEngine(ctx context.Context) *Engine {
 		Config:           mapConfig,
 		MapDataManager:   mapData,
 		MarchInfoManager: marchMgr,
+		RoleUnionIndex:   map_datas.NewRoleUnionIndex(),
 	}
 
 	// 行军执行回调 — 到达时创建执行器并结算，结算完成后通知 game
@@ -175,16 +177,19 @@ func buildGuardHeroInfo(heroConf *hero.Conf, confID int32, level int32) *pb_hero
 
 // settleBattle 注入回调实现：调用 battle 节点 BattleSettle RPC
 func (e *Engine) settleBattle(req *pb_battle.BattleSettleReq) (*pb_battle.BattleSettleRsp, error) {
+	loggers.Logger.Info("settleBattle enter", zap.Uint64("march_id", req.GetMarchId())) // TODO debug remove
 	if e.battleHub == nil {
 		return nil, fmt.Errorf("battle hub not initialized")
 	}
 	cli := e.battleHub.GetBattleHandlerClient()
+	loggers.Logger.Info("settleBattle got client", zap.Uint64("march_id", req.GetMarchId()), zap.Bool("cli_nil", cli == nil)) // TODO debug remove
 	if cli == nil {
 		return nil, fmt.Errorf("battle node not connected")
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	rsp, err := cli.BattleSettle(ctx, req)
+	loggers.Logger.Info("settleBattle rsp", zap.Uint64("march_id", req.GetMarchId()), zap.Error(err)) // TODO debug remove
 	if err == nil && rsp != nil {
 		// 异步保存战报（fire-and-forget，不阻塞战斗 tick）
 		e.saveBattleRecord(req, rsp)
@@ -297,6 +302,7 @@ func (e *Engine) Stop() {
 //  4. 执行失败则 CallBack 召回
 //  5. 结算完成后通过 Redis Stream 通知 game
 func (e *Engine) MarchTickHandler(mm *map_managers.MapManager, marchID cores_declarations.MarchID) {
+	loggers.Logger.Info("march tick fired", zap.Uint64("march_id", marchID.Uint64())) // TODO debug remove
 	marchInfo := mm.GetMarchManage().GetMarchInfo(marchID)
 	if marchInfo == nil {
 		return
@@ -326,11 +332,21 @@ func (e *Engine) MarchTickHandler(mm *map_managers.MapManager, marchID cores_dec
 	handle.Lock(false, false, toMapLock)
 	err := handle.Do()
 	handle.Unlock()
+	loggers.Logger.Info("march tick done", zap.Uint64("march_id", marchID.Uint64()),
+		zap.Int32("state", int32(marchInfo.GetMarchState())), zap.Error(err)) // TODO debug remove
 
 	if err != nil {
 		// 结算失败，召回行军
 		_ = handle.CallBack()
 		return
+	}
+
+	// 到达处理成功：终态驻留行军（Stay/Station）标记已处理，
+	// 重启恢复时跳过 Do 重放（避免重复战斗结算 + 陈旧行军同时触发卡住）。
+	// 战败召回（Back）不标记——仍需 BackArrive 删行军。
+	if marchInfo.IsTerminalState() {
+		marchInfo.SetIsProcessed(true)
+		mm.GetMarchManage().Save(marchInfo)
 	}
 
 	// 结算成功，通知 game（回城到站也会走到这里，由 state 区分）

@@ -181,7 +181,7 @@
 
 - **文件：** 新增 `map_datas/role.map.manager.func.go` 或类似
 - **参考：** 参考仓库独立于 `MapInfo` 的 `RoleMapManager`，支持按 `UnionID` 查询联盟成员位置、按 `RoleID` 查询位置
-- **说明：** 避免遍历全 map 查找角色位置，建立倒排索引。已在 `map.union.func.go` 中实现 `UnionMemberMapIDs`
+- **说明：** 避免遍历全 map 查找角色位置，建立倒排索引。已在 `role.union.index.func.go` 中实现 `RoleUnionIndex`
 - **状态：** [ ] 待开始
 
 ### P1-10: `Init()` 集结重建和异常恢复

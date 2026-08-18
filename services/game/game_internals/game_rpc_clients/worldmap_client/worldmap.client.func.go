@@ -116,3 +116,12 @@ func (c *Client) AbandonTile(ctx context.Context, req *pb_worldmap.AbandonTileRe
 	}
 	return cli.AbandonTile(ctx, req)
 }
+
+// SyncRoleUnion 同步角色联盟归属（维护 worldmap RoleUnionIndex）
+func (c *Client) SyncRoleUnion(ctx context.Context, req *pb_worldmap.SyncRoleUnionReq) (*pb_worldmap.SyncRoleUnionRsp, error) {
+	cli := c.hub.GetWorldMapHandlerClient()
+	if cli == nil {
+		return nil, fmt.Errorf("worldmap not connected")
+	}
+	return cli.SyncRoleUnion(ctx, req)
+}

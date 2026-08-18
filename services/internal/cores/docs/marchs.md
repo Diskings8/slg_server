@@ -40,6 +40,7 @@ type MarchInfo struct {
     isVirtual       bool                             `gorm:"not null;COMMENT:是否为虚拟行军;"`
     IsStay          bool                             `gorm:"not null;default:false;COMMENT:到达后停留;"`
     StayEndTimeUx   int64                            `gorm:"not null;default:0;COMMENT:停留结束时间;"`
+    IsProcessed     bool                             `gorm:"not null;default:false;COMMENT:到达处理是否已完成(终态驻留,重启跳过重放);"`
     isNeedSave      atomic.Bool                      `gorm:"-"`
     isNeedDelete    atomic.Bool                      `gorm:"-"`
     isMock          atomic.Bool                      `gorm:"-"`
@@ -60,6 +61,7 @@ type MarchInfo struct {
 | `FinalMarchSpeed` | 最终计算后的行军速度（区别于基础速度 `BaseMarchSpeed`） |
 | `VirtualData` | 虚拟行军数据（用于虚拟行军场景的附加信息） |
 | `IsStay` / `StayEndTimeUx` | 到达后停留状态和时间 |
+| `IsProcessed` | 到达处理是否已完成（终态驻留 Stay/Station 时置 true；重启恢复跳过 Do 重放） |
 | `FollowMarchID` | 跟随的行军 ID（用于集结行军，成员行军通过此字段指向集结发起者） |
 | `isMock` | 假行军标记，标记 `CreateMockMarch` 创建的条目不写入数据库 |
 
@@ -71,6 +73,8 @@ type MarchInfo struct {
 | `IsMock()` | 是否为假行军（不入库） |
 | `IsMarchTypeAssist()` | 是否为驻守行军 |
 | `IsNeedSave()` / `IsNeedDelete()` / `IsSaving()` | 持久化状态标记 |
+| `IsTerminalState()` | 是否处于终态驻留（Stay/Station），重启恢复时跳过 Do 重放 |
+| `GetIsProcessed()` / `SetIsProcessed()` | 到达处理完成标记读写 |
 
 ### 并发控制
 

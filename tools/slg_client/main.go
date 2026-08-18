@@ -26,6 +26,7 @@ import (
 	"server.slg.com/api/protocol/pb/pb_account"
 	"server.slg.com/api/protocol/pb/pb_city"
 	"server.slg.com/api/protocol/pb/pb_common"
+	"server.slg.com/api/protocol/pb/pb_gm"
 	"server.slg.com/api/protocol/pb/pb_hero"
 	"server.slg.com/api/protocol/pb/pb_item"
 	"server.slg.com/api/protocol/pb/pb_maps_march"
@@ -40,11 +41,14 @@ const (
 	marchTypeAttack   = 10001 // MarchTypeAttack：攻占（打守军 PvE → 胜利占领）
 	marchTypeDevelop  = 10005 // MarchTypeDevelop：开发自己的地（lv2~4 → +3）
 	marchTypeSweep    = 10003 // MarchTypeSweep：扫荡（保留，未在本流程使用）
+	gmHeroLevel       = 20    // GM 演示：英雄升到该等级（保证攻占能打赢守军）
 )
 
 func main() {
 	reviewMode := false
+	farMode := false
 	flag.BoolVar(&reviewMode, "review", false, "审查模式：触发审查 + 选择任务刷事件")
+	flag.BoolVar(&farMode, "far", false, "崩溃恢复测试：选最远中立资源地（行军长时间在途，供杀服务验证恢复）")
 	flag.Parse()
 
 	addr := "127.0.0.1:13001"
@@ -183,7 +187,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	// 8. 上阵英雄到 1 号位（SlotPos=1 → HeroSlots[1] → worldmap SlotId=1 → CheckCanFight 通过）
+	// 8. 上阵英雄到大营（SlotPos=1 → 编队 slot 1 → 出征 SlotId=1 大营 → CheckCanFight 通过）
 	if err := call(conn, next(), uint32(pb_protocol.MsgID_GameFormationField),
 		&pb_maps_march.FormationFieldReq{CityId: cityID, FormationId: formationID, SlotPos: 1, HeroId: heroID, SoldierNum: 100},
 		nil); err != nil {
@@ -191,6 +195,30 @@ func main() {
 		os.Exit(1)
 	}
 	fmt.Println("[8] 上阵英雄到 1 号位 成功")
+
+	// 8.5 GM：英雄升到 20 级（演示 GM 指令 + 保证能打赢守军完成攻占）
+	if err := call(conn, next(), uint32(pb_protocol.MsgID_GameGm),
+		&pb_gm.GmReq{Cmd: "hero.set_level", Args: []string{fmt.Sprintf("%d", heroID), fmt.Sprintf("%d", gmHeroLevel)}},
+		func(env *pb_common.MessagePacket) error {
+			resp := &pb_gm.GmResp{}
+			if err := proto.Unmarshal(env.GetBody(), resp); err != nil {
+				return err
+			}
+			fmt.Printf("[8.5] GM: %s\n", resp.GetMsg())
+			return nil
+		}); err != nil {
+		fmt.Println("GM 升级失败:", err)
+		os.Exit(1)
+	}
+
+	// 8.6 补满兵力（等级 20 无兵营上限 350），保证攻占能打赢守军
+	if err := call(conn, next(), uint32(pb_protocol.MsgID_GameFormationField),
+		&pb_maps_march.FormationFieldReq{CityId: cityID, FormationId: formationID, SlotPos: 1, HeroId: heroID, SoldierNum: 350},
+		nil); err != nil {
+		fmt.Println("补兵失败:", err)
+		os.Exit(1)
+	}
+	fmt.Println("[8.6] 补满兵力 350 成功")
 
 	// 9. 查主城核心格坐标
 	var coreMapID int32
@@ -215,10 +243,16 @@ func main() {
 
 	// 10. 在地图数据里找一块中立资源地（无主、lv2~4、资源元素）作为攻占目标
 	coreX, coreY := coreMapID%1000, coreMapID/1000
-	var toMapID int32
-	bestDist := int32(1 << 30)
+	var toMapID, targetDist int32
+	bestDist := int32(-1) // far 模式：最远距离
+	var lowID, lowDist, highID, highDist int32 // 非 far：lv2-3 近处优先，lv4 兜底
+	lowDist, highDist = 1<<30, 1<<30
+	searchRange := int32(3)
+	if farMode {
+		searchRange = 8 // -far：扩大查询范围找远目标（Range=Screen 粒度，响应受 gRPC 4MB 限制）
+	}
 	if err := call(conn, next(), uint32(pb_protocol.MsgID_GameMapData),
-		&pb_worldmap.MapDataReq{MapId: coreMapID, Range: 3},
+		&pb_worldmap.MapDataReq{MapId: coreMapID, Range: searchRange},
 		func(env *pb_common.MessagePacket) error {
 			resp := &pb_worldmap.MapDataRsp{}
 			if err := proto.Unmarshal(env.GetBody(), resp); err != nil {
@@ -236,15 +270,39 @@ func main() {
 				}
 				cx, cy := c.GetMapId()%1000, c.GetMapId()/1000
 				d := abs32(cx-coreX) + abs32(cy-coreY)
-				if d < bestDist {
-					bestDist = d
-					toMapID = c.GetMapId()
+				if farMode {
+					if d > bestDist {
+						bestDist = d
+						toMapID = c.GetMapId()
+						targetDist = d
+					}
+					continue
+				}
+				// 非 far：lv2-3（守军弱）近处优先，lv4 兜底
+				if c.GetLevel() >= 4 {
+					if d < highDist {
+						highDist = d
+						highID = c.GetMapId()
+					}
+				} else if d < lowDist {
+					lowDist = d
+					lowID = c.GetMapId()
 				}
 			}
-			if toMapID == 0 {
-				return fmt.Errorf("附近未找到中立资源地（无主 lv2~4 资源元素）")
+			if farMode {
+				if toMapID == 0 {
+					return fmt.Errorf("附近未找到中立资源地（无主 lv2~4 资源元素）")
+				}
+			} else {
+				if lowID != 0 {
+					toMapID, targetDist = lowID, lowDist
+				} else if highID != 0 {
+					toMapID, targetDist = highID, highDist
+				} else {
+					return fmt.Errorf("附近未找到中立资源地（无主 lv2~4 资源元素）")
+				}
 			}
-			fmt.Printf("[10] 找到中立资源地 map_id=%d 距主城%d格\n", toMapID, bestDist)
+			fmt.Printf("[10] 找到中立资源地 map_id=%d 距主城%d格 (far=%v)\n", toMapID, targetDist, farMode)
 			return nil
 		}); err != nil {
 		fmt.Println("找目标资源地失败:", err)
@@ -252,7 +310,7 @@ func main() {
 	}
 
 	// 行军耗时 ≈ 距离×1000/速度(100) 秒，加缓冲
-	marchWait := time.Duration(bestDist*10+8) * time.Second
+	marchWait := time.Duration(targetDist*10+8) * time.Second
 
 	// 11. 攻占：MarchType=10001（攻击，打守军 PvE → 胜利占领空地）
 	if err := call(conn, next(), uint32(pb_protocol.MsgID_GameMarchCreate),
