@@ -61,6 +61,10 @@ cancel() 信号中断触发           GrpcStreamServer 监听 globalCtx.Done()
 
 所有模块文档集中在源码同级的 `docs/` 子目录中，以 `MODULE_OVERVIEW.md` 为入口索引。
 
+### game_conf 模块
+
+入口: [api/game_conf/CONFIG_OVERVIEW.md](api/game_conf/CONFIG_OVERVIEW.md)
+
 ### cores 模块
 
 入口: `services/internal/cores/CORES_OVERVIEW.md`

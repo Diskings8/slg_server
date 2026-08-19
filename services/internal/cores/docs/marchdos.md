@@ -264,7 +264,7 @@ cores 保持纯逻辑包，不依赖 rpcconn；battle 节点实现见 `services/
 ```
 Prepare → checkDevelopable()
     ├─ 目标为自己的地（ownerID == fromRoleID）
-    ├─ 目标等级（当前+3）有守军配置（guard.json）→ 可开发
+    ├─ 目标等级（当前+3）有守军配置（gameconfig.json 的 guard 表）→ 可开发
     └─ 不合法 → DefeatRecall()
 
 Do → buildDevelopSettleReq()           ← 守军构造成 DefenderGroup（NPC role_id=0，仅一层）
@@ -280,7 +280,7 @@ Finish → 去留分流
     └─ 否则 → CallBack()（MarchState_Back 反向返回）
 ```
 
-**守军配置**：`game_conf/guard` 域（`guard.json`），按地块等级 → 守军队伍（英雄配置ID + 固定兵力）。
+**守军配置**：`game_conf/guard` 域（数据源 `gameconfig.json` 的 guard/guard_config/guard_slot 表），按地块等级 → 守军队伍（英雄配置ID + 固定兵力）。
 守军英雄属性由 worldmap 侧派生（`base + growth×(level-1)`，见 `worldmap_inits/engine.func.go`），
 经 `GuardConfigFunc` 回调注入 `MapManager`（`SetGuardConfigFunc`），cores 不依赖 game_conf。
 

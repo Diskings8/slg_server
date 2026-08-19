@@ -1,4 +1,4 @@
-// Package building 玩家城市内建筑配置表（Go 内嵌占位数据，后续可迁 JSON）
+// Package building 玩家城市内建筑配置表（数据源：tabtoy 单一 gameconfig.json，经 NewFromPB 构建）
 //
 // 城市内建筑：主城 + 校场/兵营/城墙/仓库 + 资源建筑（产出预留）。
 // 分城（RoleBranchCity）归 worldmap OverlayEvent，不在本表。
@@ -47,98 +47,6 @@ type Conf struct {
 	buildingByType map[pb_city.BuildingType]*BuildingConf
 	queueNums      []uint32 // 校场等级→队列数稠密数组（index=等级）
 	maxDrillLevel  uint32
-
-	version string // 内容版本（JSON 加载后为内容 hash；内嵌为 ""）
-}
-
-// New 构造建筑配置（内置占位数据）
-func New() *Conf {
-	c := &Conf{
-		buildingByType: make(map[pb_city.BuildingType]*BuildingConf),
-	}
-	// 与 json/building.json 一致的内嵌占位（资源消耗）
-	// 设计：非资源建筑耗四资源（木/石/粮/铁）混搭；资源建筑耗"非本产"资源（farm 不耗粮等）
-	c.buildingByType[pb_city.BuildingType_RoleMainCity] = &BuildingConf{
-		Type: pb_city.BuildingType_RoleMainCity, Name: "main_city", Footprint: 9, MaxLevel: 10,
-		BuildTimeUx: 300, UpgradeCostGrowth: 1.6, UpgradeTimeGrowth: 1.2,
-		UpgradeCostBase: res4(500, 500, 500, 300),
-	}
-	c.buildingByType[pb_city.BuildingType_RoleBarracks] = &BuildingConf{
-		Type: pb_city.BuildingType_RoleBarracks, Name: "barracks", Footprint: 4, MaxLevel: 10,
-		BuildTimeUx: 120, UpgradeCostGrowth: 1.5, UpgradeTimeGrowth: 1.3,
-		BuildCost:       res4(200, 200, 150, 100),
-		UpgradeCostBase: res4(300, 300, 200, 150),
-	}
-	c.buildingByType[pb_city.BuildingType_RoleDrill] = &BuildingConf{
-		Type: pb_city.BuildingType_RoleDrill, Name: "drill", Footprint: 4, MaxLevel: 10,
-		BuildTimeUx: 60, UpgradeCostGrowth: 1.5, UpgradeTimeGrowth: 1.3,
-		BuildCost:       res4(150, 150, 100, 100),
-		UpgradeCostBase: res4(250, 250, 150, 150),
-		QueueNums:       []LevelNum{{Level: 1, Num: 1}, {Level: 2, Num: 2}, {Level: 5, Num: 3}},
-	}
-	c.buildingByType[pb_city.BuildingType_RoleWall] = &BuildingConf{
-		Type: pb_city.BuildingType_RoleWall, Name: "wall", Footprint: 4, MaxLevel: 10,
-		BuildTimeUx: 60, UpgradeCostGrowth: 1.4, UpgradeTimeGrowth: 1.2,
-		BuildCost:       res4(200, 300, 100, 100),
-		UpgradeCostBase: res4(300, 500, 150, 150),
-		DefensePerLevel: 100,
-	}
-	c.buildingByType[pb_city.BuildingType_RoleWarehouse] = &BuildingConf{
-		Type: pb_city.BuildingType_RoleWarehouse, Name: "warehouse", Footprint: 4, MaxLevel: 10,
-		BuildTimeUx: 60, UpgradeCostGrowth: 1.4, UpgradeTimeGrowth: 1.2,
-		BuildCost:       res4(150, 200, 100, 100),
-		UpgradeCostBase: res4(250, 350, 150, 150),
-		CapPerLevel:     100000,
-	}
-	c.buildingByType[pb_city.BuildingType_RoleFarm] = &BuildingConf{
-		Type: pb_city.BuildingType_RoleFarm, Name: "farm", Footprint: 4, MaxLevel: 10,
-		BuildTimeUx: 60, UpgradeCostGrowth: 1.5, UpgradeTimeGrowth: 1.3,
-		BuildCost:       res3(pb_confs.ResourceWoodConfID, pb_confs.ResourceStoneConfID, pb_confs.ResourceIronConfID, 100),
-		UpgradeCostBase: res3(pb_confs.ResourceWoodConfID, pb_confs.ResourceStoneConfID, pb_confs.ResourceIronConfID, 150),
-		ProduceItem:     100003, ProducePerHourL: 100,
-	}
-	c.buildingByType[pb_city.BuildingType_RoleLumber] = &BuildingConf{
-		Type: pb_city.BuildingType_RoleLumber, Name: "lumber", Footprint: 4, MaxLevel: 10,
-		BuildTimeUx: 60, UpgradeCostGrowth: 1.5, UpgradeTimeGrowth: 1.3,
-		BuildCost:       res3(pb_confs.ResourceStoneConfID, pb_confs.ResourceFoodConfID, pb_confs.ResourceIronConfID, 100),
-		UpgradeCostBase: res3(pb_confs.ResourceStoneConfID, pb_confs.ResourceFoodConfID, pb_confs.ResourceIronConfID, 150),
-		ProduceItem:     100004, ProducePerHourL: 100,
-	}
-	c.buildingByType[pb_city.BuildingType_RoleStone] = &BuildingConf{
-		Type: pb_city.BuildingType_RoleStone, Name: "stone", Footprint: 4, MaxLevel: 10,
-		BuildTimeUx: 60, UpgradeCostGrowth: 1.5, UpgradeTimeGrowth: 1.3,
-		BuildCost:       res3(pb_confs.ResourceWoodConfID, pb_confs.ResourceFoodConfID, pb_confs.ResourceIronConfID, 100),
-		UpgradeCostBase: res3(pb_confs.ResourceWoodConfID, pb_confs.ResourceFoodConfID, pb_confs.ResourceIronConfID, 150),
-		ProduceItem:     100005, ProducePerHourL: 100,
-	}
-	c.buildingByType[pb_city.BuildingType_RoleIron] = &BuildingConf{
-		Type: pb_city.BuildingType_RoleIron, Name: "iron", Footprint: 4, MaxLevel: 10,
-		BuildTimeUx: 60, UpgradeCostGrowth: 1.5, UpgradeTimeGrowth: 1.3,
-		BuildCost:       res3(pb_confs.ResourceWoodConfID, pb_confs.ResourceStoneConfID, pb_confs.ResourceFoodConfID, 100),
-		UpgradeCostBase: res3(pb_confs.ResourceWoodConfID, pb_confs.ResourceStoneConfID, pb_confs.ResourceFoodConfID, 150),
-		ProduceItem:     100006, ProducePerHourL: 100,
-	}
-	c.rebuildQueueNums()
-	return c
-}
-
-// res4 四资源消耗快捷构造（顺序：木/石/粮/铁）
-func res4(w, s, f, i int64) []common_declarations.ItemUse {
-	return []common_declarations.ItemUse{
-		{ItemID: pb_confs.ResourceWoodConfID, ItemType: pb_confs.ItemTypeResource, Count: w},
-		{ItemID: pb_confs.ResourceStoneConfID, ItemType: pb_confs.ItemTypeResource, Count: s},
-		{ItemID: pb_confs.ResourceFoodConfID, ItemType: pb_confs.ItemTypeResource, Count: f},
-		{ItemID: pb_confs.ResourceIronConfID, ItemType: pb_confs.ItemTypeResource, Count: i},
-	}
-}
-
-// res3 三资源消耗快捷构造（每项同量，用于资源建筑耗"非本产"资源）
-func res3(a, b, c pb_confs.ItemID, count int64) []common_declarations.ItemUse {
-	return []common_declarations.ItemUse{
-		{ItemID: a, ItemType: pb_confs.ItemTypeResource, Count: count},
-		{ItemID: b, ItemType: pb_confs.ItemTypeResource, Count: count},
-		{ItemID: c, ItemType: pb_confs.ItemTypeResource, Count: count},
-	}
 }
 
 // rebuildQueueNums 由校场配置构建队列数稠密数组

@@ -1,8 +1,12 @@
 package soldier
 
-import "testing"
+import (
+	"testing"
 
-// TestSoldierLimit_Embedded 内嵌占位：英雄等级基础 + 兵营等级累计加成
+	"server.slg.com/api/protocol/pb/pb_gameconfig"
+)
+
+// TestSoldierLimit_Embedded 内嵌（真实 gameconfig.json）：英雄等级基础 + 兵营等级累计加成
 func TestSoldierLimit_Embedded(t *testing.T) {
 	c := New()
 
@@ -31,19 +35,25 @@ func TestSoldierLimit_Embedded(t *testing.T) {
 	}
 }
 
-// TestSoldierLimit_JSONLoad JSON 加载后计算与内嵌一致
-func TestSoldierLimit_JSONLoad(t *testing.T) {
-	jsonData := []byte(`{
-		"default_soldier_num": 100,
-		"hero_level_caps": [{"level":1,"soldier_num":100},{"level":10,"soldier_num":200},{"level":20,"soldier_num":350}],
-		"barrack_level_bonus": [{"level":1,"bonus":0},{"level":2,"bonus":50},{"level":3,"bonus":100}]
-	}`)
-	c := New()
-	if err := c.Load(jsonData); err != nil {
-		t.Fatalf("Load err: %v", err)
-	}
-	if err := c.Validate(); err != nil {
-		t.Fatalf("Validate err: %v", err)
+// TestSoldierLimit_NewFromPB 经 pb.Table → NewFromPB 构建后计算正确
+func TestSoldierLimit_NewFromPB(t *testing.T) {
+	c, err := NewFromPB(&pb_gameconfig.Table{
+		Soldier: []*pb_gameconfig.Soldier{
+			{DefaultSoldierNum: 100},
+		},
+		SoldierHeroCap: []*pb_gameconfig.SoldierHeroCap{
+			{Level: 1, SoldierNum: 100},
+			{Level: 10, SoldierNum: 200},
+			{Level: 20, SoldierNum: 350},
+		},
+		SoldierBarrackBonus: []*pb_gameconfig.SoldierBarrackBonus{
+			{Level: 1, Bonus: 0},
+			{Level: 2, Bonus: 50},
+			{Level: 3, Bonus: 100},
+		},
+	})
+	if err != nil {
+		t.Fatalf("NewFromPB err: %v", err)
 	}
 
 	if c.DefaultSoldierNum != 100 {

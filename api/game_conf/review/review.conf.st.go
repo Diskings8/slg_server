@@ -1,4 +1,4 @@
-// Package review 审查玩法配置表
+// Package review 审查玩法配置表（数据源：tabtoy 单一 gameconfig.json，经 NewFromPB 构建）
 //
 // 玩法：每天 8:00 后获得 1 次审查次数（最多累积 5 次）；消耗 1 次生成 tasks_per_review 个任务
 // 并 +exp 审查经验；审查等级决定任务奖励品质；前 level_up_bonus_chances 级每升 1 级送 1 次审查次数。
@@ -29,32 +29,6 @@ type Conf struct {
 	LevelUpBonusChances int32 // 前 N 级每升 1 级送 1 次审查次数
 
 	levels map[int32]*ReviewLevelConf // 等级 → 配置
-
-	version string // 内容版本（JSON 加载后为内容 hash；内嵌为 ""）
-}
-
-// New 构造审查配置（内置占位数据）
-func New() *Conf {
-	return &Conf{
-		DailyChances:        1,
-		MaxChances:          5,
-		TasksPerReview:      4,
-		ExpPerReviewMin:     4,
-		ExpPerReviewMax:     5,
-		SeasonDays:          45,
-		LevelUpBonusChances: 9,
-		levels: map[int32]*ReviewLevelConf{
-			1: {Level: 1, ExpRequired: 6, Rewards: []ReviewReward{{ItemID: 1001, Count: 5}}},
-			2: {Level: 2, ExpRequired: 11, Rewards: []ReviewReward{{ItemID: 1001, Count: 10}}},
-			3: {Level: 3, ExpRequired: 16, Rewards: []ReviewReward{{ItemID: 1001, Count: 15}}},
-			4: {Level: 4, ExpRequired: 21, Rewards: []ReviewReward{{ItemID: 1002, Count: 5}}},
-			5: {Level: 5, ExpRequired: 26, Rewards: []ReviewReward{{ItemID: 1002, Count: 10}}},
-			6: {Level: 6, ExpRequired: 31, Rewards: []ReviewReward{{ItemID: 1002, Count: 15}}},
-			7: {Level: 7, ExpRequired: 36, Rewards: []ReviewReward{{ItemID: 1003, Count: 5}}},
-			8: {Level: 8, ExpRequired: 41, Rewards: []ReviewReward{{ItemID: 1003, Count: 10}}},
-			9: {Level: 9, ExpRequired: 46, Rewards: []ReviewReward{{ItemID: 1003, Count: 15}}},
-		},
-	}
 }
 
 // GetConfig 按等级查询配置（未配置返回 nil）

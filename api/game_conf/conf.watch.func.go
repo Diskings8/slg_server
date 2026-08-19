@@ -3,7 +3,6 @@ package game_conf
 import (
 	"context"
 	"os"
-	"path/filepath"
 	"time"
 
 	common_configs "server.slg.com/common/configs"
@@ -13,10 +12,10 @@ import (
 
 const defaultWatchInterval = 2 * time.Second
 
-// StartWatch 启动配置热更监听（mtime 轮询，无 fsnotify 依赖）。
+// StartWatch 启动配置热更监听（单文件 mtime+size 轮询，无 fsnotify 依赖）。
 //
 // 必须接收全局 ctx（见 CLAUDE.md 全局 Context 规范）：ctx 取消 → 监听协程退出。
-// 检测到目录 mtime 变化 → ReLoad()（内部失败回滚保持旧配置）。
+// 检测到 gameconfig.json 变化 → ReLoad()（内部失败回滚保持旧配置）。
 func StartWatch(ctx context.Context, interval time.Duration) {
 	path := common_configs.GetConf().GameConf.ConfigPath
 	if path == "" {
@@ -28,7 +27,7 @@ func StartWatch(ctx context.Context, interval time.Duration) {
 	}
 
 	go func() {
-		last := snapshotMtimes(path)
+		last := snapshotFile(path)
 		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
 		for {
@@ -37,14 +36,12 @@ func StartWatch(ctx context.Context, interval time.Duration) {
 				loggers.Logger.Info("game_conf watch stopped")
 				return
 			case <-ticker.C:
-				cur := snapshotMtimes(path)
-				if mtimesEqual(last, cur) {
+				cur := snapshotFile(path)
+				if sameFileSnapshot(last, cur) {
 					continue
 				}
 				last = cur
-				if err := ReLoad(); err != nil {
-					// ReLoad 内部已记日志并保持旧配置
-				}
+				_ = ReLoad() // ReLoad 内部已记日志并保持旧配置
 			}
 		}
 	}()
@@ -52,32 +49,26 @@ func StartWatch(ctx context.Context, interval time.Duration) {
 	loggers.Logger.Info("game_conf watch started", zap.String("path", path), zap.Duration("interval", interval))
 }
 
-// snapshotMtimes 采集当前表集（battleOnly 或全量）对应 JSON 文件的 mtime。
-func snapshotMtimes(dir string) map[string]time.Time {
-	gc := defaultConf.Load()
-	regs := allTables
-	if gc != nil && gc.battleOnly {
-		regs = battleTables
-	}
-	m := make(map[string]time.Time, len(regs))
-	for _, r := range regs {
-		fi, err := os.Stat(filepath.Join(dir, r.file+".json"))
-		if err == nil {
-			m[r.file] = fi.ModTime()
-		}
-	}
-	return m
+// fileSnapshot 单文件快照（mtime + size；改内容不碰 mtime 的极端场景靠 size 兜底）。
+type fileSnapshot struct {
+	modTime time.Time
+	size    int64
 }
 
-// mtimesEqual 两张 mtime 快照是否一致。
-func mtimesEqual(a, b map[string]time.Time) bool {
-	if len(a) != len(b) {
-		return false
+// snapshotFile 采集 gameconfig.json 当前快照（config_path 无效/文件缺失 → 零值，下次轮询再探）。
+func snapshotFile(path string) fileSnapshot {
+	file, err := resolveGameconfig(path)
+	if err != nil {
+		return fileSnapshot{}
 	}
-	for k, v := range a {
-		if bv, ok := b[k]; !ok || !bv.Equal(v) {
-			return false
-		}
+	fi, err := os.Stat(file)
+	if err != nil {
+		return fileSnapshot{}
 	}
-	return true
+	return fileSnapshot{modTime: fi.ModTime(), size: fi.Size()}
+}
+
+// sameFileSnapshot 两次快照是否一致。
+func sameFileSnapshot(a, b fileSnapshot) bool {
+	return a.size == b.size && a.modTime.Equal(b.modTime)
 }

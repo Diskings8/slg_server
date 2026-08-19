@@ -1,4 +1,4 @@
-// Package skill 技能配置表（Go 内嵌占位数据，后续可迁 JSON）
+// Package skill 技能配置表（数据源：tabtoy 单一 gameconfig.json，经 NewFromPB 构建）
 package skill
 
 import "server.slg.com/common/common_declarations"
@@ -71,42 +71,6 @@ type Conf struct {
 	Slot1UnlockLv uint32 // 槽位1（index1）解锁所需英雄等级
 	Slot2UnlockLv uint32 // 槽位2（index2）解锁所需英雄等级
 	UnequipRefund int32  // 拆卸返还比例：每升级 1 级返还 1/2 升级道具
-
-	version string // 内容版本（JSON 加载后为内容 hash；内嵌为 ""）
-}
-
-// New 构造技能配置（内置占位数据）
-func New() *Conf {
-	c := &Conf{
-		skillList: []SkillConf{
-			{ConfID: 101, MaxLevel: 10, UseLimit: 3, UpgradeCost: common_declarations.ItemUse{ItemID: 2001, Count: 1},
-				SkillType: SkillTypeActive, TargetType: TargetRandom, EffectType: EffectPhysDamage, DamageCoeff: 100},
-			{ConfID: 102, MaxLevel: 10, UseLimit: 2, UpgradeCost: common_declarations.ItemUse{ItemID: 2001, Count: 2},
-				SkillType: SkillTypePursuit, TargetType: TargetRandom, EffectType: EffectPhysDamage, DamageCoeff: 80, TriggerRate: 30},
-			{ConfID: 103, MaxLevel: 5, UseLimit: 1, UpgradeCost: common_declarations.ItemUse{ItemID: 2002, Count: 1},
-				SkillType: SkillTypeActive, TargetType: TargetBase, EffectType: EffectMagicDamage, DamageCoeff: 120},
-		},
-		collectionConfs: map[int32]SkillCollectionConf{
-			101: {SkillConfID: 101, NeedHeroes: []common_declarations.ItemUse{
-				{ItemID: 1, Count: 5},
-				{ItemID: 2, Count: 3},
-			}},
-			102: {SkillConfID: 102, NeedHeroes: []common_declarations.ItemUse{
-				{ItemID: 1, Count: 10},
-			}},
-		},
-		SlotDefault:   0,
-		SlotEquipMin:  1,
-		SlotEquipMax:  2,
-		Slot1UnlockLv: 10,
-		Slot2UnlockLv: 20,
-		UnequipRefund: 2,
-	}
-	c.skillByID = make(map[int32]SkillConf, len(c.skillList))
-	for _, s := range c.skillList {
-		c.skillByID[s.ConfID] = s
-	}
-	return c
 }
 
 // GetSkillConf 按配置ID查询技能配置

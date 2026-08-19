@@ -1,7 +1,7 @@
-// Package soldier 兵力上限配置表（英雄上阵默认兵力 + 等级/兵营加成，Go 内嵌占位数据，后续可迁 JSON）
+// Package soldier 兵力上限配置表（英雄上阵默认兵力 + 等级/兵营加成，数据源：tabtoy 单一 gameconfig.json，经 NewFromPB 构建）
 //
 // 兵力模型：英雄上阵默认给 default_soldier_num 兵；兵力上限 = 英雄等级基础 + 兵营等级累计加成。
-// 断点数据（hero_level_caps / barrack_level_bonus）在 Load 时展开为稠密数组，运行期 O(1) 查询。
+// 断点数据（hero_level_caps / barrack_level_bonus）在 Load/NewFromPB 时展开为稠密数组，运行期 O(1) 查询。
 package soldier
 
 // heroLevelCap 英雄等级兵力断点（稀疏，Load 时按"最大 ≤ 等级"前向填充）
@@ -23,32 +23,6 @@ type Conf struct {
 	barrackBonus      []uint32 // index=兵营等级 1..MaxBarrackLevel（累计加成）
 	maxHeroLevel      int32    // 英雄等级上限（heroCaps 长度）
 	maxBarrackLevel   int32    // 兵营等级上限（barrackBonus 长度）
-
-	version string // 内容版本（JSON 加载后为内容 hash；内嵌为 ""）
-}
-
-// New 构造兵力配置（内置占位数据）
-func New() *Conf {
-	c := &Conf{
-		DefaultSoldierNum: 100,
-		maxHeroLevel:      20,
-		maxBarrackLevel:   3,
-	}
-	// 英雄等级基础兵力：1级100，10级200，20级350（前向填充）
-	c.heroCaps = make([]uint32, c.maxHeroLevel+1)
-	fillHeroCaps(c.heroCaps, []heroLevelCap{
-		{Level: 1, SoldierNum: 100},
-		{Level: 10, SoldierNum: 200},
-		{Level: 20, SoldierNum: 350},
-	})
-	// 兵营等级累计加成：1级+0，2级+50，3级+100（断点间前向填充）
-	c.barrackBonus = make([]uint32, c.maxBarrackLevel+1)
-	fillBarrackBonus(c.barrackBonus, []barrackLevelBonus{
-		{Level: 1, Bonus: 0},
-		{Level: 2, Bonus: 50},
-		{Level: 3, Bonus: 100},
-	})
-	return c
 }
 
 // SoldierLimit 计算兵力上限 = 英雄等级基础 + 兵营等级累计加成

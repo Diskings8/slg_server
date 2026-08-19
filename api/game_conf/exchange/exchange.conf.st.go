@@ -1,4 +1,4 @@
-// Package exchange 货币兑换配置表（Go 内嵌占位数据，后续可迁 JSON）
+// Package exchange 货币兑换配置表（数据源：tabtoy 单一 gameconfig.json，经 NewFromPB 构建）
 //
 // 货币兑换是货币流通渠道：一级货币（钻石，仅充值获得）→ 二级货币（金币，游戏内主要消耗）。
 // 比例由配置驱动，一个来源货币一条规则（当前占位 1 钻石 = 10 金币）。
@@ -19,24 +19,6 @@ type RuleConfig struct {
 // Conf 货币兑换配置聚合（按 FromID 索引，一个来源货币一条规则）
 type Conf struct {
 	rules map[pb_confs.ItemID]*RuleConfig
-
-	version string // 内容版本（JSON 加载后为内容 hash；内嵌为 ""）
-}
-
-// New 构造货币兑换配置（内置占位数据）
-func New() *Conf {
-	return &Conf{
-		rules: map[pb_confs.ItemID]*RuleConfig{
-			pb_confs.Currency1ConfID: {
-				FromID:    pb_confs.Currency1ConfID,
-				FromType:  pb_confs.ItemTypeCurrency1,
-				ToID:      pb_confs.Currency2ConfID,
-				ToType:    pb_confs.ItemTypeCurrency2,
-				FromCount: 1,
-				ToCount:   10,
-			},
-		},
-	}
 }
 
 // GetRule 按来源货币配置ID查询兑换规则

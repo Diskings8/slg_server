@@ -1,4 +1,4 @@
-// Package item 道具配置表（Go 内嵌占位数据，后续可迁 JSON）
+// Package item 道具配置表（数据源：tabtoy 单一 gameconfig.json，经 NewFromPB 构建）
 package item
 
 import "server.slg.com/api/protocol/pb_confs"
@@ -33,26 +33,6 @@ type ItemConfig struct {
 // Conf 道具配置聚合
 type Conf struct {
 	configs map[pb_confs.ItemID]ItemConfig
-
-	version string // 内容版本（JSON 加载后为内容 hash；内嵌为 ""）
-}
-
-// New 构造道具配置（内置占位数据）
-func New() *Conf {
-	return &Conf{
-		configs: map[pb_confs.ItemID]ItemConfig{
-			2001: {ConfID: 2001, Effect: ItemEffect{Type: EffectAddHeroExp, Value: 100}},                                              // 英雄经验书
-			2002: {ConfID: 2002, Effect: ItemEffect{Type: EffectAddCurrency, Target: int32(pb_confs.Currency2ConfID), Value: 1000}}, // 金币礼包
-			2003: {ConfID: 2003, Effect: ItemEffect{Type: EffectAddItem, Target: 2001, Value: 5}},                                   // 资源包：5 张经验书
-			2004: {ConfID: 2004, Effect: ItemEffect{Type: EffectNone}},                                                              // 抽卡券（无效果，仅消耗）
-
-			// ── 资源（背包存储，受仓库上限约束；无使用效果） ──
-			pb_confs.ResourceFoodConfID:  {ConfID: pb_confs.ResourceFoodConfID, Effect: ItemEffect{Type: EffectNone}},  // 粮食
-			pb_confs.ResourceWoodConfID:  {ConfID: pb_confs.ResourceWoodConfID, Effect: ItemEffect{Type: EffectNone}},  // 木材
-			pb_confs.ResourceStoneConfID: {ConfID: pb_confs.ResourceStoneConfID, Effect: ItemEffect{Type: EffectNone}}, // 石料
-			pb_confs.ResourceIronConfID:  {ConfID: pb_confs.ResourceIronConfID, Effect: ItemEffect{Type: EffectNone}},  // 铁矿
-		},
-	}
 }
 
 // Get 按配置ID查询道具配置

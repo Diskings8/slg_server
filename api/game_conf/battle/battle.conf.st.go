@@ -16,21 +16,6 @@ type Conf struct {
 	PhysConverge       uint32 `json:"phys_converge"`        // 物理伤害收敛系数（%）：攻击²/(攻击 + 防御×系数)
 	MagicConverge      uint32 `json:"magic_converge"`       // 法术伤害收敛系数（%）：智力²/(智力 + 智力×系数)
 	BattleExpCoeff     uint32 `json:"battle_exp_coeff"`     // 战斗经验系数：每场总经验 = 敌方平均等级 × 击杀敌兵 × 系数
-
-	version string // 内容版本（JSON 加载后为内容 hash；内嵌为 ""）
-}
-
-// New 构造战斗规则配置（内置占位数据）
-func New() *Conf {
-	return &Conf{
-		Rounds:             8,
-		InjuryRateStart:    85,
-		InjuryRateDecay:    10,
-		SettlementDeadRate: 10,
-		PhysConverge:       100, // 1.0
-		MagicConverge:      100, // 1.0
-		BattleExpCoeff:     5,
-	}
 }
 
 // InjuryRate 第 round 回合的受伤比例（%），随回合衰减，最低 0

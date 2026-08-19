@@ -1,4 +1,4 @@
-// Package guard 地块守军配置表（开发行军的战斗对象，Go 内嵌占位数据，后续可迁 JSON）
+// Package guard 地块守军配置表（开发行军的战斗对象，数据源：tabtoy 单一 gameconfig.json，经 NewFromPB 构建）
 //
 // 开发行军（MarchTypeDevelop）到达地块后，与目标等级（当前等级+3）的守军战斗。
 // 守军按地块等级配置：每个等级一组守军队伍（英雄配置ID + 固定兵力）。
@@ -21,31 +21,6 @@ type GuardConfig struct {
 type Conf struct {
 	configs         map[int32]*GuardConfig // 等级 → 守军配置
 	MaxDevelopLevel int32                  // 地块可开发的最高等级（含）
-
-	version string // 内容版本（JSON 加载后为内容 hash；内嵌为 ""）
-}
-
-// New 构造守军配置（内置占位数据）
-func New() *Conf {
-	return &Conf{
-		configs: map[int32]*GuardConfig{
-			0: {Level: 0, Slots: []GuardSlot{
-				{HeroConfID: 1, SoldierNum: 100},
-			}},
-			3: {Level: 3, Slots: []GuardSlot{
-				{HeroConfID: 1, SoldierNum: 300},
-			}},
-			6: {Level: 6, Slots: []GuardSlot{
-				{HeroConfID: 1, SoldierNum: 600},
-				{HeroConfID: 2, SoldierNum: 200},
-			}},
-			9: {Level: 9, Slots: []GuardSlot{
-				{HeroConfID: 1, SoldierNum: 900},
-				{HeroConfID: 2, SoldierNum: 400},
-			}},
-		},
-		MaxDevelopLevel: 9,
-	}
 }
 
 // GetGuard 按地块等级查询守军配置（未配置返回 nil）

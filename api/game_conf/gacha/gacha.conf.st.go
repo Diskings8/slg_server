@@ -1,8 +1,7 @@
-// Package gacha 抽卡系统配置表（Go 内嵌占位数据，后续可迁 JSON）
+// Package gacha 抽卡系统配置表（数据源：tabtoy 单一 gameconfig.json，经 NewFromPB 构建）
 //
 // 抽卡是英雄卡来源：消耗抽卡券/金币，按权重随机掉落英雄卡或道具。
-// 英雄 ID 当前为占位 int32（hero_conf 定义表未建，见 LDL_COMPARISON 主要缺失），
-// 后续接入配置表后只改本文件占位数据，不影响逻辑层。
+// 三张表拼装：gacha_pool（池定义） + gacha_drop_group（稀有度档位） + gacha_drop_item（组内条目）。
 package gacha
 
 import "sort"
@@ -48,87 +47,6 @@ type RecruitPoolConfig struct {
 // Conf 抽卡配置聚合
 type Conf struct {
 	pools map[int32]*RecruitPoolConfig
-
-	version string // 内容版本（JSON 加载后为内容 hash；内嵌为 ""）
-}
-
-// New 构造抽卡配置（内置占位数据）
-func New() *Conf {
-	return &Conf{
-		pools: map[int32]*RecruitPoolConfig{
-			1001: newPool(1001, "新手池", true, true,
-				1, 100, 10, 900,
-				10, 3, 2,
-				[]int32{2, 3}, 20,
-				70, 25, 5),
-			1002: newPool(1002, "英雄池", false, true,
-				1, 200, 10, 1800,
-				20, 3, 0,
-				[]int32{1, 2, 3, 4, 5}, 50,
-				60, 30, 10),
-		},
-	}
-}
-
-// newPool 便捷构造抽卡池，普通/稀有/史诗三档组权重入参
-func newPool(poolID int32, name string, freeDaily, halfPrice bool,
-	singleTicket, singleGold, tenTicket, tenGold int64,
-	guaranteeTimes, guaranteeGroupID, firstDropGroupID int32,
-	wishHeros []int32, wishTimes int32,
-	commonW, rareW, epicW int32) *RecruitPoolConfig {
-
-	return &RecruitPoolConfig{
-		PoolID:           poolID,
-		Name:             name,
-		TicketConfID:     2004,
-		SingleTicket:     singleTicket,
-		SingleGold:       singleGold,
-		TenTicket:        tenTicket,
-		TenGold:          tenGold,
-		FreeDaily:        freeDaily,
-		HalfPrice:        halfPrice,
-		DropGroups:       buildDropGroups(commonW, rareW, epicW),
-		GuaranteeTimes:   guaranteeTimes,
-		GuaranteeGroupID: guaranteeGroupID,
-		FirstDropGroupID: firstDropGroupID,
-		WishHeros:        wishHeros,
-		WishTimes:        wishTimes,
-	}
-}
-
-// buildDropGroups 三档稀有度掉落组（普通/稀有/史诗）
-//
-//   - 普通：英雄1 + 道具（2001 经验书×5 / 2002 金币包×1）
-//   - 稀有：英雄2/英雄3
-//   - 史诗：英雄4/英雄5，命中即保底重置（GuaranteeReset=true）
-func buildDropGroups(commonW, rareW, epicW int32) []DropGroupConfig {
-	return []DropGroupConfig{
-		{
-			GroupID: 1,
-			Weight:  commonW,
-			Items: []DropItemConfig{
-				{RewardConfID: 1, IsHero: true, Count: 1, Weight: 40},
-				{RewardConfID: 2001, IsHero: false, Count: 5, Weight: 30},
-				{RewardConfID: 2002, IsHero: false, Count: 1, Weight: 30},
-			},
-		},
-		{
-			GroupID: 2,
-			Weight:  rareW,
-			Items: []DropItemConfig{
-				{RewardConfID: 2, IsHero: true, Count: 1, Weight: 60},
-				{RewardConfID: 3, IsHero: true, Count: 1, Weight: 40},
-			},
-		},
-		{
-			GroupID: 3,
-			Weight:  epicW,
-			Items: []DropItemConfig{
-				{RewardConfID: 4, IsHero: true, Count: 1, Weight: 50, GuaranteeReset: true},
-				{RewardConfID: 5, IsHero: true, Count: 1, Weight: 50, GuaranteeReset: true},
-			},
-		},
-	}
 }
 
 // GetPool 按池ID查询抽卡池配置

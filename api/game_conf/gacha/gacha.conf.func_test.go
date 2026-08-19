@@ -1,42 +1,40 @@
 package gacha
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
+
+	"server.slg.com/api/protocol/pb/pb_gameconfig"
 )
 
-// TestGacha_LoadAndQuery JSON 加载后抽卡池/掉落组/保底查询正常。
+// poolFixture 新手池 pb.Table：掉落组 1（普通）+ 3（保底），含英雄与道具掉落。
+func poolFixture() *pb_gameconfig.Table {
+	return &pb_gameconfig.Table{
+		GachaPool: []*pb_gameconfig.GachaPool{
+			{
+				PoolId: 1001, Name: "新手池", TicketConfId: 2004,
+				SingleTicket: 1, SingleGold: 100, TenTicket: 10, TenGold: 900,
+				FreeDaily: true, HalfPrice: true,
+				GuaranteeTimes: 10, GuaranteeGroupId: 3, FirstDropGroupId: 0,
+				WishHeros: []int32{2, 3}, WishTimes: 20,
+			},
+		},
+		GachaDropGroup: []*pb_gameconfig.GachaDropGroup{
+			{PoolId: 1001, GroupId: 1, Weight: 70},
+			{PoolId: 1001, GroupId: 3, Weight: 5},
+		},
+		GachaDropItem: []*pb_gameconfig.GachaDropItem{
+			{PoolId: 1001, GroupId: 1, RewardConfId: 1, IsHero: true, Count: 1, Weight: 40},
+			{PoolId: 1001, GroupId: 1, RewardConfId: 2001, IsHero: false, Count: 5, Weight: 30},
+			{PoolId: 1001, GroupId: 3, RewardConfId: 4, IsHero: true, Count: 1, Weight: 50, GuaranteeReset: true},
+		},
+	}
+}
+
+// TestGacha_LoadAndQuery 经 pb.Table → NewFromPB 构建后抽卡池/掉落组/保底查询正常。
 func TestGacha_LoadAndQuery(t *testing.T) {
-	c := New()
-	data := []byte(`{
-  "pools": [
-    {
-      "pool_id": 1001, "name": "新手池", "ticket_conf_id": 2004,
-      "single_ticket": 1, "single_gold": 100, "ten_ticket": 10, "ten_gold": 900,
-      "free_daily": true, "half_price": true,
-      "guarantee_times": 10, "guarantee_group_id": 3, "first_drop_group_id": 2,
-      "wish_heros": [2, 3], "wish_times": 20,
-      "drop_groups": [
-        {"group_id": 1, "weight": 70, "items": [
-          {"reward_conf_id": 1, "is_hero": true, "count": 1, "weight": 40},
-          {"reward_conf_id": 2001, "is_hero": false, "count": 5, "weight": 30}
-        ]},
-        {"group_id": 3, "weight": 5, "items": [
-          {"reward_conf_id": 4, "is_hero": true, "count": 1, "weight": 50, "guarantee_reset": true}
-        ]}
-      ]
-    }
-  ]
-}`)
-	if err := c.Load(data); err != nil {
-		t.Fatalf("Load failed: %v", err)
-	}
-	if c.FileName() != "gacha" {
-		t.Errorf("FileName = %q, want gacha", c.FileName())
-	}
-	if c.Version() == "" {
-		t.Error("Version should be non-empty after JSON load")
+	c, err := NewFromPB(poolFixture())
+	if err != nil {
+		t.Fatalf("NewFromPB failed: %v", err)
 	}
 	pool, ok := c.GetPool(1001)
 	if !ok || pool.Name != "新手池" || pool.SingleGold != 100 || pool.GuaranteeTimes != 10 {
@@ -54,69 +52,42 @@ func TestGacha_LoadAndQuery(t *testing.T) {
 	}
 }
 
-// TestGacha_LoadDuplicateKey pool_id 重复 → Load 报错。
+// TestGacha_LoadDuplicateKey pool_id 重复 → NewFromPB 报错。
 func TestGacha_LoadDuplicateKey(t *testing.T) {
-	c := New()
-	data := []byte(`{
-  "pools": [
-    {"pool_id": 1001, "name": "a", "ticket_conf_id": 2004, "single_ticket": 1, "single_gold": 100, "ten_ticket": 10, "ten_gold": 900, "free_daily": true, "half_price": true, "guarantee_times": 10, "guarantee_group_id": 3, "first_drop_group_id": 0, "wish_heros": [], "wish_times": 20, "drop_groups": [{"group_id": 1, "weight": 70, "items": [{"reward_conf_id": 1, "is_hero": true, "count": 1, "weight": 40}]}]},
-    {"pool_id": 1001, "name": "b", "ticket_conf_id": 2004, "single_ticket": 1, "single_gold": 100, "ten_ticket": 10, "ten_gold": 900, "free_daily": true, "half_price": true, "guarantee_times": 10, "guarantee_group_id": 3, "first_drop_group_id": 0, "wish_heros": [], "wish_times": 20, "drop_groups": [{"group_id": 1, "weight": 70, "items": [{"reward_conf_id": 1, "is_hero": true, "count": 1, "weight": 40}]}]}
-  ]
-}`)
-	if err := c.Load(data); err == nil {
-		t.Fatal("Load should fail on duplicate pool_id")
+	tb := &pb_gameconfig.Table{
+		GachaPool: []*pb_gameconfig.GachaPool{
+			{PoolId: 1001, Name: "a", TicketConfId: 2004, SingleTicket: 1, SingleGold: 100, TenTicket: 10, TenGold: 900,
+				FreeDaily: true, HalfPrice: true, GuaranteeTimes: 10, GuaranteeGroupId: 3, FirstDropGroupId: 0, WishTimes: 20},
+			{PoolId: 1001, Name: "b", TicketConfId: 2004, SingleTicket: 1, SingleGold: 100, TenTicket: 10, TenGold: 900,
+				FreeDaily: true, HalfPrice: true, GuaranteeTimes: 10, GuaranteeGroupId: 3, FirstDropGroupId: 0, WishTimes: 20},
+		},
+		GachaDropGroup: []*pb_gameconfig.GachaDropGroup{
+			{PoolId: 1001, GroupId: 1, Weight: 70},
+		},
+		GachaDropItem: []*pb_gameconfig.GachaDropItem{
+			{PoolId: 1001, GroupId: 1, RewardConfId: 1, IsHero: true, Count: 1, Weight: 40},
+		},
+	}
+	if _, err := NewFromPB(tb); err == nil {
+		t.Fatal("NewFromPB should fail on duplicate pool_id")
 	}
 }
 
-// TestGacha_ValidateGuaranteeGroupMissing 保底组引用不存在的组 → Validate 报错。
+// TestGacha_ValidateGuaranteeGroupMissing 保底组引用不存在的组 → NewFromPB 校验报错。
 func TestGacha_ValidateGuaranteeGroupMissing(t *testing.T) {
-	c := New()
-	data := []byte(`{
-  "pools": [
-    {"pool_id": 1001, "name": "a", "ticket_conf_id": 2004, "single_ticket": 1, "single_gold": 100, "ten_ticket": 10, "ten_gold": 900, "free_daily": true, "half_price": true, "guarantee_times": 10, "guarantee_group_id": 99, "first_drop_group_id": 0, "wish_heros": [], "wish_times": 20, "drop_groups": [{"group_id": 1, "weight": 70, "items": [{"reward_conf_id": 1, "is_hero": true, "count": 1, "weight": 40}]}]}
-  ]
-}`)
-	if err := c.Load(data); err != nil {
-		t.Fatalf("Load failed: %v", err)
+	tb := &pb_gameconfig.Table{
+		GachaPool: []*pb_gameconfig.GachaPool{
+			{PoolId: 1001, Name: "a", TicketConfId: 2004, SingleTicket: 1, SingleGold: 100, TenTicket: 10, TenGold: 900,
+				FreeDaily: true, HalfPrice: true, GuaranteeTimes: 10, GuaranteeGroupId: 99, FirstDropGroupId: 0, WishTimes: 20},
+		},
+		GachaDropGroup: []*pb_gameconfig.GachaDropGroup{
+			{PoolId: 1001, GroupId: 1, Weight: 70},
+		},
+		GachaDropItem: []*pb_gameconfig.GachaDropItem{
+			{PoolId: 1001, GroupId: 1, RewardConfId: 1, IsHero: true, Count: 1, Weight: 40},
+		},
 	}
-	if err := c.Validate(); err == nil {
-		t.Fatal("Validate should fail when guarantee_group_id not in drop_groups")
-	}
-}
-
-// TestGacha_RealJSONMatchesEmbedded 仓库 json/gacha.json 与内嵌占位逐值一致。
-func TestGacha_RealJSONMatchesEmbedded(t *testing.T) {
-	data, err := os.ReadFile(filepath.Join("..", "json", "gacha.json"))
-	if err != nil {
-		t.Skipf("gacha.json not found, skip: %v", err)
-	}
-	jc := New()
-	if err := jc.Load(data); err != nil {
-		t.Fatalf("load real gacha.json: %v", err)
-	}
-	if err := jc.Validate(); err != nil {
-		t.Fatalf("real gacha.json validate: %v", err)
-	}
-	// 池 1001 关键字段与内嵌一致
-	embed, _ := New().GetPool(1001)
-	got, ok := jc.GetPool(1001)
-	if !ok {
-		t.Fatal("pool 1001 not found in json")
-	}
-	if got.Name != embed.Name || got.SingleGold != embed.SingleGold || got.TenGold != embed.TenGold ||
-		got.GuaranteeTimes != embed.GuaranteeTimes || got.GuaranteeGroupID != embed.GuaranteeGroupID ||
-		got.FirstDropGroupID != embed.FirstDropGroupID || got.WishTimes != embed.WishTimes {
-		t.Errorf("pool 1001 json=%+v embedded=%+v", got, embed)
-	}
-	if len(got.DropGroups) != len(embed.DropGroups) {
-		t.Fatalf("drop groups len json=%d embedded=%d", len(got.DropGroups), len(embed.DropGroups))
-	}
-	for i := range embed.DropGroups {
-		if got.DropGroups[i].Weight != embed.DropGroups[i].Weight {
-			t.Errorf("group %d weight json=%d embedded=%d", i, got.DropGroups[i].Weight, embed.DropGroups[i].Weight)
-		}
-		if len(got.DropGroups[i].Items) != len(embed.DropGroups[i].Items) {
-			t.Errorf("group %d items len mismatch", i)
-		}
+	if _, err := NewFromPB(tb); err == nil {
+		t.Fatal("NewFromPB should fail when guarantee_group_id not in drop_groups")
 	}
 }

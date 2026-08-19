@@ -74,9 +74,6 @@ func runBattle(attackerSlots, defenderSlots []*pb_battle.TeamSlotInfo) *pb_battl
 		attacker: prepSide(attackerSlots, 0),
 		defender: prepSide(defenderSlots, 1),
 	}
-	if b.rules == nil || b.rules.Rounds == 0 {
-		b.rules = battle.New()
-	}
 	result := &pb_battle.OneBattleResult{
 		Attacker: &pb_battle.BattleSide{TeamInfo: &pb_battle.TeamInfo{SlotInfo: attackerSlots}},
 		Defender: &pb_battle.BattleSide{TeamInfo: &pb_battle.TeamInfo{SlotInfo: defenderSlots}},

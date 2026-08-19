@@ -1,5 +1,0 @@
-{
-  "rules": [
-    {"from_id": 100001, "from_type": 1, "to_id": 100002, "to_type": 2, "from_count": 1, "to_count": 10}
-  ]
-}

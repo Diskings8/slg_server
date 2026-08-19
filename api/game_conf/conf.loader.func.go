@@ -13,146 +13,177 @@ import (
 	"server.slg.com/api/game_conf/guard"
 	"server.slg.com/api/game_conf/hero"
 	"server.slg.com/api/game_conf/item"
+	gameconfigjson "server.slg.com/api/game_conf/json"
 	"server.slg.com/api/game_conf/resource"
 	"server.slg.com/api/game_conf/review"
 	"server.slg.com/api/game_conf/skill"
 	"server.slg.com/api/game_conf/soldier"
 	"server.slg.com/api/game_conf/table"
 	"server.slg.com/api/game_conf/troop"
+	"server.slg.com/api/protocol/pb/pb_gameconfig"
 	"server.slg.com/api/protocol/pb_confs"
-	"server.slg.com/common/loggers"
-	"go.uber.org/zap"
+	"server.slg.com/common/utils/util_jsons"
 )
 
-// newEmbedded 构建全域 Go 内嵌配置（InitDefault 用，不校验）。
-func newEmbedded() *GameConf {
-	return &GameConf{
-		Battle:   battle.New(),
-		Hero:     hero.New(),
-		Skill:    skill.New(),
-		Item:     item.New(),
-		Troop:    troop.New(),
-		Gacha:    gacha.New(),
-		Exchange: exchange.New(),
-		Guard:    guard.New(),
-		Resource: resource.New(),
-		Review:   review.New(),
-		Soldier:   soldier.New(),
-		Building:  building.New(),
-		Formation: formation.New(),
-	}
-}
+// gameconfigFileName 单一配置表产物名（tabtoy 导出，与内嵌 gameconfigjson 同源）。
+const gameconfigFileName = "gameconfig.json"
 
-// newBattleEmbedded 构建 battle 节点子集（仅 battle+skill，其余 nil）。
-func newBattleEmbedded() *GameConf {
-	return &GameConf{
-		Battle:    battle.New(),
-		Skill:     skill.New(),
-		battleOnly: true,
-	}
-}
-
-// loadAll 从 dir 加载全部注册表 + 跨表校验。
+// newEmbedded 构建全域配置（内嵌 gameconfig.json → pb.Table → NewFromPB），供 InitDefault/New("") 使用。
 //
-// 文件缺失 → 告警并保留该域 Go 内嵌；任一步失败 → 返回 err（调用方不替换旧配置）。
+// 内嵌数据损坏或校验失败 → panic（数据源与文件路径同源，正常不应发生）。
+func newEmbedded() *GameConf {
+	t, err := gameconfigjson.Table()
+	if err != nil {
+		panic(fmt.Sprintf("embedded gameconfig invalid: %v", err))
+	}
+	gc, err := newFromPB(t, false)
+	if err != nil {
+		panic(fmt.Sprintf("embedded gameconfig build failed: %v", err))
+	}
+	return gc
+}
+
+// newBattleEmbedded 构建 battle 节点子集（battle+skill，其余 nil）。
+func newBattleEmbedded() *GameConf {
+	t, err := gameconfigjson.Table()
+	if err != nil {
+		panic(fmt.Sprintf("embedded gameconfig invalid: %v", err))
+	}
+	gc, err := newFromPB(t, true)
+	if err != nil {
+		panic(fmt.Sprintf("embedded gameconfig build failed: %v", err))
+	}
+	return gc
+}
+
+// resolveGameconfig 解析配置入口：config_path 为目录时指向其中的 gameconfig.json，为文件时直接用。
+func resolveGameconfig(path string) (string, error) {
+	fi, err := os.Stat(path)
+	if err != nil {
+		return "", fmt.Errorf("stat config path %q: %w", path, err)
+	}
+	if fi.IsDir() {
+		return filepath.Join(path, gameconfigFileName), nil
+	}
+	return path, nil
+}
+
+// loadAll 从 config_path 加载全部配置表 + 跨表校验（battleOnly=false）。
+//
+// 单文件缺失 → 返回 err（fail-fast），替代原「缺表保持内嵌」语义；任一步失败不产生半更新。
 func loadAll(dir string) (*GameConf, error) {
-	gc := newEmbedded()
-	if err := loadTables(gc, dir, allTables); err != nil {
+	return loadFromPath(dir, false)
+}
+
+// loadBattle 从 config_path 加载 battle 节点子集（battle+skill）。
+func loadBattle(dir string) (*GameConf, error) {
+	return loadFromPath(dir, true)
+}
+
+// loadFromPath 从 config_path 读入单一 gameconfig.json → pb.Table → newFromPB 构建。
+func loadFromPath(dir string, battleOnly bool) (*GameConf, error) {
+	file, err := resolveGameconfig(dir)
+	if err != nil {
 		return nil, err
+	}
+	data, err := os.ReadFile(file)
+	if err != nil {
+		return nil, fmt.Errorf("read gameconfig %q: %w", file, err)
+	}
+	t := &pb_gameconfig.Table{}
+	if err := util_jsons.Unmarshal(data, t); err != nil {
+		return nil, fmt.Errorf("unmarshal gameconfig %q: %w", file, err)
+	}
+	gc, err := newFromPB(t, battleOnly)
+	if err != nil {
+		return nil, err
+	}
+	gc.filePath = dir
+	gc.battleOnly = battleOnly
+	gc.contentHash = table.ContentHash(data)
+	gc.globalVersion = nextVersion()
+	gc.tableVersions = map[string]string{gameconfigFileName: gc.contentHash}
+	return gc, nil
+}
+
+// newFromPB 从 pb.Table 构建 GameConf（battleOnly=true 时仅 battle+skill，其余 nil）。
+//
+// 各域 NewFromPB 均为「局部构建 + 末尾提交 + 校验」，失败返回 err 不产生半更新；
+// 全量构建完成后做跨表校验（validateCrossRefs）。
+func newFromPB(t *pb_gameconfig.Table, battleOnly bool) (*GameConf, error) {
+	gc := &GameConf{pb: t, battleOnly: battleOnly}
+	if battleOnly {
+		var err error
+		if gc.Battle, err = battle.NewFromPB(t); err != nil {
+			return nil, fmt.Errorf("battle: %w", err)
+		}
+		if gc.Skill, err = skill.NewFromPB(t); err != nil {
+			return nil, fmt.Errorf("skill: %w", err)
+		}
+		return gc, nil
+	}
+
+	var err error
+	if gc.Hero, err = hero.NewFromPB(t); err != nil {
+		return nil, fmt.Errorf("hero: %w", err)
+	}
+	if gc.Skill, err = skill.NewFromPB(t); err != nil {
+		return nil, fmt.Errorf("skill: %w", err)
+	}
+	if gc.Item, err = item.NewFromPB(t); err != nil {
+		return nil, fmt.Errorf("item: %w", err)
+	}
+	if gc.Troop, err = troop.NewFromPB(t); err != nil {
+		return nil, fmt.Errorf("troop: %w", err)
+	}
+	if gc.Exchange, err = exchange.NewFromPB(t); err != nil {
+		return nil, fmt.Errorf("exchange: %w", err)
+	}
+	if gc.Battle, err = battle.NewFromPB(t); err != nil {
+		return nil, fmt.Errorf("battle: %w", err)
+	}
+	if gc.Gacha, err = gacha.NewFromPB(t); err != nil {
+		return nil, fmt.Errorf("gacha: %w", err)
+	}
+	if gc.Guard, err = guard.NewFromPB(t); err != nil {
+		return nil, fmt.Errorf("guard: %w", err)
+	}
+	if gc.Resource, err = resource.NewFromPB(t); err != nil {
+		return nil, fmt.Errorf("resource: %w", err)
+	}
+	if gc.Review, err = review.NewFromPB(t); err != nil {
+		return nil, fmt.Errorf("review: %w", err)
+	}
+	if gc.Soldier, err = soldier.NewFromPB(t); err != nil {
+		return nil, fmt.Errorf("soldier: %w", err)
+	}
+	if gc.Building, err = building.NewFromPB(t); err != nil {
+		return nil, fmt.Errorf("building: %w", err)
+	}
+	if gc.Formation, err = formation.NewFromPB(t); err != nil {
+		return nil, fmt.Errorf("formation: %w", err)
 	}
 	if err := validateCrossRefs(gc); err != nil {
 		return nil, err
 	}
-	gc.filePath = dir
-	gc.globalVersion = nextVersion()
-	gc.tableVersions = collectVersions(gc, allTables)
 	return gc, nil
-}
-
-// loadTablesFrom 从 dir 加载指定表集（battle 节点子集用）。
-func loadTablesFrom(dir string, regs []tableReg) (*GameConf, error) {
-	gc := newBattleEmbedded()
-	if err := loadTables(gc, dir, regs); err != nil {
-		return nil, err
-	}
-	if err := validateCrossRefs(gc); err != nil {
-		return nil, err
-	}
-	gc.filePath = dir
-	gc.battleOnly = true
-	gc.globalVersion = nextVersion()
-	gc.tableVersions = collectVersions(gc, regs)
-	return gc, nil
-}
-
-// loadTables 按注册表逐表读取 JSON → Load → Validate。
-func loadTables(gc *GameConf, dir string, regs []tableReg) error {
-	for _, r := range regs {
-		data, err := os.ReadFile(filepath.Join(dir, r.file+".json"))
-		if err != nil {
-			if os.IsNotExist(err) {
-				loggers.Logger.Warn("table json not found, keep embedded", zap.String("table", r.file))
-				continue
-			}
-			return fmt.Errorf("read table %s json: %w", r.file, err)
-		}
-		if err := loadOne(r.get(gc), data); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// loadOne 单表加载 + 表内校验。
-func loadOne(t table.Table, data []byte) error {
-	if err := t.Load(data); err != nil {
-		return fmt.Errorf("table %s load: %w", t.FileName(), err)
-	}
-	if err := t.Validate(); err != nil {
-		return fmt.Errorf("table %s validate: %w", t.FileName(), err)
-	}
-	return nil
-}
-
-// collectVersions 收集各表内容版本（仅 JSON 加载的表有 hash）。
-func collectVersions(gc *GameConf, regs []tableReg) map[string]string {
-	versions := make(map[string]string, len(regs))
-	for _, r := range regs {
-		if v := r.get(gc).Version(); v != "" {
-			versions[r.file] = v
-		}
-	}
-	return versions
-}
-
-// versionsEqual 两张版本表是否一致（内容未变则热更跳过原子替换）。
-func versionsEqual(a, b map[string]string) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for k, v := range a {
-		if bv, ok := b[k]; !ok || bv != v {
-			return false
-		}
-	}
-	return true
 }
 
 // validateCrossRefs 跨表引用校验。
 //
-// 表内校验在各域 Conf.Validate 完成，这里只做跨表引用（避免 game_conf ↔ 域包循环依赖）。
-// 仅当**引用方表为 JSON 加载**（Version() != ""）时校验——内嵌占位视为可信现状（可能含历史不一致）。
-// battle 子集 nil 表跳过（如 skill 引用 item，但 battle 节点不加载 item）。
+// 表内校验在各域 NewFromPB 内完成（Validate），这里只做跨表引用（避免 game_conf ↔ 域包循环依赖）。
+// 数据源统一为 gameconfig.json（文件或内嵌），故不再区分「JSON 已加载」——全量构建必然 13 域齐全；
+// battle 子集 nil 表跳过（如 skill 引用 item/hero，但 battle 节点不加载）。
 func validateCrossRefs(gc *GameConf) error {
 	// skill：升级消耗道具 → item；收藏所需英雄卡 → hero
-	if gc.Skill.Version() != "" && gc.Item != nil {
+	if gc.Item != nil {
 		for _, s := range gc.Skill.AllSkills() {
 			if !gc.Item.Has(s.UpgradeCost.ItemID) {
 				return fmt.Errorf("skill %d upgrade_cost item %d not found", s.ConfID, s.UpgradeCost.ItemID)
 			}
 		}
 	}
-	if gc.Skill.Version() != "" && gc.Hero != nil {
+	if gc.Hero != nil {
 		for _, cc := range gc.Skill.AllCollections() {
 			for _, h := range cc.NeedHeroes {
 				if _, ok := gc.Hero.HeroConf(int32(h.ItemID)); !ok {
@@ -162,13 +193,13 @@ func validateCrossRefs(gc *GameConf) error {
 		}
 	}
 	// troop：扩展兵种解锁道具 → item
-	if gc.Troop != nil && gc.Troop.Version() != "" && gc.Item != nil {
+	if gc.Troop != nil && gc.Item != nil {
 		if !gc.Item.Has(pb_confs.ItemID(gc.Troop.UnlockItemConf)) {
 			return fmt.Errorf("troop unlock_item_conf %d not found in items", gc.Troop.UnlockItemConf)
 		}
 	}
 	// gacha：英雄掉落/心愿 → hero；道具掉落/抽卡券 → item
-	if gc.Gacha != nil && gc.Gacha.Version() != "" {
+	if gc.Gacha != nil {
 		if gc.Hero != nil {
 			for _, poolID := range gc.Gacha.AllPoolIDs() {
 				pool, _ := gc.Gacha.GetPool(poolID)

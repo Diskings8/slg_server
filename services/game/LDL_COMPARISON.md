@@ -266,7 +266,7 @@ func (r *Role) New() {
 6. ✅ 技能收藏激活 (收藏兑换消耗客户端选定英雄卡，解锁即发放技能，可装配)
 7. ✅ 英雄属性计算已接入（hero.conf 基础/成长/星级/加点 → CalcHeroAttr，参与战斗公式）；战力聚合数字不接入
 8. ✅ 战斗结果回调（每场经验 = 敌方平均等级×击杀×系数÷参战英雄；逐场升级；战报记录；MarchEvent 回传 game HeroAddExp）
-9. ✅ 配置表系统 (完整: Table 接口 + 注册中心/加载器 + 校验 + 热更 + 版本控制；7 表 JSON 化于 api/game_conf/json，逻辑层零改动，config_path 空则 Go 内嵌兜底)
+9. ✅ 配置表系统 (xlsx→tabtoy→pb 管线, 08-19): 策划维护 24 张 excel 源表 → export_conf.ps1 导出单一 gameconfig.json + 自动生成 gameconfig.proto → protoc 编译 pb_gameconfig.pb.go 强类型；运行时读单一 JSON → pb.Table → 各域 NewFromPB 构建索引 + 跨表校验 + mtime 热更 + 版本控制；go:embed 内嵌同源 JSON 兜底（config_path 空）；逻辑层零改动
 10. ✅ 货币兑换 (一级→二级, 配置规则表驱动: 1 钻石=10 金币, 整组兑换, 产消日志 reason="exchange")
 11. ❌ 产销日志落库 (ItemChange 收集但未写 DB)
 
@@ -310,7 +310,7 @@ Phase 2 的 8 个子任务（含实际调整），标注 **08-04 实际进度**:
 | **Attr 属性系统** | ✅ **已提前完成** | role_attrs 子模块 + GameAttrList 协议；ServerID/VIPLevel/Offline 桩已替换；玩家等级仍派生于建筑 |
 | **Teams 队伍编成** | ✅ **已提前完成** | role_formations + 3 协议 |
 | **Builds 城建系统** | ✅ **已提前完成** | role_buildings + 2 协议 |
-| **配置表系统** | ✅ **已完成 (08-05)** | Table 接口 + registry/loader/watch + 跨表校验 + 版本；7 表 JSON 化，config_path 空则 Go 内嵌兜底 |
+| **配置表系统** | ✅ **已完成 (08-19)** | xlsx 源表 → tabtoy → 单一 gameconfig.json + gameconfig.proto → protoc pb.go；运行时 NewFromPB 构建 + 跨表校验 + 热更；go:embed 同源兜底 |
 
 ---
 
@@ -320,7 +320,7 @@ Phase 2 的 8 个子任务（含实际调整），标注 **08-04 实际进度**:
 2. **08-04 大爆发**: 技能系统（槽/装配/拆卸/升级）、英雄升星、货币类型 3 大块完成，协议 16 → 20，测试 4 文件
 3. **基础设施修复 4 项**: Recv 双重加锁、道具 Save 遗漏、rpc_results.Reset panic、ItemChange 成功误报
 4. **Phase 2 全部完成 (08-05)** — 2.1~2.7 已完成；**2.8 货币兑换** 落地（配置规则表驱动、整组兑换、产消日志），**Phase 2 ≈100%**
-5. ✅ **配置表系统 (08-05)** — 完整落地：表定义+通用加载器+数据校验+热更(mtime 轮询)+版本控制；7 表 JSON 化，逻辑层零改动，隐藏前置解除
+5. ✅ **配置表系统 (08-19)** — 对齐 LDL 管线：24 张 excel 源表 + tabtoy 导出单一 gameconfig.json + 自动生成 gameconfig.proto → pb.go 强类型；运行时读单一 JSON → 各域 NewFromPB + 跨表校验 + mtime 热更 + 版本控制；go:embed 同源兜底，逻辑层零改动，模拟数据全移除
 6. **Attr 属性系统** — ✅ 已完成 (role_attrs + 桩替换 + 登录统计钩子)；玩家等级未入 Attr，保持派生于建筑
 7. **战斗模块完善 (08-05)** — 英雄属性接入战斗（属性加权公式）、战斗经验结算 + 逐场升级（下一场以新属性进入）、每场经验记录战报、MarchEvent 回传 game 落地 HeroAddExp；无战力聚合数字
 

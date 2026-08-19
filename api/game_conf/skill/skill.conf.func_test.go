@@ -1,33 +1,36 @@
 package skill
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
+
+	"server.slg.com/api/protocol/pb/pb_gameconfig"
 )
 
-// TestSkill_LoadAndQuery JSON 加载后技能/收藏/槽位查询正常。
+// TestSkill_LoadAndQuery 经 pb.Table → NewFromPB 构建后技能/收藏/槽位查询正常。
 func TestSkill_LoadAndQuery(t *testing.T) {
-	c := New()
-	data := []byte(`{
-  "skills": [
-    {"conf_id": 101, "max_level": 10, "use_limit": 3, "upgrade_cost": {"item_id": 2001, "count": 1}, "skill_type": 1, "target_type": 1, "effect_type": 1, "damage_coeff": 100, "converge_coeff": 0, "trigger_rate": 0}
-  ],
-  "collections": [
-    {"skill_conf_id": 101, "need_heroes": [{"item_id": 1, "count": 5}, {"item_id": 2, "count": 3}]}
-  ],
-  "slot_default": 0, "slot_equip_min": 1, "slot_equip_max": 2,
-  "slot1_unlock_lv": 10, "slot2_unlock_lv": 20, "unequip_refund": 2
-}`)
-	if err := c.Load(data); err != nil {
-		t.Fatalf("Load failed: %v", err)
-	}
-
-	if c.FileName() != "skill" {
-		t.Errorf("FileName = %q, want skill", c.FileName())
-	}
-	if c.Version() == "" {
-		t.Error("Version should be non-empty after JSON load")
+	c, err := NewFromPB(&pb_gameconfig.Table{
+		Skill: []*pb_gameconfig.Skill{
+			{
+				ConfId: 101, MaxLevel: 10, UseLimit: 3,
+				UpgradeCost: &pb_gameconfig.Cost{ItemId: 2001, Count: 1},
+				SkillType:   pb_gameconfig.Skilltype_skilltype_active,
+				TargetType:  pb_gameconfig.Targettype_targettype_random,
+				EffectType:  pb_gameconfig.Effecttype_effecttype_phys_damage,
+				DamageCoeff: 100,
+			},
+		},
+		SkillCollection: []*pb_gameconfig.SkillCollection{
+			{
+				SkillConfId: 101,
+				NeedHeroes:  []*pb_gameconfig.Reward{{ItemId: 1, Count: 5}, {ItemId: 2, Count: 3}},
+			},
+		},
+		SkillSetting: []*pb_gameconfig.SkillSetting{
+			{SlotDefault: 0, SlotEquipMin: 1, SlotEquipMax: 2, Slot1UnlockLv: 10, Slot2UnlockLv: 20, UnequipRefund: 2},
+		},
+	})
+	if err != nil {
+		t.Fatalf("NewFromPB failed: %v", err)
 	}
 	s, ok := c.GetSkillConf(101)
 	if !ok || s.MaxLevel != 10 || s.UpgradeCost.ItemID != 2001 || s.UpgradeCost.Count != 1 {
@@ -45,72 +48,56 @@ func TestSkill_LoadAndQuery(t *testing.T) {
 	}
 }
 
-// TestSkill_LoadDuplicateKey 技能主键重复 → Load 报错。
+// TestSkill_LoadDuplicateKey 技能主键重复 → NewFromPB 报错。
 func TestSkill_LoadDuplicateKey(t *testing.T) {
-	c := New()
-	data := []byte(`{
-  "skills": [
-    {"conf_id": 101, "max_level": 10, "use_limit": 3, "upgrade_cost": {"item_id": 2001, "count": 1}, "skill_type": 1, "target_type": 1, "effect_type": 1, "damage_coeff": 100},
-    {"conf_id": 101, "max_level": 5, "use_limit": 1, "upgrade_cost": {"item_id": 2002, "count": 1}, "skill_type": 1, "target_type": 3, "effect_type": 2, "damage_coeff": 120}
-  ],
-  "collections": [], "slot_default": 0, "slot_equip_min": 1, "slot_equip_max": 2,
-  "slot1_unlock_lv": 10, "slot2_unlock_lv": 20, "unequip_refund": 2
-}`)
-	if err := c.Load(data); err == nil {
-		t.Fatal("Load should fail on duplicate conf_id")
+	if _, err := NewFromPB(&pb_gameconfig.Table{
+		Skill: []*pb_gameconfig.Skill{
+			{ConfId: 101, MaxLevel: 10, UseLimit: 3, UpgradeCost: &pb_gameconfig.Cost{ItemId: 2001, Count: 1},
+				SkillType: pb_gameconfig.Skilltype_skilltype_active, TargetType: pb_gameconfig.Targettype_targettype_random,
+				EffectType: pb_gameconfig.Effecttype_effecttype_phys_damage, DamageCoeff: 100},
+			{ConfId: 101, MaxLevel: 5, UseLimit: 1, UpgradeCost: &pb_gameconfig.Cost{ItemId: 2002, Count: 1},
+				SkillType: pb_gameconfig.Skilltype_skilltype_active, TargetType: pb_gameconfig.Targettype_targettype_base,
+				EffectType: pb_gameconfig.Effecttype_effecttype_magic_damage, DamageCoeff: 120},
+		},
+		SkillSetting: []*pb_gameconfig.SkillSetting{
+			{SlotDefault: 0, SlotEquipMin: 1, SlotEquipMax: 2, Slot1UnlockLv: 10, Slot2UnlockLv: 20, UnequipRefund: 2},
+		},
+	}); err == nil {
+		t.Fatal("NewFromPB should fail on duplicate conf_id")
 	}
 }
 
-// TestSkill_ValidateInvalidEnum 非法枚举 → Validate 报错。
+// TestSkill_ValidateInvalidEnum 非法枚举 → NewFromPB 校验报错。
 func TestSkill_ValidateInvalidEnum(t *testing.T) {
-	c := New()
-	data := []byte(`{
-  "skills": [
-    {"conf_id": 101, "max_level": 10, "use_limit": 3, "upgrade_cost": {"item_id": 2001, "count": 1}, "skill_type": 99, "target_type": 1, "effect_type": 1, "damage_coeff": 100}
-  ],
-  "collections": [], "slot_default": 0, "slot_equip_min": 1, "slot_equip_max": 2,
-  "slot1_unlock_lv": 10, "slot2_unlock_lv": 20, "unequip_refund": 2
-}`)
-	if err := c.Load(data); err != nil {
-		t.Fatalf("Load failed: %v", err)
-	}
-	if err := c.Validate(); err == nil {
-		t.Fatal("Validate should fail on invalid skill_type")
+	if _, err := NewFromPB(&pb_gameconfig.Table{
+		Skill: []*pb_gameconfig.Skill{
+			{ConfId: 101, MaxLevel: 10, UseLimit: 3, UpgradeCost: &pb_gameconfig.Cost{ItemId: 2001, Count: 1},
+				SkillType: 99, TargetType: pb_gameconfig.Targettype_targettype_random,
+				EffectType: pb_gameconfig.Effecttype_effecttype_phys_damage, DamageCoeff: 100},
+		},
+		SkillSetting: []*pb_gameconfig.SkillSetting{
+			{SlotDefault: 0, SlotEquipMin: 1, SlotEquipMax: 2, Slot1UnlockLv: 10, Slot2UnlockLv: 20, UnequipRefund: 2},
+		},
+	}); err == nil {
+		t.Fatal("NewFromPB should fail on invalid skill_type")
 	}
 }
 
-// TestSkill_ValidateCollectionRefMissing 收藏引用了不存在的技能 → Validate 报错。
+// TestSkill_ValidateCollectionRefMissing 收藏引用了不存在的技能 → NewFromPB 校验报错。
 func TestSkill_ValidateCollectionRefMissing(t *testing.T) {
-	c := New()
-	data := []byte(`{
-  "skills": [
-    {"conf_id": 101, "max_level": 10, "use_limit": 3, "upgrade_cost": {"item_id": 2001, "count": 1}, "skill_type": 1, "target_type": 1, "effect_type": 1, "damage_coeff": 100}
-  ],
-  "collections": [{"skill_conf_id": 999, "need_heroes": [{"item_id": 1, "count": 5}]}],
-  "slot_default": 0, "slot_equip_min": 1, "slot_equip_max": 2,
-  "slot1_unlock_lv": 10, "slot2_unlock_lv": 20, "unequip_refund": 2
-}`)
-	if err := c.Load(data); err != nil {
-		t.Fatalf("Load failed: %v", err)
-	}
-	if err := c.Validate(); err == nil {
-		t.Fatal("Validate should fail on collection referencing missing skill")
-	}
-}
-
-// TestSkill_RealJSONMatchesEmbedded 仓库 json/skill.json 与内嵌占位逐值一致。
-func TestSkill_RealJSONMatchesEmbedded(t *testing.T) {
-	data, err := os.ReadFile(filepath.Join("..", "json", "skill.json"))
-	if err != nil {
-		t.Skipf("skill.json not found, skip: %v", err)
-	}
-	embed, _ := New().GetSkillConf(101)
-	jc := New()
-	if err := jc.Load(data); err != nil {
-		t.Fatalf("load real skill.json: %v", err)
-	}
-	got, _ := jc.GetSkillConf(101)
-	if got != embed {
-		t.Errorf("skill 101 json=%+v embedded=%+v", got, embed)
+	if _, err := NewFromPB(&pb_gameconfig.Table{
+		Skill: []*pb_gameconfig.Skill{
+			{ConfId: 101, MaxLevel: 10, UseLimit: 3, UpgradeCost: &pb_gameconfig.Cost{ItemId: 2001, Count: 1},
+				SkillType: pb_gameconfig.Skilltype_skilltype_active, TargetType: pb_gameconfig.Targettype_targettype_random,
+				EffectType: pb_gameconfig.Effecttype_effecttype_phys_damage, DamageCoeff: 100},
+		},
+		SkillCollection: []*pb_gameconfig.SkillCollection{
+			{SkillConfId: 999, NeedHeroes: []*pb_gameconfig.Reward{{ItemId: 1, Count: 5}}},
+		},
+		SkillSetting: []*pb_gameconfig.SkillSetting{
+			{SlotDefault: 0, SlotEquipMin: 1, SlotEquipMax: 2, Slot1UnlockLv: 10, Slot2UnlockLv: 20, UnequipRefund: 2},
+		},
+	}); err == nil {
+		t.Fatal("NewFromPB should fail on collection referencing missing skill")
 	}
 }

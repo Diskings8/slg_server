@@ -1,4 +1,4 @@
-// Package resource 资源地产量配置表（每小时产量，扫荡采集/占领收益基础）
+// Package resource 资源地产量配置表（数据源：tabtoy 单一 gameconfig.json，经 NewFromPB 构建；每小时产量，扫荡采集/占领收益基础）
 //
 // 产出模型：
 //   - lv1：混合型 — 全 4 项资源各产 amount（每小时）
@@ -35,25 +35,6 @@ type ResourceConfig struct {
 // Conf 资源产量配置聚合
 type Conf struct {
 	configs map[int32]*ResourceConfig // 等级 → 产量配置
-
-	version string // 内容版本（JSON 加载后为内容 hash；内嵌为 ""）
-}
-
-// New 构造资源产量配置（内置占位数据）
-func New() *Conf {
-	return &Conf{
-		configs: map[int32]*ResourceConfig{
-			1: {Level: 1, Type: int32(ResourceTypeMixed), Amount: 36}, // 全 4 项各 +36/h
-			2: {Level: 2, Type: int32(ResourceTypeDual), PrimaryAmount: 120, SecondaryAmount: 120},
-			3: {Level: 3, Type: int32(ResourceTypeSingle), Amount: 360},
-			4: {Level: 4, Type: int32(ResourceTypeSingle), Amount: 480},
-			5: {Level: 5, Type: int32(ResourceTypeSingle), Amount: 1200}, // 关键分水岭
-			6: {Level: 6, Type: int32(ResourceTypeSingle), Amount: 1400},
-			7: {Level: 7, Type: int32(ResourceTypeSingle), Amount: 1600},
-			8: {Level: 8, Type: int32(ResourceTypeSingle), Amount: 1800},
-			9: {Level: 9, Type: int32(ResourceTypeSingle), Amount: 2000},
-		},
-	}
 }
 
 // GetConfig 按等级查询配置（未配置返回 nil）

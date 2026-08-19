@@ -21,12 +21,12 @@ func init() {
 	_ = InitDefault()
 }
 
-// InitFromConf 使用 EnvConf 配置里的 game_conf.config_path 初始化（path 为空走 Go 内嵌）。
+// InitFromConf 使用 EnvConf 配置里的 game_conf.config_path 初始化（path 为空走内嵌）。
 func InitFromConf() error {
 	return Init(common_configs.GetConf().GameConf.ConfigPath)
 }
 
-// Init 从 JSON 配置目录加载全部配置表；path 为空则走 Go 内嵌占位。
+// Init 从 config_path 加载单一 gameconfig.json 全部配置表；path 为空走内嵌（同源同构）。
 //
 // 加载失败返回 err 且不替换现有配置（保持旧配置）。
 func Init(filePath string) error {
@@ -44,7 +44,7 @@ func Init(filePath string) error {
 	return nil
 }
 
-// InitDefault 加载 Go 内嵌占位配置（不走 JSON、不校验），供测试/无配置路径环境。
+// InitDefault 加载内嵌 gameconfig.json 构建全部配置（构建即校验，不做跨表引用校验）。
 func InitDefault() error {
 	reloadMu.Lock()
 	defer reloadMu.Unlock()
@@ -55,7 +55,7 @@ func InitDefault() error {
 }
 
 // InitBattle 轻量初始化战斗配置子集（battle 节点专用）：
-// config_path 非空则从 JSON 加载 battle+skill 子集，否则 Go 内嵌子集。
+// config_path 非空则从单一 gameconfig.json 加载 battle+skill 子集，否则内嵌子集。
 func InitBattle() error {
 	reloadMu.Lock()
 	defer reloadMu.Unlock()
@@ -66,7 +66,7 @@ func InitBattle() error {
 		defaultConf.Store(gc)
 		return nil
 	}
-	gc, err := loadTablesFrom(path, battleTables)
+	gc, err := loadBattle(path)
 	if err != nil {
 		loggers.Logger.Error("game_conf init battle failed", zap.String("path", path), zap.Error(err))
 		return err
@@ -75,7 +75,7 @@ func InitBattle() error {
 	return nil
 }
 
-// New 兼容入口：path 为空返回内嵌配置，否则从 JSON 加载（不替换全局单例）。
+// New 兼容入口：path 为空返回内嵌配置，否则从单一 gameconfig.json 加载（不替换全局单例）。
 func New(filePath string) (*GameConf, error) {
 	if filePath == "" {
 		return newEmbedded(), nil
@@ -92,7 +92,7 @@ func Load() *GameConf {
 //
 //   - filePath 为空 → 跳过（返回 nil）
 //   - 加载失败 → 记录日志、保持旧配置（返回 err）
-//   - 各表内容 hash 全同 → 跳过原子替换（mtime 触碰但内容未变不误触发）
+//   - gameconfig.json 内容 hash 全同 → 跳过原子替换（mtime 触碰但内容未变不误触发）
 func ReLoad() error {
 	reloadMu.Lock()
 	defer reloadMu.Unlock()
@@ -105,7 +105,7 @@ func ReLoad() error {
 	var gc *GameConf
 	var err error
 	if old.battleOnly {
-		gc, err = loadTablesFrom(old.filePath, battleTables)
+		gc, err = loadBattle(old.filePath)
 	} else {
 		gc, err = loadAll(old.filePath)
 	}
@@ -113,7 +113,7 @@ func ReLoad() error {
 		loggers.Logger.Error("game_conf reload failed, keep old", zap.String("path", old.filePath), zap.Error(err))
 		return err
 	}
-	if versionsEqual(old.tableVersions, gc.tableVersions) {
+	if old.contentHash != "" && old.contentHash == gc.contentHash {
 		loggers.Logger.Info("game_conf reload: content unchanged, skip swap")
 		return nil
 	}

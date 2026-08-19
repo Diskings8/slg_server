@@ -1,26 +1,21 @@
 package battle
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
+
+	"server.slg.com/api/protocol/pb/pb_gameconfig"
 )
 
-// TestBattle_LoadAndQuery JSON 加载后标量生效，公式类方法仍按新数据计算。
+// TestBattle_LoadAndQuery 经 pb.Table → NewFromPB 构建后标量生效，公式类方法仍按新数据计算。
 func TestBattle_LoadAndQuery(t *testing.T) {
-	c := New()
-	data := []byte(`{
-  "rounds": 10, "injury_rate_start": 90, "injury_rate_decay": 15,
-  "settlement_dead_rate": 12, "phys_converge": 120, "magic_converge": 110, "battle_exp_coeff": 6
-}`)
-	if err := c.Load(data); err != nil {
-		t.Fatalf("Load failed: %v", err)
-	}
-	if c.FileName() != "battle" {
-		t.Errorf("FileName = %q, want battle", c.FileName())
-	}
-	if c.Version() == "" {
-		t.Error("Version should be non-empty after JSON load")
+	c, err := NewFromPB(&pb_gameconfig.Table{
+		Battle: []*pb_gameconfig.Battle{
+			{Rounds: 10, InjuryRateStart: 90, InjuryRateDecay: 15,
+				SettlementDeadRate: 12, PhysConverge: 120, MagicConverge: 110, BattleExpCoeff: 6},
+		},
+	})
+	if err != nil {
+		t.Fatalf("NewFromPB failed: %v", err)
 	}
 	if c.Rounds != 10 || c.InjuryRateStart != 90 || c.BattleExpCoeff != 6 {
 		t.Errorf("battle scalars = %d/%d/%d", c.Rounds, c.InjuryRateStart, c.BattleExpCoeff)
@@ -34,32 +29,14 @@ func TestBattle_LoadAndQuery(t *testing.T) {
 	}
 }
 
-// TestBattle_ValidateDecayExceedsStart decay > start → Validate 报错。
+// TestBattle_ValidateDecayExceedsStart decay > start → NewFromPB 校验报错。
 func TestBattle_ValidateDecayExceedsStart(t *testing.T) {
-	c := New()
-	if err := c.Load([]byte(`{"rounds":8,"injury_rate_start":85,"injury_rate_decay":90,"settlement_dead_rate":10,"phys_converge":100,"magic_converge":100,"battle_exp_coeff":5}`)); err != nil {
-		t.Fatalf("Load failed: %v", err)
-	}
-	if err := c.Validate(); err == nil {
-		t.Fatal("Validate should fail when injury_rate_decay > injury_rate_start")
-	}
-}
-
-// TestBattle_RealJSON 仓库 json/battle.json 可加载且与内嵌一致。
-func TestBattle_RealJSON(t *testing.T) {
-	data, err := os.ReadFile(filepath.Join("..", "json", "battle.json"))
-	if err != nil {
-		t.Skipf("battle.json not found, skip: %v", err)
-	}
-	jc := New()
-	if err := jc.Load(data); err != nil {
-		t.Fatalf("load real battle.json: %v", err)
-	}
-	if err := jc.Validate(); err != nil {
-		t.Fatalf("real battle.json validate: %v", err)
-	}
-	embed := New()
-	if jc.Rounds != embed.Rounds || jc.InjuryRateStart != embed.InjuryRateStart || jc.PhysConverge != embed.PhysConverge {
-		t.Errorf("battle json=%+v embedded=%+v", *jc, *embed)
+	if _, err := NewFromPB(&pb_gameconfig.Table{
+		Battle: []*pb_gameconfig.Battle{
+			{Rounds: 8, InjuryRateStart: 85, InjuryRateDecay: 90,
+				SettlementDeadRate: 10, PhysConverge: 100, MagicConverge: 100, BattleExpCoeff: 5},
+		},
+	}); err == nil {
+		t.Fatal("NewFromPB should fail when injury_rate_decay > injury_rate_start")
 	}
 }

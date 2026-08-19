@@ -2,45 +2,7 @@ package gacha
 
 import (
 	"fmt"
-
-	"server.slg.com/api/game_conf/table"
-	"server.slg.com/common/utils/util_jsons"
 )
-
-// gachaJSON 抽卡配置表 JSON 结构（pools → drop_groups → items 多表嵌套）。
-// 复用 RecruitPoolConfig/DropGroupConfig/DropItemConfig 作为表行（已带 json tag）。
-type gachaJSON struct {
-	Pools []*RecruitPoolConfig `json:"pools"`
-}
-
-// FileName 表名（JSON 文件名，不含扩展名）
-func (c *Conf) FileName() string { return "gacha" }
-
-// Version 内容版本（JSON 加载后为内容 hash；Go 内嵌为 ""）
-func (c *Conf) Version() string { return c.version }
-
-// Load 从 JSON 字节构建抽卡配置（覆盖占位）。失败保持本表数据不变（局部构建 + 末尾提交）。
-func (c *Conf) Load(data []byte) error {
-	var j gachaJSON
-	if err := util_jsons.Unmarshal(data, &j); err != nil {
-		return fmt.Errorf("unmarshal: %w", err)
-	}
-
-	pools := make(map[int32]*RecruitPoolConfig, len(j.Pools))
-	for _, p := range j.Pools {
-		if p.PoolID <= 0 {
-			return fmt.Errorf("pool_id must be > 0, got %d", p.PoolID)
-		}
-		if _, dup := pools[p.PoolID]; dup {
-			return fmt.Errorf("duplicate pool_id %d", p.PoolID)
-		}
-		pools[p.PoolID] = p
-	}
-
-	c.pools = pools
-	c.version = table.ContentHash(data)
-	return nil
-}
 
 // Validate 校验抽卡配置完整性（主键唯一/消耗/掉落组/保底引用/心愿去重）
 func (c *Conf) Validate() error {

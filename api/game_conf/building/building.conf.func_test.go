@@ -4,11 +4,12 @@ import (
 	"testing"
 
 	"server.slg.com/api/protocol/pb/pb_city"
+	"server.slg.com/api/protocol/pb/pb_gameconfig"
 	"server.slg.com/api/protocol/pb_confs"
 	"server.slg.com/common/common_declarations"
 )
 
-// TestGetBuilding_Embedded 内嵌占位：主城/校场/兵营存在，未配置类型不存在
+// TestGetBuilding_Embedded 内嵌（真实 gameconfig.json）：主城/校场/兵营存在，未配置类型不存在
 func TestGetBuilding_Embedded(t *testing.T) {
 	c := New()
 	for _, typ := range []pb_city.BuildingType{
@@ -111,30 +112,32 @@ func TestValidate_Invalid(t *testing.T) {
 	}
 }
 
-// TestJSONLoad 从 JSON 加载后曲线一致
+// TestJSONLoad 经 pb.Table → NewFromPB 构建后曲线一致
 func TestJSONLoad(t *testing.T) {
-	jsonData := []byte(`{"buildings":[
-		{"type":101,"name":"main_city","footprint":9,"max_level":10,"build_time_ux":300,
-		 "build_cost":[],"upgrade_cost_base":[{"item_id":100002,"item_type":2,"count":500}],
-		 "upgrade_cost_growth":1.6,"upgrade_time_growth":1.2},
-		{"type":105,"name":"drill","footprint":4,"max_level":10,"build_time_ux":60,
-		 "build_cost":[{"item_id":100002,"item_type":2,"count":100}],
-		 "upgrade_cost_base":[{"item_id":100002,"item_type":2,"count":200}],
-		 "upgrade_cost_growth":1.5,"upgrade_time_growth":1.3,
-		 "queue_nums":[{"level":1,"num":1},{"level":2,"num":2},{"level":5,"num":3}]}
-	]}`)
-	c := New()
-	if err := c.Load(jsonData); err != nil {
-		t.Fatalf("Load err: %v", err)
-	}
-	if err := c.Validate(); err != nil {
-		t.Fatalf("Validate err: %v", err)
+	c, err := NewFromPB(&pb_gameconfig.Table{
+		Building: []*pb_gameconfig.Building{
+			{
+				Btype: 101, Name: "main_city", Footprint: 9, MaxLevel: 10, BuildTimeUx: 300,
+				UpgradeCostBase:   []*pb_gameconfig.Cost{{ItemId: 100002, ItemType: 2, Count: 500}},
+				UpgradeCostGrowth: 1.6, UpgradeTimeGrowth: 1.2,
+			},
+			{
+				Btype: 105, Name: "drill", Footprint: 4, MaxLevel: 10, BuildTimeUx: 60,
+				BuildCost:         []*pb_gameconfig.Cost{{ItemId: 100002, ItemType: 2, Count: 100}},
+				UpgradeCostBase:   []*pb_gameconfig.Cost{{ItemId: 100002, ItemType: 2, Count: 200}},
+				UpgradeCostGrowth: 1.5, UpgradeTimeGrowth: 1.3,
+				QueueNums: []*pb_gameconfig.LevelNum{{Level: 1, Num: 1}, {Level: 2, Num: 2}, {Level: 5, Num: 3}},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("NewFromPB err: %v", err)
 	}
 	if c.QueueNumAtLevel(2) != 2 {
 		t.Errorf("QueueNumAtLevel(2)=%d, want 2", c.QueueNumAtLevel(2))
 	}
 	cost, ok := c.UpgradeCost(pb_city.BuildingType_RoleMainCity, 1)
 	if !ok || cost[0].Count != 500 {
-		t.Errorf("main 1→2 cost after JSON = %+v ok=%v", cost, ok)
+		t.Errorf("main 1→2 cost after NewFromPB = %+v ok=%v", cost, ok)
 	}
 }

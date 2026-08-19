@@ -1,10 +1,7 @@
-// Package hero 英雄配置表（Go 内嵌占位数据，后续可迁 JSON）
+// Package hero 英雄配置表（数据源：tabtoy 单一 gameconfig.json，经 NewFromPB 构建）
 package hero
 
-import (
-	"server.slg.com/api/protocol/pb_confs"
-	"server.slg.com/common/common_declarations"
-)
+import "server.slg.com/common/common_declarations"
 
 // HeroAttr 英雄战斗属性（无战力聚合，直接使用真实属性参与战斗）
 type HeroAttr struct {
@@ -34,54 +31,6 @@ type Conf struct {
 	AwakenCost      []common_declarations.ItemUse // 觉醒消耗（资源混搭，走 ItemChange）
 
 	heroes  map[int32]HeroConf // 每英雄属性表
-	version string             // 内容版本（JSON 加载后为内容 hash；内嵌为 ""）
-}
-
-// New 构造英雄配置（内置占位数据）
-func New() *Conf {
-	c := &Conf{
-		MaxLevel:        100,
-		FreePointPer10L: 5,
-		MaxStarStage:    5,
-		StarPointPer:    5,
-		AwakenLevel:     20,
-		AwakenCost: []common_declarations.ItemUse{
-			{ItemID: pb_confs.ResourceWoodConfID, ItemType: pb_confs.ItemTypeResource, Count: 500},
-			{ItemID: pb_confs.ResourceStoneConfID, ItemType: pb_confs.ItemTypeResource, Count: 500},
-			{ItemID: pb_confs.ResourceFoodConfID, ItemType: pb_confs.ItemTypeResource, Count: 500},
-			{ItemID: pb_confs.ResourceIronConfID, ItemType: pb_confs.ItemTypeResource, Count: 300},
-		},
-	}
-	// 占位经验曲线：从 level 升到 level+1 需 (level)*100，后续直接替换表数据
-	c.ExpNeed = make([]uint32, c.MaxLevel)
-	for lv := 0; lv < int(c.MaxLevel); lv++ {
-		c.ExpNeed[lv] = uint32((lv + 1) * 100)
-	}
-
-	// 占位英雄属性：英雄 1~5 按稀有度递增（后续迁配置表/JSON）
-	c.heroes = map[int32]HeroConf{
-		1: heroConf(1,
-			HeroAttr{Attack: 100, Defense: 80, Intelligence: 60, Movement: 50, Relocation: 20},
-			HeroAttr{Attack: 10, Defense: 8, Intelligence: 6, Movement: 5, Relocation: 2}, 3),
-		2: heroConf(2,
-			HeroAttr{Attack: 120, Defense: 90, Intelligence: 70, Movement: 55, Relocation: 25},
-			HeroAttr{Attack: 12, Defense: 9, Intelligence: 7, Movement: 6, Relocation: 3}, 4),
-		3: heroConf(3,
-			HeroAttr{Attack: 140, Defense: 100, Intelligence: 80, Movement: 60, Relocation: 30},
-			HeroAttr{Attack: 14, Defense: 10, Intelligence: 8, Movement: 6, Relocation: 3}, 3),
-		4: heroConf(4,
-			HeroAttr{Attack: 160, Defense: 110, Intelligence: 90, Movement: 65, Relocation: 35},
-			HeroAttr{Attack: 16, Defense: 11, Intelligence: 9, Movement: 7, Relocation: 4}, 4),
-		5: heroConf(5,
-			HeroAttr{Attack: 180, Defense: 120, Intelligence: 100, Movement: 70, Relocation: 40},
-			HeroAttr{Attack: 18, Defense: 12, Intelligence: 10, Movement: 7, Relocation: 4}, 5),
-	}
-	return c
-}
-
-// heroConf 便捷构造每英雄属性配置
-func heroConf(confID int32, base, growth HeroAttr, attackRange uint32) HeroConf {
-	return HeroConf{ConfID: confID, Base: base, Growth: growth, AttackRange: attackRange}
 }
 
 // NeedExp 从 level 升到 level+1 所需经验（读逐级表；越界返回 0=已达上限）
