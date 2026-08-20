@@ -128,9 +128,9 @@ func TestInitMapElements_Deterministic(t *testing.T) {
 	})
 }
 
-// 6. 链路完整性核心：服务端程序化生成结果 与 模拟 JSON（api/map_data_json）逐格一致
+// 6. 链路完整性核心：服务端程序化生成结果 与 模拟 JSON（api/data_json）逐格一致
 func TestInitMapElements_MatchesSimulatedJSON(t *testing.T) {
-	const jsonPath = "../../../../api/map_data_json/map_data_101x101_500_500.json"
+	const jsonPath = "../../../../api/data_json/map_data_101x101_500_500.json"
 
 	data, err := os.ReadFile(jsonPath)
 	if os.IsNotExist(err) {

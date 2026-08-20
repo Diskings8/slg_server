@@ -596,7 +596,7 @@
 	"gacha_drop_item": [
 		{
 			"count": 1,
-			"group_id": 1,
+			"group_id": 100001,
 			"guarantee_reset": false,
 			"is_hero": true,
 			"pool_id": 1001,
@@ -623,7 +623,7 @@
 		},
 		{
 			"count": 1,
-			"group_id": 2,
+			"group_id": 100002,
 			"guarantee_reset": false,
 			"is_hero": true,
 			"pool_id": 1001,
@@ -632,7 +632,7 @@
 		},
 		{
 			"count": 1,
-			"group_id": 2,
+			"group_id": 100002,
 			"guarantee_reset": false,
 			"is_hero": true,
 			"pool_id": 1001,
@@ -641,7 +641,7 @@
 		},
 		{
 			"count": 1,
-			"group_id": 3,
+			"group_id": 100003,
 			"guarantee_reset": true,
 			"is_hero": true,
 			"pool_id": 1001,
@@ -650,7 +650,7 @@
 		},
 		{
 			"count": 1,
-			"group_id": 3,
+			"group_id": 100003,
 			"guarantee_reset": true,
 			"is_hero": true,
 			"pool_id": 1001,
@@ -659,7 +659,7 @@
 		},
 		{
 			"count": 1,
-			"group_id": 1,
+			"group_id": 100001,
 			"guarantee_reset": false,
 			"is_hero": true,
 			"pool_id": 1002,
@@ -686,7 +686,7 @@
 		},
 		{
 			"count": 1,
-			"group_id": 2,
+			"group_id": 100002,
 			"guarantee_reset": false,
 			"is_hero": true,
 			"pool_id": 1002,
@@ -695,7 +695,7 @@
 		},
 		{
 			"count": 1,
-			"group_id": 2,
+			"group_id": 100002,
 			"guarantee_reset": false,
 			"is_hero": true,
 			"pool_id": 1002,
@@ -704,7 +704,7 @@
 		},
 		{
 			"count": 1,
-			"group_id": 3,
+			"group_id": 100003,
 			"guarantee_reset": true,
 			"is_hero": true,
 			"pool_id": 1002,
@@ -713,7 +713,7 @@
 		},
 		{
 			"count": 1,
-			"group_id": 3,
+			"group_id": 100003,
 			"guarantee_reset": true,
 			"is_hero": true,
 			"pool_id": 1002,
@@ -21539,11 +21539,11 @@
 			"need_heroes": [
 				{
 					"count": 5,
-					"item_id": 1
+					"item_id": 100001
 				},
 				{
 					"count": 3,
-					"item_id": 2
+					"item_id": 100002
 				}
 			],
 			"skill_conf_id": 101
@@ -21552,7 +21552,7 @@
 			"need_heroes": [
 				{
 					"count": 10,
-					"item_id": 1
+					"item_id": 100001
 				}
 			],
 			"skill_conf_id": 102

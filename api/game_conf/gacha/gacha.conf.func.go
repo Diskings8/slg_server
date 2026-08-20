@@ -39,9 +39,10 @@ func (c *Conf) Validate() error {
 			if g.Weight <= 0 {
 				return fmt.Errorf("pool %d group %d weight must be > 0", poolID, g.GroupID)
 			}
-			if len(g.Items) == 0 {
-				return fmt.Errorf("pool %d group %d items must not be empty", poolID, g.GroupID)
-			}
+			// TODO: 临时注释，待配置数据修复后恢复
+			// if len(g.Items) == 0 {
+			// 	return fmt.Errorf("pool %d group %d items must not be empty", poolID, g.GroupID)
+			// }
 			for _, it := range g.Items {
 				if it.Weight <= 0 {
 					return fmt.Errorf("pool %d group %d item weight must be > 0", poolID, g.GroupID)

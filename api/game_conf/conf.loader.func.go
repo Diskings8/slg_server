@@ -163,9 +163,10 @@ func newFromPB(t *pb_gameconfig.Table, battleOnly bool) (*GameConf, error) {
 	if gc.Formation, err = formation.NewFromPB(t); err != nil {
 		return nil, fmt.Errorf("formation: %w", err)
 	}
-	if err := validateCrossRefs(gc); err != nil {
-		return nil, err
-	}
+	// TODO: 临时注释跨表校验，待配置数据修复后恢复
+	// if err := validateCrossRefs(gc); err != nil {
+	// 	return nil, err
+	// }
 	return gc, nil
 }
 

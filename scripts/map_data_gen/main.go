@@ -135,7 +135,7 @@ func main() {
 	fmt.Printf("生成 %d 格 (x∈[%d,%d], y∈[%d,%d])\n", len(cells), minX, maxX, minY, maxY)
 	fmt.Printf("分布: %v\n", terrain)
 
-	outDir := "api/map_data_json"
+	outDir := "api/data_json"
 	if err := os.MkdirAll(outDir, 0o755); err != nil {
 		panic(err)
 	}
