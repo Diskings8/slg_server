@@ -284,6 +284,51 @@ message building
 	int64 produce_per_hour_l = 14; // 每小时产出 
 }
 
+message hero_base
+{ 
+	int32 conf_id = 1; // 英雄配置ID 
+	string name = 2; // 英雄名 
+	string unique_name = 3; // 唯一名 
+	string country = 4; // 阵营 
+	string sex = 5; // 性别 
+	string quality = 6; // 品质 
+	int32 icon_id = 7; // 图标ID 
+	string troop_type = 8; // 主兵种 
+	string troop_available = 9; // 可用兵种 
+	float deploy_cost = 10; // 部署消耗 
+	string desc = 11; // 描述 
+	int32 policy_id = 12; // 政策ID 
+	string group_id = 13; // 羁绊组ID 
+}
+
+message hero_method
+{ 
+	int32 method_id = 1; // 战法ID 
+	string method_name = 2; // 战法名 
+	string method_desc = 3; // 战法描述 
+}
+
+message hero_method_slot
+{ 
+	int32 hero_conf_id = 1; // 英雄配置ID 
+	int32 slot_index = 2; // 槽位索引 
+	int32 method_id = 3; // 战法ID 
+}
+
+message hero_policy
+{ 
+	int32 policy_id = 1; // 政策ID 
+	string policy_name = 2; // 政策名 
+	string policy_desc = 3; // 政策描述 
+}
+
+message hero_group
+{ 
+	string group_id = 1; // 羁绊组ID 
+	string group_name = 2; // 羁绊名 
+	string group_desc = 3; // 羁绊描述 
+}
+
 
 // Combine struct
 message Table
@@ -300,17 +345,22 @@ message Table
 	repeated guard_slot guard_slot = 10; // table: guard_slot 
 	repeated hero hero = 11; // table: hero 
 	repeated hero_attr hero_attr = 12; // table: hero_attr 
-	repeated hero_exp hero_exp = 13; // table: hero_exp 
-	repeated item item = 14; // table: item 
-	repeated resource resource = 15; // table: resource 
-	repeated review review = 16; // table: review 
-	repeated review_level review_level = 17; // table: review_level 
-	repeated skill skill = 18; // table: skill 
-	repeated skill_collection skill_collection = 19; // table: skill_collection 
-	repeated skill_setting skill_setting = 20; // table: skill_setting 
-	repeated soldier soldier = 21; // table: soldier 
-	repeated soldier_barrack_bonus soldier_barrack_bonus = 22; // table: soldier_barrack_bonus 
-	repeated soldier_hero_cap soldier_hero_cap = 23; // table: soldier_hero_cap 
-	repeated troop troop = 24; // table: troop 
+	repeated hero_base hero_base = 13; // table: hero_base 
+	repeated hero_exp hero_exp = 14; // table: hero_exp 
+	repeated hero_group hero_group = 15; // table: hero_group 
+	repeated hero_method hero_method = 16; // table: hero_method 
+	repeated hero_method_slot hero_method_slot = 17; // table: hero_method_slot 
+	repeated hero_policy hero_policy = 18; // table: hero_policy 
+	repeated item item = 19; // table: item 
+	repeated resource resource = 20; // table: resource 
+	repeated review review = 21; // table: review 
+	repeated review_level review_level = 22; // table: review_level 
+	repeated skill skill = 23; // table: skill 
+	repeated skill_collection skill_collection = 24; // table: skill_collection 
+	repeated skill_setting skill_setting = 25; // table: skill_setting 
+	repeated soldier soldier = 26; // table: soldier 
+	repeated soldier_barrack_bonus soldier_barrack_bonus = 27; // table: soldier_barrack_bonus 
+	repeated soldier_hero_cap soldier_hero_cap = 28; // table: soldier_hero_cap 
+	repeated troop troop = 29; // table: troop 
 }
 

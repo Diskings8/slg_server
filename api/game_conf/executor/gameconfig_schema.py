@@ -154,6 +154,56 @@ TABLES = [
              Field("攻击距离", "attack_range", "uint32", comment="攻击距离"),
          ]),
 
+    # hero_base（英雄基础信息，multi，conf_id 主键）
+    dict(name="hero_base", kind="multi", comment="英雄基础信息",
+         fields=[
+             Field("英雄配置ID", "conf_id", "int32", index=True, comment="英雄配置ID"),
+             Field("英雄名", "name", "string", comment="英雄名"),
+             Field("唯一名", "unique_name", "string", comment="唯一名称（含阵营和兵种）"),
+             Field("阵营", "country", "string", comment="阵营（群/魏/蜀/吴/汉）"),
+             Field("性别", "sex", "string", comment="性别（男/女）"),
+             Field("品质", "quality", "string", comment="品质（3-R/4-SR/5-SSR）"),
+             Field("图标ID", "icon_id", "int32", comment="图标ID"),
+             Field("主兵种", "troop_type", "string", comment="主兵种（骑/步/弓）"),
+             Field("可用兵种", "troop_available", "string", comment="可用兵种列表"),
+             Field("部署消耗", "deploy_cost", "float", comment="部署消耗"),
+             Field("描述", "desc", "string", comment="英雄描述（史实+演义）"),
+             Field("政策ID", "policy_id", "int32", comment="政策ID（引用 hero_policy）"),
+             Field("羁绊组ID", "group_id", "string", comment="羁绊组ID（引用 hero_group，空=无羁绊）"),
+         ]),
+
+    # hero_method（战法配置，multi，method_id 主键）
+    dict(name="hero_method", kind="multi", comment="战法配置",
+         fields=[
+             Field("战法ID", "method_id", "int32", index=True, comment="战法ID"),
+             Field("战法名", "method_name", "string", comment="战法名称"),
+             Field("战法描述", "method_desc", "string", comment="战法效果描述"),
+         ]),
+
+    # hero_method_slot（英雄战法槽位，multi）
+    dict(name="hero_method_slot", kind="multi", comment="英雄战法槽位",
+         fields=[
+             Field("英雄配置ID", "hero_conf_id", "int32", comment="英雄配置ID"),
+             Field("槽位索引", "slot_index", "int32", comment="槽位索引（0/1/2）"),
+             Field("战法ID", "method_id", "int32", comment="战法ID（引用 hero_method）"),
+         ]),
+
+    # hero_policy（政策配置，multi，policy_id 主键）
+    dict(name="hero_policy", kind="multi", comment="政策配置",
+         fields=[
+             Field("政策ID", "policy_id", "int32", index=True, comment="政策ID"),
+             Field("政策名", "policy_name", "string", comment="政策名称"),
+             Field("政策描述", "policy_desc", "string", comment="政策效果描述"),
+         ]),
+
+    # hero_group（羁绊配置，multi，group_id 主键）
+    dict(name="hero_group", kind="multi", comment="羁绊配置",
+         fields=[
+             Field("羁绊组ID", "group_id", "string", index=True, comment="羁绊组ID"),
+             Field("羁绊名", "group_name", "string", comment="羁绊组名称"),
+             Field("羁绊描述", "group_desc", "string", comment="羁绊描述（成员+加成）"),
+         ]),
+
     # item（道具，multi，conf_id 主键；effect 摊平）
     dict(name="item", kind="multi", comment="道具配置",
          fields=[
